@@ -1,0 +1,6 @@
+database dbname=negoto
+sql negoto.sql
+
+log
+data
+negoto

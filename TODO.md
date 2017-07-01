@@ -1,0 +1,5 @@
+- [ ] write a C library that:
+  - saves files
+  - processes their thumbnails
+  - returns some info (dimensions?)
+  - deletes them on demand
