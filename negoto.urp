@@ -1,6 +1,8 @@
 database dbname=negoto
 sql negoto.sql
 
+$/list
+util
 log
 data
 negoto
