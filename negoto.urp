@@ -2,6 +2,7 @@ database dbname=negoto
 sql negoto.sql
 
 $/list
+$/option
 util
 log
 data

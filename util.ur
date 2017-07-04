@@ -23,3 +23,14 @@ fun joinStrings sep ls : string =
   in
     loop ls ""
   end
+
+
+fun head [a] (ls : list a) : option a =
+  case ls of
+    x :: _ => Some x
+  | [] => None
+
+
+(* AKA "blackbird" *)
+fun compose2 [a] [b] [c] [d] (f1 : c -> d) (f2 : a -> b -> c) x y =
+  f1 (f2 x y)

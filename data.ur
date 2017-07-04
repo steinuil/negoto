@@ -81,24 +81,33 @@ fun deleteTag
 
 
 (* * Thread functions *)
-(* FIXME: collate threads and tags *)
-fun unifyThread t tt =
-  { Id = t.Id, Updated = t.Updated, Subject = t.Subject
-  , Locked = t.Locked, Tag = tt.Tag }
+fun coalesceThreads { Threads = t, Thread_tags = tt } acc =
+  let
+    val (tagList, rest) = case acc of
+    | [] => ([], [])
+    | hd :: rst =>
+      if t.Id = hd.Id
+      then (hd.Tags, rst)
+      else ([], acc)
+  in
+    (t ++ { Tags = tt.Tag :: tagList }) :: rest
+  end
 
 fun allThreads () =
   query (SELECT * FROM threads
-        JOIN thread_tags ON thread_tags.Thread = threads.Id)
-        (fn { Threads = t, Thread_tags = tt } acc =>
-          return (unifyThread t tt :: acc))
+        JOIN thread_tags
+          ON thread_tags.Thread = threads.Id
+        ORDER BY threads.Id DESC)
+        (return `Util.compose2` coalesceThreads)
         []
 
 fun threadsByTag name =
   query (SELECT * FROM threads
-        JOIN thread_tags ON thread_tags.Thread = threads.Id
-        WHERE thread_tags.Tag = {[name]})
-        (fn { Threads = t, Thread_tags = tt } acc =>
-          return (unifyThread t tt :: acc))
+        JOIN thread_tags
+          ON thread_tags.Thread = threads.Id
+        WHERE thread_tags.Tag = {[name]}
+        ORDER BY threads.Id DESC)
+        (return `Util.compose2` coalesceThreads)
         []
 
 (* TODO:
@@ -107,16 +116,30 @@ fun newThread
 
 
 (* * Post functions *)
-(* FIXME: collate posts and files *)
+fun coalescePosts { Posts = p, Post_files = pf, Files = f } acc =
+  let
+    val (fileList, rest) = case acc of
+    | [] => ([], [])
+    | hd :: rst =>
+      if p.Id = hd.Id
+      then (hd.Files, rst)
+      else ([], hd :: rst)
+
+    val files = case pf.Spoiler of
+    | None => fileList
+    | Some s => (f ++ { Spoiler = s }) :: fileList
+  in
+    (p -- #Key ++ { Files = files }) :: rest
+  end
+
 fun allPosts () =
-  query (SELECT posts.*, Post_files.Spoiler, files.* FROM posts
-        LEFT OUTER JOIN post_files ON post_files.Post = posts.Key
-        JOIN files ON {sql_nullable (SQL files.Hash)} = post_files.File
+  query (SELECT * FROM posts
+        LEFT OUTER JOIN post_files
+          ON post_files.Post = posts.Key
+        JOIN files
+          ON {sql_nullable (SQL files.Hash)} = post_files.File
         ORDER BY posts.Id DESC)
-        (fn { Posts = p, Post_files = pf, Files = f } acc => return (
-          { Id = p.Id, Thread = p.Thread, Nam = p.Nam, Time = p.Time
-          , Body = p.Body , Spoiler = pf.Spoiler, Hash = f.Hash
-          , FileNam = f.Nam, Ext = f.Ext } :: acc))
+        (return `Util.compose2` coalescePosts)
         []
 
 
@@ -125,7 +148,7 @@ fun orphanedFiles () =
   queryL1
     (SELECT files.* FROM files
     JOIN post_files
-    ON files.Hash <> post_files.File)
+      ON files.Hash <> post_files.File)
 
 
 

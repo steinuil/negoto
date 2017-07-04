@@ -7,7 +7,7 @@ type thread =
   , Updated : time
   , Subject : string
   , Locked  : bool
-  , Tag     : string } (* : list string } *)
+  , Tags    : list string }
 
 type file =
   { Hash    : string
@@ -32,3 +32,6 @@ val newTag : tag -> transaction (option string)
 val allThreads : unit -> transaction (list thread)
 
 val threadsByTag : string -> transaction (list thread)
+
+
+val allPosts : unit -> transaction (list post)
