@@ -38,7 +38,7 @@ table posts :
     REFERENCES threads(Id)
     ON DELETE CASCADE
 
-(* Files are stored by their hash, and be referenced by multiple posts.
+(* Files are stored by their hash, and can be referenced by multiple posts.
  * They should be deleted when every post referencing them is gone. *)
 table files :
   { Hash : string
@@ -63,9 +63,15 @@ table post_files :
 
 
 
+
 (* * Tag functions *)
 fun allTags () =
   queryL1 (SELECT * FROM tags)
+
+fun tagByName name =
+  oneOrNoRows1
+    (SELECT * FROM tags
+    WHERE tags.Nam = {[name]})
 
 fun newTag { Nam = name, Slug = slug } =
   if strlen name > 16
@@ -75,9 +81,10 @@ fun newTag { Nam = name, Slug = slug } =
   else tryDml (INSERT INTO tags (Nam, Slug)
               VALUES ({[name]}, {[slug]}))
 
-(* TODO:
-fun deleteTag
-*)
+fun deleteTag name =
+  tryDml
+    (DELETE FROM tags
+    WHERE Nam = {[name]})
 
 
 (* * Thread functions *)
@@ -93,22 +100,23 @@ fun coalesceThreads { Threads = t, Thread_tags = tt } acc =
     (t ++ { Tags = tt.Tag :: tagList }) :: rest
   end
 
+fun queryThreads q =
+  query q (return `Util.compose2` coalesceThreads) []
+
 fun allThreads () =
-  query (SELECT * FROM threads
-        JOIN thread_tags
-          ON thread_tags.Thread = threads.Id
-        ORDER BY threads.Id DESC)
-        (return `Util.compose2` coalesceThreads)
-        []
+  queryThreads
+    (SELECT * FROM threads
+    JOIN thread_tags
+      ON thread_tags.Thread = threads.Id
+    ORDER BY threads.Id DESC)
 
 fun threadsByTag name =
-  query (SELECT * FROM threads
-        JOIN thread_tags
-          ON thread_tags.Thread = threads.Id
-        WHERE thread_tags.Tag = {[name]}
-        ORDER BY threads.Id DESC)
-        (return `Util.compose2` coalesceThreads)
-        []
+  queryThreads
+    (SELECT * FROM threads
+    JOIN thread_tags
+      ON thread_tags.Thread = threads.Id
+    WHERE thread_tags.Tag = {[name]}
+    ORDER BY threads.Id DESC)
 
 (* TODO:
 fun newThread
@@ -132,15 +140,27 @@ fun coalescePosts { Posts = p, Post_files = pf, Files = f } acc =
     (p -- #Key ++ { Files = files }) :: rest
   end
 
+fun queryPosts q =
+  query q (return `Util.compose2` coalescePosts) []
+
 fun allPosts () =
-  query (SELECT * FROM posts
-        LEFT OUTER JOIN post_files
-          ON post_files.Post = posts.Key
-        JOIN files
-          ON {sql_nullable (SQL files.Hash)} = post_files.File
-        ORDER BY posts.Id DESC)
-        (return `Util.compose2` coalescePosts)
-        []
+  queryPosts
+    (SELECT * FROM posts
+    LEFT OUTER JOIN post_files
+      ON post_files.Post = posts.Key
+    JOIN files
+      ON {sql_nullable (SQL files.Hash)} = post_files.File
+    ORDER BY posts.Id DESC)
+
+fun postsByThread threadId =
+  queryPosts
+    (SELECT * FROM posts
+    LEFT OUTER JOIN post_files
+      ON post_files.Post = posts.Key
+    JOIN files
+      ON {sql_nullable (SQL files.Hash)} = post_files.File
+    WHERE posts.Thread = {[threadId]}
+    ORDER BY posts.Id DESC)
 
 
 (* * File functions *)
