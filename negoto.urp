@@ -3,6 +3,7 @@ sql negoto.sql
 
 $/list
 $/option
+$/monad
 util
 log
 data

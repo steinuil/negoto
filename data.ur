@@ -24,8 +24,7 @@ table thread_tags :
     ON DELETE CASCADE
 
 (* Key is the unique ID used to reference the post,
- * while Id is the relative ID used when displaying the post. *)
-(* TODO: should it be relative to the board or to the thread? *)
+ * while Id is the ID (relative to the thread) used when displaying the post. *)
 table posts :
   { Key    : int
   , Id     : int
@@ -63,9 +62,8 @@ table post_files :
 
 
 
-
 (* * Tag functions *)
-fun allTags () =
+val allTags =
   queryL1 (SELECT * FROM tags)
 
 fun tagByName name =
@@ -103,7 +101,7 @@ fun coalesceThreads { Threads = t, Thread_tags = tt } acc =
 fun queryThreads q =
   query q (return `Util.compose2` coalesceThreads) []
 
-fun allThreads () =
+val allThreads =
   queryThreads
     (SELECT * FROM threads
     JOIN thread_tags
@@ -117,6 +115,34 @@ fun threadsByTag name =
       ON thread_tags.Thread = threads.Id
     WHERE thread_tags.Tag = {[name]}
     ORDER BY threads.Id DESC)
+
+val catalog =
+  let
+    fun coalesce { Threads = t, Thread_tags = tt, Posts = p } acc =
+      let
+        val (tagList, rest) = case acc of
+        | [] => ([], [])
+        | hd :: rst =>
+          if t.Id = hd.Id
+          then (hd.Tags, rst)
+          else ([], acc)
+
+        val post = { Nam = p.Nam, Time = p.Time, Body = p.Body }
+      in
+        (t ++ post ++ { Tags = tt.Tag :: tagList }) :: rest
+      end
+  in
+    query
+      (SELECT * FROM threads
+      JOIN thread_tags
+        ON thread_tags.Thread = threads.Id
+      JOIN posts
+        ON posts.Thread = threads.Id
+      WHERE posts.Id = 1
+      ORDER BY threads.Id DESC)
+      (return `Util.compose2` coalesce)
+      []
+  end
 
 (* TODO:
 fun newThread
@@ -143,7 +169,7 @@ fun coalescePosts { Posts = p, Post_files = pf, Files = f } acc =
 fun queryPosts q =
   query q (return `Util.compose2` coalescePosts) []
 
-fun allPosts () =
+val allPosts =
   queryPosts
     (SELECT * FROM posts
     LEFT OUTER JOIN post_files
@@ -164,21 +190,25 @@ fun postsByThread threadId =
 
 
 (* * File functions *)
-fun orphanedFiles () =
+val orphanedFiles =
   queryL1
     (SELECT files.* FROM files
     JOIN post_files
       ON files.Hash <> post_files.File)
+
+(* FIXME: actually delete files *)
+fun deleteFile hash =
+  tryDml
+    (DELETE FROM files
+    WHERE Hash = {[hash]})
 
 
 
 (* * Tasks *)
 (* Periodically check for orphaned files
  * and delete them from the database/filesystem *)
-(* FIXME: actually delete them *)
-task periodic (30 * 60) = fn {} =>
-  ls <- orphanedFiles ();
-  if List.length ls < 1
-  then Log.log "data" "no orphaned files found"
-  else Log.log "data" ("orphaned files found: " ^
-    Util.joinStrings ", " (List.mp (fn x => x.Nam) ls))
+(* FIXME: run deleteFile *)
+task periodic (30 * 60) = fn () =>
+  files <- orphanedFiles;
+  (* _ <- Monad.appR deleteFile files; *)
+  Log.log "data" "checking for orphaned files"

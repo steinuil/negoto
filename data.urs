@@ -24,7 +24,7 @@ type post =
   , Files  : list file }
 
 
-val allTags : unit -> transaction (list tag)
+val allTags : transaction (list tag)
 
 val tagByName : string -> transaction (option tag)
 
@@ -33,11 +33,24 @@ val newTag : tag -> transaction (option string)
 val deleteTag : string -> transaction (option string)
 
 
-val allThreads : unit -> transaction (list thread)
+val allThreads : transaction (list thread)
 
 val threadsByTag : string -> transaction (list thread)
 
 
-val allPosts : unit -> transaction (list post)
+val catalog : transaction (list { Id      : int
+                                , Updated : time
+                                , Subject : string
+                                , Locked  : bool
+                                , Tags    : list string
+                                , Nam     : string
+                                , Time    : time
+                                , Body    : string })
+
+
+val allPosts : transaction (list post)
 
 val postsByThread : int -> transaction (list post)
+
+
+val deleteFile : string -> transaction (option string)

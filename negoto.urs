@@ -1,1 +1,1 @@
-val main : unit -> transaction page
+val main : transaction page
