@@ -1,6 +1,6 @@
 DB = test.db
 NAME = negoto
-FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur log.urs util.ur
+FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur util.ur
 URWEB = ~/lam/urweb/bin/urweb
 
 negoto: negoto.exe $(DB)
