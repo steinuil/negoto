@@ -37,24 +37,19 @@ table posts :
     REFERENCES threads(Id)
     ON DELETE CASCADE
 
-(* Files are stored by their hash, and can be referenced by multiple posts.
- * They should be deleted when every post referencing them is gone. *)
+(* Ur/Web doesn't support database triggers, so we want to defer the deletion
+ * of a row to the periodic task, so that we can call the function that
+ * actually deletes the file. *)
 table files :
-  { Hash : string
-  , Nam  : string
-  , Ext  : string }
-  PRIMARY KEY (Hash)
-
-table post_files :
-  { Post    : int
-  , File    : string
-  , Spoiler : bool }
+  { Hash    : string
+  , Nam     : string
+  , Ext     : string
+  , Spoiler : bool
+  , Post    : option int }
+  PRIMARY KEY (Hash),
   CONSTRAINT Post FOREIGN KEY Post
     REFERENCES posts(Key)
-    ON DELETE CASCADE,
-  CONSTRAINT File FOREIGN KEY File
-    REFERENCES files(Hash)
-    ON DELETE CASCADE
+    ON DELETE SET NULL
 
 (* TODO: admins *)
 (* TODO: delete posts *)
@@ -116,41 +111,58 @@ fun threadsByTag name =
     WHERE thread_tags.Tag = {[name]}
     ORDER BY threads.Id DESC)
 
+(*  *)
 val catalog =
   let
-    fun coalesce { Threads = t, Thread_tags = tt, Posts = p } acc =
+    fun coalesce { Threads = t, Posts = p, Thread_tags = { Tag = tag }, Files = f } acc =
       let
-        val (tagList, rest) = case acc of
-        | [] => ([], [])
-        | hd :: rst =>
-          if t.Id = hd.Id
-          then (hd.Tags, rst)
-          else ([], acc)
+        val (tagList, fileList, rest) = case acc of
+          | [] => ([], [], [])
+          | hd :: rst =>
+            if t.Id = hd.Id
+            then (hd.Tags, hd.Files, rst)
+            else ([], [], acc)
 
         val post = { Nam = p.Nam, Time = p.Time, Body = p.Body }
+
+        val fileList = case f of
+          | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s } =>
+              if List.exists (fn x => x.Hash = h) fileList
+              then fileList
+              else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+          | _ => fileList
+
+        val tagList =
+          if List.exists (fn x => x = tag) tagList
+          then tagList
+          else tag :: tagList
       in
-        (t ++ post ++ { Tags = tt.Tag :: tagList }) :: rest
+        (t ++ post ++ { Tags = tagList } ++ { Files = fileList }) :: rest
       end
   in
     query
-      (SELECT * FROM threads
+      (SELECT threads.*, posts.Nam, posts.Time, posts.Body,
+        thread_tags.Tag, files.Hash, files.Nam, files.Ext, files.Spoiler
+      FROM threads
       JOIN thread_tags
         ON thread_tags.Thread = threads.Id
       JOIN posts
         ON posts.Thread = threads.Id
+      LEFT OUTER JOIN files
+        ON files.Post = {sql_nullable (SQL posts.Key)}
       WHERE posts.Id = 1
-      ORDER BY threads.Id DESC)
+      ORDER BY
+        threads.Updated,
+        threads.Id
+        DESC)
       (return `Util.compose2` coalesce)
       []
   end
 
-(* TODO:
-fun newThread
-*)
-
 
 (* * Post functions *)
-fun coalescePosts { Posts = p, Post_files = pf, Files = f } acc =
+(*
+fun coalescePosts { Posts = p, Files = f } acc =
   let
     val (fileList, rest) = case acc of
     | [] => ([], [])
@@ -174,27 +186,29 @@ val allPosts =
     (SELECT * FROM posts
     LEFT OUTER JOIN post_files
       ON post_files.Post = posts.Key
-    JOIN files
+    LEFT OUTER JOIN files
       ON {sql_nullable (SQL files.Hash)} = post_files.File
     ORDER BY posts.Id DESC)
+*)
 
+(*
 fun postsByThread threadId =
   queryPosts
     (SELECT * FROM posts
     LEFT OUTER JOIN post_files
       ON post_files.Post = posts.Key
-    JOIN files
-      ON {sql_nullable (SQL files.Hash)} = post_files.File
+    LEFT OUTER JOIN files
+      ON files.Hash = post_files.File
     WHERE posts.Thread = {[threadId]}
     ORDER BY posts.Id DESC)
+*)
 
 
 (* * File functions *)
 val orphanedFiles =
   queryL1
     (SELECT files.* FROM files
-    JOIN post_files
-      ON files.Hash <> post_files.File)
+    WHERE files.Post IS NULL)
 
 (* FIXME: actually delete files *)
 fun deleteFile hash =

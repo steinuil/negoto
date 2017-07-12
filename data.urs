@@ -45,12 +45,15 @@ val catalog : transaction (list { Id      : int
                                 , Tags    : list string
                                 , Nam     : string
                                 , Time    : time
-                                , Body    : string })
+                                , Body    : string 
+                                , Files   : list file })
 
 
+(*
 val allPosts : transaction (list post)
 
 val postsByThread : int -> transaction (list post)
+*)
 
 
 val deleteFile : string -> transaction (option string)

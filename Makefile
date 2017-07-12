@@ -1,11 +1,12 @@
 DB = test.db
 NAME = negoto
 FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur log.urs util.ur
+URWEB = ~/lam/urweb/bin/urweb
 
 negoto: negoto.exe $(DB)
 
 negoto.sql negoto.exe: $(FILES)
-	urweb $(NAME) -dbms sqlite -db $(DB)
+	$(URWEB) $(NAME) -dbms sqlite -db $(DB)
 
 $(DB): $(NAME).sql
 	rm -f $(.TARGET)
@@ -17,7 +18,7 @@ run: negoto
 
 .PHONY: check
 check:
-	urweb -tc $(NAME)
+	$(URWEB) -tc $(NAME)
 
 .PHONY: clean
 clean:

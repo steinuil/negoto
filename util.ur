@@ -13,6 +13,14 @@ fun strlist s : list char =
   strfold (fn x acc => x :: acc) [] s
 
 
+fun strmap (f : char -> char) (s : string) : string =
+  strfold (fn x acc => str1 (f x) ^ acc) "" s
+
+
+val strToUpper =
+  strmap Char.toUpper
+
+
 fun joinStrings sep ls : string =
   let
     fun loop ls acc =

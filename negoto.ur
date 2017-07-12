@@ -1,24 +1,10 @@
-fun errorPage (error : string) =
-  return <xml>
-    <body>
-      <h1>{[error]}</h1>
-    </body>
-  </xml>
-
-(*
-fun returnErrorPage error =
-  redirect (url (errorPage error))
-*)
-val returnErrorPage =
-  redirect <<< url <<< errorPage
-  (*
-  errorPage >>> url >>> redirect
-  *)
+val errorPage (err : string) =
+  <xml>{[err]}</xml>
 
 fun tagPage (name : string) : transaction page =
   tag <- Data.tagByName name;
   case tag of
-  | None => returnErrorPage "404"
+  | None => error (errorPage "404")
   | Some t =>
     threads <- Data.threadsByTag t.Nam;
     return <xml>
@@ -32,17 +18,23 @@ fun tagPage (name : string) : transaction page =
       </body>
     </xml>
 
+fun tagList ls =
+  Util.joinStrings " " <| List.mp (fn x => "[" ^ x ^ "]") ls
+
 val catalog =
   threads <- Data.catalog;
   return <xml>
     <body>
-      {List.mapX (fn thread' => <xml>
+      {List.mapX (fn thread' => let
+        val tags' = tagList thread'.Tags
+        val locked' = if thread'.Locked then " [LOCKED] " else ""
+      in <xml>
         <div>
-          <div>{[thread'.Id]}. {[thread'.Subject]} {[Util.joinStrings " " (List.mp (fn x => "[" ^ x ^ "]") thread'.Tags)]}{[if thread'.Locked then " [LOCKED]" else ""]}</div>
+          <div>{[thread'.Id]}. {[thread'.Subject]} {[tags']} {[locked']}</div>
           <div>{[thread'.Nam]} {[thread'.Time]}</div>
           <div>{[thread'.Body]}</div>
         </div>
-      </xml>) threads}
+      </xml> end) threads}
     </body>
   </xml>
 
