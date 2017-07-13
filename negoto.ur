@@ -20,18 +20,60 @@ and readme () =
     </body>
   </xml>
 
+and threadPost post' = <xml>
+  <div>
+    <div>{[post'.Nam]} {[post'.Time]} &#8470;{[post'.Id]}</div>
+    <hr/>
+    <div>{[post'.Body]}</div>
+  </div>
+</xml>
+
+and thread (id : int) =
+  posts <- Data.postsByThread id;
+  case posts of
+  | [] => error errorPage
+  | _ =>
+    return <xml>
+      <body>
+        <main>
+          {List.mapX threadPost posts}
+        </main>
+      </body>
+    </xml>
+
+and catalogThread thread' = <xml>
+  <div>
+    <figure>
+      <a href={url (thread thread'.Id)}>
+        {case Util.head thread'.Files of
+        | None => <xml/>
+        | Some file => <xml>
+          [image {[file.Nam]}]
+        </xml>}
+      </a>
+    </figure>
+    <div>{[thread'.Updated]} / [count here]</div>
+    <div>{[thread'.Subject]} // {[thread'.Body]}</div>
+  </div>
+</xml>
+
 and tag (name : string) =
   tags <- Data.allTags;
   case List.find (fn x => x.Nam = name) tags of
   | None => error errorPage
-  | Some t => return <xml>
-    <body>
-      <header>
-        {navigator tags}
-        <h1>/{[t.Nam]}/ - {[t.Slug]}</h1>
-      </header>
-    </body>
-  </xml>
+  | Some t =>
+    threads <- Data.catalogByTag t.Nam;
+    return <xml>
+      <body>
+        <header>
+          {navigator tags}
+          <h1>/{[t.Nam]}/ - {[t.Slug]}</h1>
+        </header>
+        <main>
+          {List.mapX catalogThread threads}
+        </main>
+      </body>
+    </xml>
 
 and front () =
   tags <- Data.allTags;
@@ -42,6 +84,7 @@ and front () =
     <body>
       <header>
         <div>Good Day, Brother.</div>
+        <div>Welcome To The</div>
         <div>Time-Telling Fortress.</div>
       </header>
       <ul>
@@ -56,92 +99,3 @@ and front () =
   </xml>
 
 val main = redirect (url (front ()))
-
-(*
-  tags <- Data.allTags;
-  return <xml>
-    <head>
-      <title>Time-Telling Fortress</title>
-    </head>
-    <body>
-      <header>
-        <div>Good Day, Brother.</div>
-        <div>Time-Telling Fortress.</div>
-      </header>
-      <ul>
-        {List.mapX (fn t => <xml><li>
-          <a href={url (tag t.Nam)}>/{[t.Nam]}/ - {[t.Slug]}</a>
-        </li></xml>) tags}
-      </ul>
-      <footer>
-        Powered by <a href="https://github.com/steinuil/negoto">Negoto</a>
-      </footer>
-    </body>
-  </xml>
-  *)
-
-
-
-(*
-val errorPage (err : string) =
-  <xml>{[err]}</xml>
-
-fun tagPage (name : string) : transaction page =
-  tag <- Data.tagByName name;
-  case tag of
-  | None => error (errorPage "404")
-  | Some t =>
-    threads <- Data.threadsByTag t.Nam;
-    return <xml>
-      <body>
-        <h1>{[t.Nam]}</h1>
-        <main>
-          {List.mapX (fn x => <xml>
-            <div>[{[x.Id]}] {[x.Subject]} [{[x.Updated]}]</div>
-          </xml>) threads}
-        </main>
-      </body>
-    </xml>
-
-fun tagList ls =
-  Util.joinStrings " " <| List.mp (fn x => "[" ^ x ^ "]") ls
-
-fun catalogThread thread = let
-  val tags' = tagList thread.Tags
-  val locked' = if thread.Locked then " [LOCKED]" else ""
-in
-  <xml><div>
-    <div>{[thread.Id]}. {[thread.Subject]} {[tags']}{[locked']}</div>
-    <div>{[thread.Nam]} {[thread.Time]}</div>
-    <div>{[thread.Body]}</div>
-  </div></xml>
-end
-
-val catalog =
-  threads <- Data.catalog;
-  return <xml>
-    <body>
-      {List.mapX catalogThread threads}
-    </body>
-  </xml>
-
-val main =
-  tags <- Data.allTags;
-  return <xml>
-    <head>
-      <title>negoto</title>
-    </head>
-    <body>
-      <h1>Negoto</h1>
-
-      <a href={url catalog}>All threads</a>
-
-      Tag list
-      <ul>
-        {List.mapX (fn x => <xml>
-          <li><a href={url (tagPage x.Nam)}>{[x.Nam]} - {[x.Slug]}</a></li>
-        </xml>) tags}
-      </ul>
-    </body>
-  </xml>
-*)

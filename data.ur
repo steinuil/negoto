@@ -52,7 +52,6 @@ table files :
     ON DELETE SET NULL
 
 (* TODO: admins *)
-(* TODO: delete posts *)
 (* TODO: users for bans *)
 
 
@@ -80,128 +79,93 @@ fun deleteTag name =
     WHERE Nam = {[name]})
 
 
+
 (* * Thread functions *)
-fun coalesceThreads { Threads = t, Thread_tags = tt } acc =
-  let
-    val (tagList, rest) = case acc of
-    | [] => ([], [])
+fun coalesceThread
+  { Threads = t, Thread_tags = { Tag = tag, ... }, Posts = p, Files = f } acc =
+let
+  val (tagList, fileList, rest) = case acc of
+    | [] => ([], [], [])
     | hd :: rst =>
       if t.Id = hd.Id
-      then (hd.Tags, rst)
-      else ([], acc)
-  in
-    (t ++ { Tags = tt.Tag :: tagList }) :: rest
-  end
+      then (hd.Tags, hd.Files, rst)
+      else ([], [], acc)
 
-fun queryThreads q =
-  query q (return `Util.compose2` coalesceThreads) []
+  val post = { Nam = p.Nam, Time = p.Time, Body = p.Body }
 
-val allThreads =
-  queryThreads
-    (SELECT * FROM threads
-    JOIN thread_tags
-      ON thread_tags.Thread = threads.Id
-    ORDER BY threads.Id DESC)
+  val fileList = case f of
+    | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s, ... } =>
+        if List.exists (fn x => x.Hash = h) fileList
+        then fileList
+        else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+    | _ => fileList
 
-fun threadsByTag name =
-  queryThreads
-    (SELECT * FROM threads
-    JOIN thread_tags
-      ON thread_tags.Thread = threads.Id
-    WHERE thread_tags.Tag = {[name]}
-    ORDER BY threads.Id DESC)
+  val tagList =
+    if List.exists (fn x => x = tag) tagList
+    then tagList
+    else tag :: tagList
+in
+  (t ++ post ++ { Tags = tagList } ++ { Files = fileList }) :: rest
+end
 
-(*  *)
 val catalog =
-  let
-    fun coalesce { Threads = t, Posts = p, Thread_tags = { Tag = tag }, Files = f } acc =
-      let
-        val (tagList, fileList, rest) = case acc of
-          | [] => ([], [], [])
-          | hd :: rst =>
-            if t.Id = hd.Id
-            then (hd.Tags, hd.Files, rst)
-            else ([], [], acc)
+  query
+    (SELECT * FROM threads
+    JOIN thread_tags
+      ON thread_tags.Thread = threads.Id
+    JOIN posts
+      ON posts.Thread = threads.Id
+    LEFT OUTER JOIN files
+      ON files.Post = {sql_nullable (SQL posts.Key)}
+    WHERE posts.Id = 1
+    ORDER BY threads.Updated, threads.Id DESC)
+    (return `Util.compose2` coalesceThread)
+    []
 
-        val post = { Nam = p.Nam, Time = p.Time, Body = p.Body }
+fun catalogByTag tag =
+  query
+    (SELECT * FROM threads
+    JOIN thread_tags
+      ON thread_tags.Thread = threads.Id
+    JOIN posts
+      ON posts.Thread = threads.Id
+    LEFT OUTER JOIN files
+      ON files.Post = {sql_nullable (SQL posts.Key)}
+    WHERE posts.Id = 1
+      AND thread_tags.Tag = {[tag]}
+    ORDER BY threads.Updated, threads.Id DESC)
+    (return `Util.compose2` coalesceThread)
+    []
 
-        val fileList = case f of
-          | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s } =>
-              if List.exists (fn x => x.Hash = h) fileList
-              then fileList
-              else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
-          | _ => fileList
-
-        val tagList =
-          if List.exists (fn x => x = tag) tagList
-          then tagList
-          else tag :: tagList
-      in
-        (t ++ post ++ { Tags = tagList } ++ { Files = fileList }) :: rest
-      end
-  in
-    query
-      (SELECT threads.*, posts.Nam, posts.Time, posts.Body,
-        thread_tags.Tag, files.Hash, files.Nam, files.Ext, files.Spoiler
-      FROM threads
-      JOIN thread_tags
-        ON thread_tags.Thread = threads.Id
-      JOIN posts
-        ON posts.Thread = threads.Id
-      LEFT OUTER JOIN files
-        ON files.Post = {sql_nullable (SQL posts.Key)}
-      WHERE posts.Id = 1
-      ORDER BY
-        threads.Updated,
-        threads.Id
-        DESC)
-      (return `Util.compose2` coalesce)
-      []
-  end
 
 
 (* * Post functions *)
-(*
-fun coalescePosts { Posts = p, Files = f } acc =
-  let
-    val (fileList, rest) = case acc of
+fun coalescePost { Posts = p, Files = f } acc = let
+  val (fileList, rest) = case acc of
     | [] => ([], [])
     | hd :: rst =>
       if p.Id = hd.Id
       then (hd.Files, rst)
-      else ([], hd :: rst)
+      else ([], acc)
 
-    val files = case pf.Spoiler of
-    | None => fileList
-    | Some s => (f ++ { Spoiler = s }) :: fileList
-  in
-    (p -- #Key ++ { Files = files }) :: rest
-  end
+  val fileList = case f of
+    | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s, ... } =>
+      { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+    | _ => fileList
+in
+  (p -- #Key ++ { Files = fileList }) :: rest
+end
 
-fun queryPosts q =
-  query q (return `Util.compose2` coalescePosts) []
-
-val allPosts =
-  queryPosts
-    (SELECT * FROM posts
-    LEFT OUTER JOIN post_files
-      ON post_files.Post = posts.Key
-    LEFT OUTER JOIN files
-      ON {sql_nullable (SQL files.Hash)} = post_files.File
-    ORDER BY posts.Id DESC)
-*)
-
-(*
 fun postsByThread threadId =
-  queryPosts
+  query
     (SELECT * FROM posts
-    LEFT OUTER JOIN post_files
-      ON post_files.Post = posts.Key
     LEFT OUTER JOIN files
-      ON files.Hash = post_files.File
+      ON files.Post = {sql_nullable (SQL posts.Id)}
     WHERE posts.Thread = {[threadId]}
     ORDER BY posts.Id DESC)
-*)
+    (return `Util.compose2` coalescePost)
+    []
+
 
 
 (* * File functions *)

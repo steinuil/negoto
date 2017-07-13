@@ -23,6 +23,17 @@ type post =
   , Body   : string
   , Files  : list file }
 
+type catalogThread =
+  { Id      : int
+  , Updated : time
+  , Subject : string
+  , Locked  : bool
+  , Tags    : list string
+  , Nam     : string
+  , Time    : time
+  , Body    : string
+  , Files   : list file }
+
 
 val allTags : transaction (list tag)
 
@@ -33,27 +44,12 @@ val newTag : tag -> transaction (option string)
 val deleteTag : string -> transaction (option string)
 
 
-val allThreads : transaction (list thread)
+val catalog : transaction (list catalogThread)
 
-val threadsByTag : string -> transaction (list thread)
+val catalogByTag : string -> transaction (list catalogThread)
 
-
-val catalog : transaction (list { Id      : int
-                                , Updated : time
-                                , Subject : string
-                                , Locked  : bool
-                                , Tags    : list string
-                                , Nam     : string
-                                , Time    : time
-                                , Body    : string 
-                                , Files   : list file })
-
-
-(*
-val allPosts : transaction (list post)
 
 val postsByThread : int -> transaction (list post)
-*)
 
 
 val deleteFile : string -> transaction (option string)

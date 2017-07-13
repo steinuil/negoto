@@ -8,6 +8,8 @@
   - returns some info (dimensions?)
   - deletes them on demand
 
+- [ ] pull in libvpx to support webms
+
 - [ ] [sexpcode](http://cairnarvon.rotahall.org/misc/sexpcode.html) library
   - add a "post" function of arity 2 to link to a post
   - have `>>post` desugar to `{post <thread> <num>}`
