@@ -81,7 +81,7 @@ fun deleteTag name =
 
 
 (* * Thread functions *)
-fun coalesceThread
+fun coalesceCatalogThread
   { Threads = t, Thread_tags = { Tag = tag, ... }, Posts = p, Files = f } acc =
 let
   val (tagList, fileList, rest) = case acc of
@@ -119,7 +119,7 @@ val catalog =
       ON files.Post = {sql_nullable (SQL posts.Key)}
     WHERE posts.Id = 1
     ORDER BY threads.Updated, threads.Id DESC)
-    (return `Util.compose2` coalesceThread)
+    (return `Util.compose2` coalesceCatalogThread)
     []
 
 fun catalogByTag tag =
@@ -134,8 +134,32 @@ fun catalogByTag tag =
     WHERE posts.Id = 1
       AND thread_tags.Tag = {[tag]}
     ORDER BY threads.Updated, threads.Id DESC)
-    (return `Util.compose2` coalesceThread)
+    (return `Util.compose2` coalesceCatalogThread)
     []
+
+
+fun coalesceThread { Threads = t, Thread_tags = { Tag = tag, ... } } acc =
+  let
+    val (tagList, rest) = case acc of
+    | [] => ([], [])
+    | hd :: rst =>
+      if t.Id = hd.Id
+      then (hd.Tags, rst)
+      else ([], acc)
+  in
+    (t ++ { Tags = tag :: tagList }) :: rest
+end
+
+
+fun threadById id =
+  thread <- query
+    (SELECT * FROM threads
+    JOIN thread_tags
+      ON thread_tags.Thread = threads.Id
+    WHERE threads.Id = {[id]})
+    (return `Util.compose2` coalesceThread)
+    [];
+  return (case thread of t :: _ => Some t | [] => None)
 
 
 

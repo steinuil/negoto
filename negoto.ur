@@ -1,45 +1,49 @@
+style post
+style post_info
+style post_body
+style post_name
+
+
 val sourceUrl = bless "https://github.com/steinuil/negoto"
+
 
 val errorPage =
   <xml>Error</xml>
 
-fun navigator tags = let
-  fun link' t =
-    <xml> / <a href={url (tag t.Nam)} title={t.Slug}>{[t.Nam]}</a></xml>
-in
-  <xml><nav>
-    [ <a href={url (front ())} title="Home">Home</a> {List.mapX link' tags} ]
-    [ <a href={url (readme ())}>readme</a> / <a href={sourceUrl}>source</a> ]
-  </nav></xml>
-end
 
-and readme () =
-  return <xml>
-    <body>
-      Read this.
-    </body>
-  </xml>
+fun readme () =
+  tags <- Data.allTags;
+  return (layout "Readme" tags
+    <xml>Read this.</xml>)
+
 
 and threadPost post' = <xml>
-  <div>
-    <div>{[post'.Nam]} {[post'.Time]} &#8470;{[post'.Id]}</div>
+  <div class="post">
+    <div class="post-info">
+      <span class="post-name">{[post'.Nam]}</span> {[post'.Time]} &#8470;{[post'.Id]}
+    </div>
     <hr/>
-    <div>{[post'.Body]}</div>
+    <div class="post-body">{[post'.Body]}</div>
   </div>
 </xml>
 
+
 and thread (id : int) =
-  posts <- Data.postsByThread id;
-  case posts of
-  | [] => error errorPage
-  | _ =>
-    return <xml>
-      <body>
-        <main>
-          {List.mapX threadPost posts}
-        </main>
-      </body>
-    </xml>
+  thread' <- Data.threadById id;
+  case thread' of
+  | None => error errorPage
+  | Some t =>
+    posts' <- Data.postsByThread t.Id;
+    tags <- Data.allTags;
+    return (layout ("Thread" ^ show id) tags <xml>
+        <div>{case t.Tags of
+          t :: _ => <xml>[ <a href={url (tag t)}>back</a> ]</xml>
+        | [] => <xml/>}
+          {[t.Subject]}
+        </div>
+        {List.mapX threadPost posts'}
+      </xml>)
+
 
 and catalogThread thread' = <xml>
   <div>
@@ -57,45 +61,74 @@ and catalogThread thread' = <xml>
   </div>
 </xml>
 
+
 and tag (name : string) =
   tags <- Data.allTags;
   case List.find (fn x => x.Nam = name) tags of
   | None => error errorPage
   | Some t =>
     threads <- Data.catalogByTag t.Nam;
-    return <xml>
-      <body>
-        <header>
-          {navigator tags}
-          <h1>/{[t.Nam]}/ - {[t.Slug]}</h1>
-        </header>
-        <main>
-          {List.mapX catalogThread threads}
-        </main>
-      </body>
-    </xml>
+    return (layout ("/" ^ t.Nam ^ "/ - " ^ t.Slug) tags
+      <xml>{List.mapX catalogThread threads}</xml>)
+
 
 and front () =
   tags <- Data.allTags;
-  return <xml>
-    <head>
-      <title>Time-Telling Fortress</title>
-    </head>
-    <body>
-      <header>
-        <div>Good Day, Brother.</div>
-        <div>Welcome To The</div>
-        <div>Time-Telling Fortress.</div>
-      </header>
+  return (baseLayout
+    { Title = "Time-Telling Fortress"
+    , Header = <xml>
+      <div>Good Day, Brother.</div>
+      <div>Welcome To The</div>
+      <div>Time-Telling Fortress.</div>
+    </xml>
+    , Body = <xml>
       <ul>
         {List.mapX (fn t => <xml><li>
           <a href={url (tag t.Nam)}>/{[t.Nam]}/ - {[t.Slug]}</a>
         </li></xml>) tags}
       </ul>
+    </xml>
+    , Footer = <xml>
+      Powered by <a href={sourceUrl}>Negoto</a>
+    </xml> })
+
+
+and baseLayout { Title = title', Header = header'
+               , Body = body', Footer = footer' } =
+  <xml>
+    <head>
+      <title>{[title']}</title>
+      <link type="text/css" rel="stylesheet" href="/style.css" />
+    </head>
+    <body>
+      <header>
+        {header'}
+      </header>
+      <main>
+        {body'}
+      </main>
       <footer>
-        Powered by <a href={sourceUrl}>Negoto</a>
+        {footer'}
       </footer>
     </body>
   </xml>
+
+
+and layout (title' : string) tags' (body' : xbody) = let
+  fun link' { Nam = name, Slug = slug } =
+    <xml> / <a href={url (tag name)} title={slug}>{[name]}</a></xml>
+in
+  baseLayout
+    { Title = title'
+    , Header = <xml><nav>
+      [ <a href={url (front ())} title="Home">Home</a> {List.mapX link' tags'} ]
+      [ <a href={url (readme ())}>readme</a> / <a href={sourceUrl}>source</a> ]
+    </nav></xml>
+    , Body = body'
+    , Footer = <xml>
+      [ ayy ]
+    </xml> }
+end
+
 
 val main = redirect (url (front ()))

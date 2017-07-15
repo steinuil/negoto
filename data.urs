@@ -48,6 +48,8 @@ val catalog : transaction (list catalogThread)
 
 val catalogByTag : string -> transaction (list catalogThread)
 
+val threadById : int -> transaction (option thread)
+
 
 val postsByThread : int -> transaction (list post)
 
