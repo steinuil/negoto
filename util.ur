@@ -42,3 +42,33 @@ fun head [a] (ls : list a) : option a =
 (* AKA "blackbird" *)
 fun compose2 [a] [b] [c] [d] (f1 : c -> d) (f2 : a -> b -> c) x y =
   f1 (f2 x y)
+
+
+fun elapsed tim =
+  tnow <- now;
+  let
+    val diff = tim `diffInSeconds` tnow
+
+    val (oneMinute, oneHour, oneDay, oneWeek, oneMonth, oneYear) =
+      (60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365)
+
+    val (elapsed', unit') =
+      if diff < oneMinute then
+        (diff, "second")
+      else if diff < oneHour then
+        (diff / oneMinute, "minute")
+      else if diff < oneDay then
+        (diff / oneHour, "hour")
+      else if diff < oneWeek then
+        (diff / oneDay, "day")
+      else if diff < oneMonth then
+        (diff / oneWeek, "week")
+      else if diff < oneYear then
+        (diff / oneMonth, "month")
+      else
+        (diff / oneYear, "year")
+
+    val unit' = if elapsed' <> 0 then unit' ^ "s" else unit'
+  in
+    return (show elapsed' ^ " " ^ unit' ^ " ago")
+  end

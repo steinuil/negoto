@@ -23,3 +23,6 @@ check:
 .PHONY: clean
 clean:
 	rm -f $(DB) $(NAME).exe $(NAME).sql
+
+.PHONY: refresh
+refresh: clean run

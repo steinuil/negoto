@@ -184,7 +184,7 @@ fun postsByThread threadId =
   query
     (SELECT * FROM posts
     LEFT OUTER JOIN files
-      ON files.Post = {sql_nullable (SQL posts.Id)}
+      ON files.Post = {sql_nullable (SQL posts.Key)}
     WHERE posts.Thread = {[threadId]}
     ORDER BY posts.Id DESC)
     (return `Util.compose2` coalescePost)
@@ -212,5 +212,5 @@ fun deleteFile hash =
 (* FIXME: run deleteFile *)
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
-  (* _ <- Monad.appR deleteFile files; *)
+  _ <- List.mapM (fn x => deleteFile x.Hash) files;
   Log.log "data" "checking for orphaned files"
