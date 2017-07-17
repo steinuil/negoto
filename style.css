@@ -70,3 +70,42 @@ header, footer {
 .post .name {
   font-weight: bold;
 }
+
+
+/* POST FORM */
+.post-form {
+  min-width: 256px;
+  background-color: grey;
+  width: 256px;
+  padding: 4px;
+  font-size: .9em;
+}
+
+.post-form .button,
+.post-form input[type="text"],
+.post-form textarea {
+  display: inline-block;
+  padding: 4px;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.post-form .hidden-form {
+  display: none;
+}
+
+.post-form input[type="text"] {
+  display: inline-block;
+}
+
+.post-form .button {
+  background-color: lightgrey;
+}
+
+.post-form textarea {
+  margin: 4px 0;
+}
+
+input[type="checkbox"]:checked + .button {
+  background-color: red;
+}

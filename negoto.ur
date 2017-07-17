@@ -6,6 +6,9 @@ style subject
 style post_body
 style catalog_thread
 style separator
+style button
+style hidden_form
+style post_form
 
 style tag_page
 style thread_page
@@ -62,10 +65,41 @@ and front () =
   </xml>
 
 
-and tagLinks tags' =
+
+and formHandler f =
+  return <xml><body>
+    {[f.Body]}
+  </body></xml>
+
+
+and threadForm id =
+  submitButton <- fresh;
+  fileButton <- fresh;
+  sageButton <- fresh;
+  spoilerButton <- fresh;
+  return <xml><form class="post-form">
+    <textbox{#Nam} placeholder="Name" />
+    <label for={submitButton} class="button">Post</label>
+    <br/>
+    <textarea{#Body} placeholder="Comment" />
+    <br/>
+    <label for={fileButton} class="button">Add file</label>
+
+    <checkbox{#Spoiler} class="hidden-form" id={spoilerButton} />
+    <label for={spoilerButton} class="button">Spoiler</label>
+
+    <checkbox{#Sage} class="hidden-form" id={sageButton} />
+    <label for={sageButton} class="button">Sage</label>
+    <upload{#File} class="hidden-form" id={fileButton} />
+    <hidden{#Thread} value={show id} />
+    <submit action={formHandler} class="hidden-form" id={submitButton} />
+  </form></xml>
+
+
+and tagLinks tags =
   menu <| (url (front ()), "Home", "Home")
        :: List.mp (fn { Nam = name, Slug = slug } =>
-         (url (tag name), slug, name)) tags'
+         (url (tag name), slug, name)) tags
 
 
 and otherLinks () =
@@ -74,8 +108,8 @@ and otherLinks () =
        :: []
 
 
-and navigation tags' =
-  <xml>{tagLinks tags'} {otherLinks ()}</xml>
+and navigation tags =
+  <xml>{tagLinks tags} {otherLinks ()}</xml>
 
 
 and readme () =
@@ -115,6 +149,7 @@ and thread id =
     tags <- Data.allTags;
     posts <- Data.postsByThread t.Id;
     posts <- List.mapXM threadPost posts;
+    tForm <- threadForm t.Id;
     let
       val title' = case t.Tags of
         | [] => ""
@@ -134,6 +169,7 @@ and thread id =
         <main>
           {back} {[t.Subject]}
           {posts}
+          {tForm}
         </main>
       </xml>
     end
@@ -178,6 +214,7 @@ and threadPost post' = return <xml>
     <div class="post-body">{[post'.Body]}</div>
   </div>
 </xml>
+
 
 
 val main = redirect (url (front ()))
