@@ -72,3 +72,13 @@ fun elapsed tim =
   in
     return (show elapsed' ^ " " ^ unit' ^ " ago")
   end
+
+
+fun interpose [a] (sep : a) (ls : list a) : list a = case ls of
+  | [] => ls
+  | _ :: [] => ls
+  | hd :: rest => hd :: sep :: (interpose sep rest)
+
+
+fun capitalize str =
+  str1 (Char.toUpper (strsub str 0)) ^ substring str 1 ((strlen str) - 1)
