@@ -1,4 +1,7 @@
 (* * Tables *)
+sequence thread_id
+sequence post_id
+
 (* Negoto uses tags instead of boards.
  * A thread may belong to one or more tags. *)
 table tags :
@@ -56,6 +59,119 @@ table files :
 
 
 
+(* * Views *)
+view catalogView =
+  SELECT threads.Id   AS Id
+    , threads.Updated AS Updated
+    , threads.Subject AS Subject
+    , threads.Locked  AS Locked
+    , thread_tags.Tag AS Tag
+    , posts.Nam       AS Nam
+    , posts.Time      AS Time
+    , posts.Body      AS Body
+    , files.Hash      AS Hash
+    , files.Nam       AS Filename
+    , files.Ext       AS Ext
+    , files.Spoiler   AS Spoiler
+  FROM threads
+  JOIN thread_tags
+    ON thread_tags.Thread = threads.Id
+  JOIN posts
+    ON posts.Thread = threads.Id
+  LEFT OUTER JOIN files
+    ON files.Post = {sql_nullable (SQL posts.Key)}
+  WHERE posts.Id = 1
+  ORDER BY threads.Updated, threads.Id DESC
+
+view threadView =
+  SELECT threads.Id   AS Id
+    , threads.Updated AS Updated
+    , threads.Subject AS Subject
+    , threads.Locked  AS Locked
+    , thread_tags.Tag AS Tag
+  FROM threads
+  JOIN thread_tags
+    ON thread_tags.Thread = threads.Id
+
+view postView =
+  SELECT posts.Id   AS Id
+    , posts.Thread  AS Thread
+    , posts.Nam     AS Nam
+    , posts.Time    AS Time
+    , posts.Body    AS Body
+    , files.Hash    AS Hash
+    , files.Nam     AS Filename
+    , files.Ext     AS Ext
+    , files.Spoiler AS Spoiler
+  FROM posts
+  LEFT OUTER JOIN files
+    ON files.Post = {sql_nullable (SQL posts.Key)}
+  ORDER BY posts.Id DESC
+
+
+
+(* * Coalesce functions *)
+(* TODO: turn coalesce into a typeclass or something *)
+fun coalesceCatalogThread { CatalogView = c } acc = let
+  val (tagList, fileList, rest) = case acc of
+    | [] => ([], [], [])
+    | hd :: rst =>
+      if c.Id = hd.Id
+      then (hd.Tags, hd.Files, rst)
+      else ([], [], acc)
+
+  val thread = c -- #Tag -- #Hash -- #Filename -- #Ext -- #Spoiler
+
+  val fileList = case (c.Hash, c.Filename, c.Ext, c.Spoiler) of
+    | (Some h, Some n, Some e, Some s) =>
+      if List.exists (fn x => x.Hash = h) fileList
+      then fileList
+      else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+    | _ => fileList
+
+  val tagList =
+    if List.exists (fn x => x = c.Tag) tagList
+    then tagList
+    else c.Tag :: tagList
+in
+  (thread ++ { Tags = tagList } ++ { Files = fileList }) :: rest
+end
+
+
+fun coalesceThread' { ThreadView = t } acc = let
+  val thread = t -- #Tag
+
+  val (tagList, rest) = case acc of
+    | [] => ([], [])
+    | hd :: rst =>
+      if t.Id = hd.Id
+      then (hd.Tags, rst)
+      else ([], acc)
+in
+  (thread ++ { Tags = t.Tag :: tagList }) :: rest
+end
+
+
+fun coalescePost' { PostView = p } acc = let
+  val (fileList, rest) = case acc of
+    | [] => ([], [])
+    | hd :: rst =>
+      if p.Id = hd.Id
+      then (hd.Files, rst)
+      else ([], acc)
+
+  val fileList = case (p.Hash, p.Filename, p.Ext, p.Spoiler) of
+    | (Some h, Some n, Some e, Some s) =>
+      { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+    | _ => fileList
+
+  val post = p -- #Hash -- #Filename -- #Ext -- #Spoiler
+in
+  (post ++ { Files = fileList }) :: rest
+end
+
+
+
 (* * Tag functions *)
 val allTags =
   queryL1 (SELECT * FROM tags)
@@ -81,113 +197,29 @@ fun deleteTag name =
 
 
 (* * Thread functions *)
-fun coalesceCatalogThread
-  { Threads = t, Thread_tags = { Tag = tag, ... }, Posts = p, Files = f } acc =
-let
-  val (tagList, fileList, rest) = case acc of
-    | [] => ([], [], [])
-    | hd :: rst =>
-      if t.Id = hd.Id
-      then (hd.Tags, hd.Files, rst)
-      else ([], [], acc)
-
-  val post = { Nam = p.Nam, Time = p.Time, Body = p.Body }
-
-  val fileList = case f of
-    | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s, ... } =>
-        if List.exists (fn x => x.Hash = h) fileList
-        then fileList
-        else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
-    | _ => fileList
-
-  val tagList =
-    if List.exists (fn x => x = tag) tagList
-    then tagList
-    else tag :: tagList
-in
-  (t ++ post ++ { Tags = tagList } ++ { Files = fileList }) :: rest
-end
-
 val catalog =
-  query
-    (SELECT * FROM threads
-    JOIN thread_tags
-      ON thread_tags.Thread = threads.Id
-    JOIN posts
-      ON posts.Thread = threads.Id
-    LEFT OUTER JOIN files
-      ON files.Post = {sql_nullable (SQL posts.Key)}
-    WHERE posts.Id = 1
-    ORDER BY threads.Updated, threads.Id DESC)
+  query (SELECT * FROM catalogView)
     (return `Util.compose2` coalesceCatalogThread)
     []
 
-fun catalogByTag tag =
-  query
-    (SELECT * FROM threads
-    JOIN thread_tags
-      ON thread_tags.Thread = threads.Id
-    JOIN posts
-      ON posts.Thread = threads.Id
-    LEFT OUTER JOIN files
-      ON files.Post = {sql_nullable (SQL posts.Key)}
-    WHERE posts.Id = 1
-      AND thread_tags.Tag = {[tag]}
-    ORDER BY threads.Updated, threads.Id DESC)
+val catalogByTag tag =
+  query (SELECT * FROM catalogView
+        WHERE catalogView.Tag = {[tag]})
     (return `Util.compose2` coalesceCatalogThread)
     []
-
-
-fun coalesceThread { Threads = t, Thread_tags = { Tag = tag, ... } } acc =
-  let
-    val (tagList, rest) = case acc of
-    | [] => ([], [])
-    | hd :: rst =>
-      if t.Id = hd.Id
-      then (hd.Tags, rst)
-      else ([], acc)
-  in
-    (t ++ { Tags = tag :: tagList }) :: rest
-end
-
 
 fun threadById id =
-  thread <- query
-    (SELECT * FROM threads
-    JOIN thread_tags
-      ON thread_tags.Thread = threads.Id
-    WHERE threads.Id = {[id]})
-    (return `Util.compose2` coalesceThread)
+  thread <- query (SELECT * FROM threadView WHERE threadView.Id = {[id]})
+    (return `Util.compose2` coalesceThread')
     [];
   return (case thread of t :: _ => Some t | [] => None)
 
 
 
 (* * Post functions *)
-fun coalescePost { Posts = p, Files = f } acc = let
-  val (fileList, rest) = case acc of
-    | [] => ([], [])
-    | hd :: rst =>
-      if p.Id = hd.Id
-      then (hd.Files, rst)
-      else ([], acc)
-
-  val fileList = case f of
-    | { Hash = Some h, Nam = Some n, Ext = Some e, Spoiler = Some s, ... } =>
-      { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
-    | _ => fileList
-in
-  (p -- #Key ++ { Files = fileList }) :: rest
-end
-
-fun postsByThread threadId =
-  query
-    (SELECT * FROM posts
-    LEFT OUTER JOIN files
-      ON files.Post = {sql_nullable (SQL posts.Key)}
-    WHERE posts.Thread = {[threadId]}
-    ORDER BY posts.Id DESC)
-    (return `Util.compose2` coalescePost)
+fun postsByThread id =
+  query (SELECT * FROM postView WHERE postView.Thread = {[id]})
+    (return `Util.compose2` coalescePost')
     []
 
 
@@ -209,7 +241,6 @@ fun deleteFile hash =
 (* * Tasks *)
 (* Periodically check for orphaned files
  * and delete them from the database/filesystem *)
-(* FIXME: run deleteFile *)
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
   _ <- List.mapM (fn x => deleteFile x.Hash) files;

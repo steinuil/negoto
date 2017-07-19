@@ -10,10 +10,10 @@ style button
 style hidden_form
 style post_form
 
+style base_page
+style front_page
 style tag_page
 style thread_page
-style front_page
-style base_page
 
 
 val sourceUrl = bless "https://github.com/steinuil/negoto"
@@ -63,7 +63,6 @@ and front () =
       Powered by <a href={sourceUrl}>Negoto</a>
     </footer>
   </xml>
-
 
 
 and formHandler f =

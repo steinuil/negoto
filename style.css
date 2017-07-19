@@ -106,6 +106,6 @@ header, footer {
   margin: 4px 0;
 }
 
-input[type="checkbox"]:checked + .button {
+.post-form input[type="checkbox"]:checked + .button {
   background-color: red;
 }
