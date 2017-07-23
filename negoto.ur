@@ -67,7 +67,7 @@ and front () =
 
 and formHandler f =
   return <xml><body>
-    {[f.Body]}
+    {[SexpCode.test f.Body]}
   </body></xml>
 
 

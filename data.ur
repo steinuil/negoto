@@ -26,16 +26,16 @@ table thread_tags :
     REFERENCES tags(Nam)
     ON DELETE CASCADE
 
-(* Key is the unique ID used to reference the post,
+(* Uid is the unique ID used to reference the post,
  * while Id is the ID (relative to the thread) used when displaying the post. *)
 table posts :
-  { Key    : int
+  { Uid    : int
   , Id     : int
   , Thread : int
   , Nam    : string
   , Time   : time
   , Body   : string }
-  PRIMARY KEY (Key),
+  PRIMARY KEY (Uid),
   CONSTRAINT Thread FOREIGN KEY Thread
     REFERENCES threads(Id)
     ON DELETE CASCADE
@@ -51,7 +51,7 @@ table files :
   , Post    : option int }
   PRIMARY KEY (Hash),
   CONSTRAINT Post FOREIGN KEY Post
-    REFERENCES posts(Key)
+    REFERENCES posts(Uid)
     ON DELETE SET NULL
 
 (* TODO: admins *)
@@ -79,7 +79,7 @@ view catalogView =
   JOIN posts
     ON posts.Thread = threads.Id
   LEFT OUTER JOIN files
-    ON files.Post = {sql_nullable (SQL posts.Key)}
+    ON files.Post = {sql_nullable (SQL posts.Uid)}
   WHERE posts.Id = 1
   ORDER BY threads.Updated, threads.Id DESC
 
@@ -105,7 +105,7 @@ view postView =
     , files.Spoiler AS Spoiler
   FROM posts
   LEFT OUTER JOIN files
-    ON files.Post = {sql_nullable (SQL posts.Key)}
+    ON files.Post = {sql_nullable (SQL posts.Uid)}
   ORDER BY posts.Id DESC
 
 
