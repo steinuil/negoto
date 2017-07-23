@@ -18,36 +18,60 @@ style text_strikethrough
 style text_spoiler
 style text_quote
 *)
+(* * SYNTAX:
+{spoiler| Spoilered text}
+{link http://example.com| Link}
+
+function ::= [a-zA-Z][a-zA-Z-]*
+*)
+
+
+val sexpFunctions =
+     ("b", 0)
+  :: ("i", 0)
+  :: ("m", 0) (* monospace *)
+  :: ("u", 0) (* underline *)
+  :: ("o", 0) (* overline *)
+  :: ("s", 0) (* strikethrough *)
+  :: ("sup", 0)
+  :: ("sub", 0)
+  :: ("quote", 0)
+  :: ("spoiler", 0)
+  :: ("link", 1)
+  :: ("post", 2)
+  :: []
 
 (* TODO: Micropass to expand >>post, >>thread/post and >quote *)
 
 
-(* * LEXER *)
+(* * PASS 1 *)
 datatype sexpToken =
   | LBRACE
   | RBRACE
+  | BREAK
   | TEXT of string
+  | FUNC of string
+  | ARG of string
 
 
 val show_sexpToken =
   mkShow (fn x => case x of
     | LBRACE => "LBRACE"
     | RBRACE => "RBRACE"
-    | TEXT t => t)
+    | BREAK => "BREAK"
+    | TEXT t => t
+    | FUNC f => "FUNC " ^ f
+    | ARG a => "ARG " ^ a)
 
 
-fun substring' str start endd =
-  if strlen str < start + endd
-  then ""
-  else substring str start endd
+fun strchar str idx =
+  if strlen str <= idx
+  then None
+  else Some (strsub str idx)
 
 
-fun peek str =
-  substring' str 0 1
-
-
-fun peek2 str =
-  substring' str 0 2
+fun shift str = strsuffix str 1
+fun shift2 str = strsuffix str 2
 
 
 fun appendText str acc = case acc of
@@ -55,46 +79,134 @@ fun appendText str acc = case acc of
   | _ => (TEXT str) :: acc
 
 
-(* Preserve whitespace and ignore unbalanced braces *)
-and readVerbatim str acc = case peek2 str of
-  | ""   => error <xml>reached EOF inside verbatim</xml>
-
-  | "-}" => readTokens (strsuffix str 2) (TEXT "" :: acc)
-  
-  | x => readVerbatim (strsuffix str 1) (appendText (peek str) acc)
+fun funcName str acc = case acc of
+  | (FUNC f) :: rest => (FUNC (f ^ str)) :: rest
+  | _ => (FUNC str) :: acc
 
 
-and readTokens str acc =
-  case peek str of
-    | ""  => acc
-
-    | "\\" => (case peek (strsuffix str 1) of
-      | "{" => readTokens (strsuffix str 2) (appendText "{" acc)
-      | "}" => readTokens (strsuffix str 2) (appendText "}" acc)
-      | x   => readTokens (strsuffix str 1) (appendText "\\" acc))
-
-    | "{" => (case peek2 str of
-      | "{-" => readVerbatim (strsuffix str 2) acc
-      | _    => readTokens (strsuffix str 1) (LBRACE :: acc))
-
-    | "}" => readTokens (strsuffix str 1) (RBRACE :: acc)
-
-    | x =>
-      (* Text tokens are separated by whitespace characters *)
-      if isblank (strsub x 0)
-      then readTokens (strsuffix str 1) ((TEXT "") :: acc)
-      else readTokens (strsuffix str 1) (appendText x acc)
+fun argName str acc = case acc of
+  | (ARG a) :: rest => (ARG (a ^ str)) :: rest
+  | _ => (ARG str) :: acc
 
 
-(* Strip empty text tags *)
-fun tokenize str =
-  readTokens str []
-    |> List.foldl (fn x acc => case x of TEXT "" => acc | t => t :: acc) []
+fun readTokens str acc = case strchar str 0 of
+  | None => acc
+
+  | Some #"\\" => (case strchar str 1 of
+    | None => (appendText "\\" acc)
+    | Some #"{" => readTokens (shift2 str) (appendText "{" acc)
+    | Some #"}" => readTokens (shift2 str) (appendText "}" acc)
+    | Some _ => readTokens (shift str) (appendText "\\" acc))
+
+  | Some #"{" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"-" => readVerbatim (shift2 str) acc
+    | Some _ => readFuncStart (shift str) (LBRACE :: acc))
+
+  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
+
+  | Some #"\n" => readTokens (shift2 str) (BREAK :: acc)
+
+  | Some #"\r" => (case strchar str 1 of
+    | None => acc
+    | Some #"\n" => readTokens (shift2 str) (BREAK :: acc)
+    | Some _ => readTokens (shift str) (appendText " " acc))
+
+  | Some chr =>
+    if isblank chr
+    then readTokens (shift str) (appendText " " acc)
+    else readTokens (shift str) (appendText (str1 chr) acc)
+
+
+and readFuncStart str acc = case strchar str 0 of
+  | None => error <xml>Unexpected EOS</xml>
+  | Some chr =>
+    if isblank chr
+    then readFuncStart (shift str) acc
+    else if isalpha chr
+    then readFunc (shift str) (funcName (str1 chr) acc)
+    else error <xml>Invalid function name</xml>
+
+
+and readFunc str acc = case strchar str 0 of
+  | None => error <xml>Unexpected EOS</xml>
+  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
+  | Some #"|" => readTokens (shift str) acc
+  | Some chr =>
+    if isblank chr
+    then readArgsStart (shift str) acc
+    else if isalpha chr || chr = #"-"
+    then readFunc (shift str) (funcName (str1 chr) acc)
+    else error <xml>Invalid function name</xml>
+
+
+and readArgsStart str acc = case strchar str 0 of
+  | None => error <xml>Unexpected EOS</xml>
+  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
+  | Some #"|" => readTokens (shift str) acc
+  | Some #"\\" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"}" => readArg (shift2 str) (argName "}" acc)
+    | Some #"|" => readArg (shift2 str) (argName "|" acc)
+    | Some _ => readArg (shift str) acc)
+  | Some chr =>
+    if isblank chr
+    then readArgsStart (shift str) acc
+    else readArg (shift str) ((ARG (str1 chr)) :: acc)
+
+
+and readArg str acc = case strchar str 0 of
+  | None => error <xml>Unexpected EOS</xml>
+  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
+  | Some #"|" => readTokens (shift str) acc
+  | Some #"\\" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"}" => readArg (shift2 str) (argName "}" acc)
+    | Some #"|" => readArg (shift2 str) (argName "|" acc)
+    | Some _ => readArg (shift str) acc)
+  | Some chr =>
+    if isblank chr
+    then readArgsStart (shift str) acc
+    else readArg (shift str) (argName (str1 chr) acc)
+
+
+and readVerbatim str acc = case strchar str 0 of
+  | None => error <xml>Unexpected EOS</xml>
+
+  | Some #"-" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"}" => readTokens (shift2 str) acc
+    | Some _ => readVerbatim (shift str) (appendText "-" acc))
+
+  | Some #"\\" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"-" => readVerbatim (shift2 str) (appendText "-" acc)
+    | Some _ => readVerbatim (shift str) (appendText "\\" acc))
+
+  | Some #"\n" => readVerbatim (shift2 str) (BREAK :: acc)
+
+  | Some #"\r" => (case strchar str 1 of
+    | None => error <xml>Unexpected EOS</xml>
+    | Some #"\n" => readVerbatim (shift2 str) (BREAK :: acc)
+    | Some _ => readVerbatim (shift str) (appendText " " acc))
+
+  | Some chr => readVerbatim (shift str) (appendText (str1 chr) acc)
+
+
+fun pass1 str =
+  readTokens str [] |> List.rev
 
 
 fun test str =
-  show (tokenize str)
+  show (pass1 str)
 
 
 
-(* * PARSER *)
+(* * PASS 2 *)
+(*
+val max_depth = 128
+
+
+fun parse ls acc depth = case ls of
+  | LBRACE :: TEXT t
+*)
