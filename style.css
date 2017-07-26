@@ -19,6 +19,30 @@ a {
   text-decoration: underline dotted;
 }
 
+.text-underline {
+  text-decoration: underline;
+}
+
+.text-overline {
+  text-decoration: overline;
+}
+
+.text-striken {
+  text-decoration: line-through;
+}
+
+.text-spoiler {
+  background-color: black;
+}
+
+.text-spoiler:hover {
+  color: white;
+}
+
+.text-quote {
+  color: green;
+}
+
 header, main, footer {
   margin: 4px;
 }

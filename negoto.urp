@@ -2,6 +2,7 @@ database dbname=negoto
 sql negoto.sql
 allow url https://github.com/steinuil/negoto
 rewrite style Negoto/*  [-]
+rewrite style SexpCode/* text_ [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 file /style.css style.css

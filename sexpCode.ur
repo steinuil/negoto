@@ -107,11 +107,11 @@ and readArgsStart str acc = case strchar str 0 of
 
 
 and readArg str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS</xml>
+  | None => error <xml>Unexpected EOS while reading arguments {[str]}</xml>
   | Some #"}" => readTokens (shift str) (RBRACE :: acc)
   | Some #"|" => readTokens (shift str) acc
   | Some #"\\" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
+    | None => error <xml>Unexpected EOS while reading arguments</xml>
     | Some #"}" => readArg (shift2 str) (argName "}" acc)
     | Some #"|" => readArg (shift2 str) (argName "|" acc)
     | Some _ => readArg (shift str) acc)
@@ -172,7 +172,7 @@ fun parseText ls acc depth =
     | [] =>
       if depth = 0
       then (List.rev acc, [])
-      else error <xml>Unexpected EOS</xml>
+      else error <xml>Unbalanced left brace</xml>
     | RBRACE :: rest =>
       if depth > 0
       then (List.rev acc, rest)
@@ -190,7 +190,7 @@ fun parseText ls acc depth =
 
 
 and parseArgs ls acc = case ls of
-  | [] => error <xml>Unexpected EOS</xml>
+  | [] => error <xml>Unexpected EOS while parsing arguments</xml>
   | (ARG a) :: rst => parseArgs rst (a :: acc)
   | (FUNC f) :: rst => error <xml>Unexpected function</xml>
   | _ => (List.rev acc, ls)
@@ -205,12 +205,12 @@ end
 
 
 (* * To XML  *)
-style text_underline
-style text_overline
-style text_striken
-style text_spoiler
-style text_quote
-style text_ref
+style underline
+style overline
+style striken
+style spoiler
+style quote
+style ref
 
 
 fun sexpTag t (ls : list string) (txt : xbody) = case ls of
@@ -218,13 +218,13 @@ fun sexpTag t (ls : list string) (txt : xbody) = case ls of
     | "b" => <xml><strong>{txt}</strong></xml>
     | "i" => <xml><em>{txt}</em></xml>
     | "m" => <xml><tt>{txt}</tt></xml>
-    | "u" => <xml><span class="text-underline">{txt}</span></xml>
-    | "o" => <xml><span class="text-overline">{txt}</span></xml>
-    | "s" => <xml><span class="text-striken">{txt}</span></xml>
+    | "u" => <xml><span class="underline">{txt}</span></xml>
+    | "o" => <xml><span class="overline">{txt}</span></xml>
+    | "s" => <xml><span class="striken">{txt}</span></xml>
     | "sup" => <xml><sup>{txt}</sup></xml>
     | "sub" => <xml><sub>{txt}</sub></xml>
-    | "quote" => <xml><span class="text-quote">&gt;{txt}</span></xml>
-    | "spoiler" => <xml><span class="text-spoiler">{txt}</span></xml>
+    | "quote" => <xml><span class="quote">&gt;{txt}</span></xml>
+    | "spoiler" => <xml><span class="spoiler">{txt}</span></xml>
     | _ => error <xml>No such tag {[t]}/0</xml>)
 
   | arg1 :: [] => (case t of
@@ -234,7 +234,7 @@ fun sexpTag t (ls : list string) (txt : xbody) = case ls of
 
   | arg1 :: arg2 :: [] => (case t of
     | "post" =>
-      <xml><span class="text-ref">&gt;&gt;{[arg2]}</span></xml>
+      <xml><span class="ref">&gt;&gt;{[arg2]}</span></xml>
     | _ => error <xml>No such tag {[t]}/2</xml>)
 
   | _ => error <xml>No tag with such arity</xml>
