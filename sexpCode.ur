@@ -1,5 +1,12 @@
 (* TODO: Micropass to expand >>post, >>thread/post and >quote *)
 
+(* Fibonacci buttsort implementation:
+{b|{i|{o|F}{u|I}{o|B}{u|O}{o|N}{u|A}{o|C}{u|C}{o|I} {u|B}{o|U}{u|T}{o|T}{u|S}{o|O}{u|R}{o|T}}}
+
+ * Different spec:
+{sup|F}{sub|{o|B}}{sup|I}{sub|{o|U}}{sup|B}{sub|{o|T}}{sup|O}{sub|{o|T}}{sup|N}{sub|{o|S}}{sup|A}{sub|{o|O}}{sup|C}{sub|{o|R}}{sup|C}{sub|{o|T}}{sup|I}
+*)
+
 
 (* * PASS 1 *)
 datatype sexpToken =
@@ -58,7 +65,7 @@ fun readTokens str acc = case strchar str 0 of
     | Some #"-" => readVerbatim (shift2 str) acc
     | Some _ => readFuncStart (shift str) (LBRACE :: acc))
   | Some #"}" => readTokens (shift str) (RBRACE :: acc)
-  | Some #"\n" => readTokens (shift2 str) (BREAK :: acc)
+  | Some #"\n" => readTokens (shift str) (BREAK :: acc)
   | Some #"\r" => (case strchar str 1 of
     | None => acc
     | Some #"\n" => readTokens (shift2 str) (BREAK :: acc)

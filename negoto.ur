@@ -66,9 +66,11 @@ and front () =
 
 
 and formHandler f =
-  return <xml><body>
-    {SexpCode.xml_of_sexpCode f.Body}
-  </body></xml>
+  layout "Inspect post" base_page <xml>
+    <main>
+      {SexpCode.xml_of_sexpCode f.Body}
+    </main>
+  </xml>
 
 
 and threadForm id =
@@ -118,7 +120,19 @@ and readme () =
       {navigation tags}
       <h1>Readme</h1>
     </header>
-    <main>Read this.</main>
+    <main>
+      {SexpCode.xml_of_sexpCode
+"{b|Bold} -> {-{b|Bold}-}
+{i|Italic} -> {-{i|Italic}-}
+{o|Overline} -> {-{o|Overline}-}
+{u|Underline} -> {-{u|Underline}-}
+{s|Strikethrough} -> {-{s|Strikethrough}-}
+{m|Monospace} -> {-{m|Monospace}-}
+{sup|Superscript} -> {-{sup|Superscript}-}
+{sub|Subscript} -> {-{sub|Subscript}-}
+{spoiler|Spoiler} -> {-{spoiler|Spoiler}-}
+{- Verbatim (unbalanced braces allowed {}{}}}}}{{}} -} -> \{- Verbatim -\}"}
+    </main>
   </xml>
 
 

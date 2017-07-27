@@ -9,7 +9,10 @@
   - deletes them on demand
 
 - [ ] pull in libvpx to support webms
+  - actually we need something to demux webms too
 
-- [ ] [sexpcode](http://cairnarvon.rotahall.org/misc/sexpcode.html) library
-  - add a "post" function of arity 2 to link to a post
-  - have `>>post` desugar to `{post <thread> <num>}`
+- [X] [sexpcode](http://cairnarvon.rotahall.org/misc/sexpcode.html) library
+  - [X] add a "post" function of arity 2 to link to a post
+  - [ ] have `>>num` desugar to `{post <thread> <num>}`
+  - [ ] and `>text` desugar to `{quote|text}`
+
