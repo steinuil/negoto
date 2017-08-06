@@ -181,14 +181,6 @@ fun tagByName name =
     (SELECT * FROM tags
     WHERE tags.Nam = {[name]})
 
-fun newTag { Nam = name, Slug = slug } =
-  if strlen name > 16
-  then return (Some "name too long")
-  else if strlen slug > 24
-  then return (Some "slug too long")
-  else tryDml (INSERT INTO tags (Nam, Slug)
-              VALUES ({[name]}, {[slug]}))
-
 fun deleteTag name =
   tryDml
     (DELETE FROM tags
@@ -235,6 +227,39 @@ fun deleteFile hash =
   tryDml
     (DELETE FROM files
     WHERE Hash = {[hash]})
+
+
+
+(* * Inserting and checking *)
+fun newTag { Nam = name, Slug = slug } =
+  if strlen name > 16
+  then return (Some "name too long")
+  else if strlen slug > 24
+  then return (Some "slug too long")
+  else tryDml (INSERT INTO tags (Nam, Slug)
+              VALUES ({[name]}, {[slug]}))
+
+
+(*
+fun newPost { Nam = name, Body = body, Spoiler = spoil, Sage = sage
+            , Files = files, Thread = thread } =
+  if strlen name > 20
+  then return (Some "name too long")
+  else if strlen body > 2000
+  then return (Some "body too long")
+  else
+    uid <- nextval thread_id;
+    lastid <- query (SELECT COUNT( * ) FROM posts WHERE posts.Thread = {[thread]});
+    Util.mapNoneMonad
+      (tryDml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
+             VALUES ({[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
+                    , CURRENT_TIMESTAMP, {[body]})))
+      (fn x => List.foldl (Util.flip (Util.mapNoneMonad (fn file =>
+        ayy <- show rand;
+        tryDml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
+               VALUES ({[ayy]}, "file", "jpg", {[spoil]}, {[uid]}))))) x files)
+*)
+
 
 
 

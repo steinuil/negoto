@@ -34,121 +34,127 @@ fun strchar str idx =
   else Some (strsub str idx)
 
 
-fun shift str = strsuffix str 1
-fun shift2 str = strsuffix str 2
+datatype lexerState = Text | FuncStart | Func | ArgStart | Arg | Verbatim
 
 
-fun appendText str acc = case acc of
-  | (TEXT t) :: rest => (TEXT (t ^ str)) :: rest
-  | _ => (TEXT str) :: acc
+val show_lexerState = mkShow
+  (fn s => case s of
+    | Text => "Text"
+    | FuncStart => "FuncStart"
+    | Func => "Func"
+    | ArgStart => "ArgStart"
+    | Arg => "Arg"
+    | Verbatim => "Verbatim")
 
 
-fun funcName str acc = case acc of
-  | (FUNC f) :: rest => (FUNC (f ^ str)) :: rest
-  | _ => (FUNC str) :: acc
+fun appendText chr acc = case acc of
+  | (TEXT t) :: rest => (TEXT (t ^ (str1 chr))) :: rest
+  | _ => (TEXT (str1 chr)) :: acc
 
 
-fun argName str acc = case acc of
-  | (ARG a) :: rest => (ARG (a ^ str)) :: rest
-  | _ => (ARG str) :: acc
+fun funcName chr acc = case acc of
+  | (FUNC f) :: rest => (FUNC (f ^ (str1 chr))) :: rest
+  | _ => (FUNC (str1 chr)) :: acc
 
 
-fun readTokens str acc = case strchar str 0 of
-  | None => acc
-  | Some #"\\" => (case strchar str 1 of
-    | None => (appendText "\\" acc)
-    | Some #"{" => readTokens (shift2 str) (appendText "{" acc)
-    | Some #"}" => readTokens (shift2 str) (appendText "}" acc)
-    | Some _ => readTokens (shift str) (appendText "\\" acc))
-  | Some #"{" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
-    | Some #"-" => readVerbatim (shift2 str) acc
-    | Some _ => readFuncStart (shift str) (LBRACE :: acc))
-  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
-  | Some #"\n" => readTokens (shift str) (BREAK :: acc)
-  | Some #"\r" => (case strchar str 1 of
-    | None => acc
-    | Some #"\n" => readTokens (shift2 str) (BREAK :: acc)
-    | Some _ => readTokens (shift str) (appendText " " acc))
-  | Some chr =>
-    if isblank chr
-    then readTokens (shift str) (appendText " " acc)
-    else readTokens (shift str) (appendText (str1 chr) acc)
+fun argName chr acc = case acc of
+  | (ARG a) :: rest => (ARG (a ^ (str1 chr))) :: rest
+  | _ => (ARG (str1 chr)) :: acc
 
 
-and readFuncStart str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS</xml>
-  | Some chr =>
-    if isblank chr
-    then readFuncStart (shift str) acc
-    else if isalpha chr
-    then readFunc (shift str) (funcName (str1 chr) acc)
-    else error <xml>Invalid function name</xml>
+fun tokenize str = let
+  loop 0 Text [] |> List.rev
+where
+  val len' = strlen str
 
+  fun at idx =
+    if len' <= idx then None else Some (strsub str idx)
 
-and readFunc str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS</xml>
-  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
-  | Some #"|" => readTokens (shift str) acc
-  | Some chr =>
-    if isblank chr
-    then readArgsStart (shift str) acc
-    else if isalpha chr || chr = #"-"
-    then readFunc (shift str) (funcName (str1 chr) acc)
-    else error <xml>Invalid function name</xml>
+  fun loop pos state acc = case (state, at pos) of
+    | (Text, None) => acc
 
+    | (_, None) => error <xml>Unexpected EOS in {[show state]}</xml>
 
-and readArgsStart str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS</xml>
-  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
-  | Some #"|" => readTokens (shift str) acc
-  | Some #"\\" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
-    | Some #"}" => readArg (shift2 str) (argName "}" acc)
-    | Some #"|" => readArg (shift2 str) (argName "|" acc)
-    | Some _ => readArg (shift str) acc)
-  | Some chr =>
-    if isblank chr
-    then readArgsStart (shift str) acc
-    else readArg (shift str) ((ARG (str1 chr)) :: acc)
+    | (_, Some chr) => (case state of
 
+      | Text => (case chr of
+        | #"\\" => (case at (pos + 1) of
+          | Some #"{" => loop (pos + 2) state (appendText #"{" acc)
+          | Some #"}" => loop (pos + 2) state (appendText #"}" acc)
+          | _         => loop (pos + 1) state (appendText #"\\" acc))
+        | #"{"  => (case at (pos + 1) of
+          | Some #"-" => loop (pos + 2) Verbatim acc
+          | _         => loop (pos + 1) FuncStart (LBRACE :: acc))
+        | #"}"  => loop (pos + 1) state (RBRACE :: acc)
+        | #"\n" => loop (pos + 1) state (BREAK :: acc)
+        | #"\r" => (case at (pos + 1) of
+          | Some #"\n" => loop (pos + 2) state (BREAK :: acc)
+          | Some _     => loop (pos + 1) state (appendText #" " acc)
+          | None => acc)
+        | _ =>
+          (if isblank chr then
+            loop (pos + 1) state (appendText #" " acc)
+          else
+            loop (pos + 1) state (appendText chr acc)))
 
-and readArg str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS while reading arguments {[str]}</xml>
-  | Some #"}" => readTokens (shift str) (RBRACE :: acc)
-  | Some #"|" => readTokens (shift str) acc
-  | Some #"\\" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS while reading arguments</xml>
-    | Some #"}" => readArg (shift2 str) (argName "}" acc)
-    | Some #"|" => readArg (shift2 str) (argName "|" acc)
-    | Some _ => readArg (shift str) acc)
-  | Some chr =>
-    if isblank chr
-    then readArgsStart (shift str) acc
-    else readArg (shift str) (argName (str1 chr) acc)
+      | Verbatim => (case chr of
+        | #"-"  => (case at (pos + 1) of
+          | Some #"}" => loop (pos + 2) Text acc
+          | _ => loop (pos + 1) state acc)
+        | #"\\" => (case at (pos + 1) of
+          | Some #"-" => loop (pos + 2) state (appendText #"-" acc)
+          | _ => loop (pos + 1) state (appendText #"-" acc))
+        | #"\n" => loop (pos + 1) state (BREAK :: acc)
+        | #"\r" => (case at (pos + 1) of
+          | Some #"\n" => loop (pos + 2) state (BREAK :: acc)
+          | _ => loop (pos + 1) state (appendText #" " acc))
+        | _ => loop (pos + 1) state (appendText chr acc))
 
+      | FuncStart =>
+        (if isblank chr then
+          loop (pos + 1) state acc
+        else if isalpha chr then
+          loop (pos + 1) Func (funcName chr acc)
+        else
+          error <xml>Invalid function name</xml>)
 
-and readVerbatim str acc = case strchar str 0 of
-  | None => error <xml>Unexpected EOS</xml>
-  | Some #"-" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
-    | Some #"}" => readTokens (shift2 str) acc
-    | Some _ => readVerbatim (shift str) (appendText "-" acc))
-  | Some #"\\" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
-    | Some #"-" => readVerbatim (shift2 str) (appendText "-" acc)
-    | Some _ => readVerbatim (shift str) (appendText "\\" acc))
-  | Some #"\n" => readVerbatim (shift2 str) (BREAK :: acc)
-  | Some #"\r" => (case strchar str 1 of
-    | None => error <xml>Unexpected EOS</xml>
-    | Some #"\n" => readVerbatim (shift2 str) (BREAK :: acc)
-    | Some _ => readVerbatim (shift str) (appendText " " acc))
-  | Some chr => readVerbatim (shift str) (appendText (str1 chr) acc)
+      | Func => (case chr of
+        | #"}" => loop (pos + 1) Text (RBRACE :: acc)
+        | #"|" => loop (pos + 1) Text acc
+        | _ =>
+          (if isblank chr then
+            loop (pos + 1) ArgStart acc
+          else if isalpha chr then
+            loop (pos + 1) state (funcName chr acc)
+          else
+            error <xml>Invalid function name</xml>))
 
+      | ArgStart => (case chr of
+        | #"}"  => loop (pos + 1) Text (RBRACE :: acc)
+        | #"|"  => loop (pos + 1) Text acc
+        | #"\\" => (case at (pos + 1) of
+          | Some #"}" => loop (pos + 2) Arg (argName #"}" acc)
+          | Some #"|" => loop (pos + 2) Arg (argName #"|" acc)
+          | _ => loop (pos + 1) Arg (argName #"\\" acc))
+        | _ =>
+          (if isblank chr then
+            loop (pos + 1) ArgStart acc
+          else
+            loop (pos + 1) Arg ((ARG (str1 chr)) :: acc)))
 
-fun tokenize str =
-  readTokens str [] |> List.rev
-
+      | Arg => (case chr of
+        | #"}"  => loop (pos + 1) Text (RBRACE :: acc)
+        | #"|"  => loop (pos + 1) Text acc
+        | #"\\" => (case at (pos + 1) of
+          | Some #"}" => loop (pos + 2) Arg (argName #"}" acc)
+          | Some #"|" => loop (pos + 2) Arg (argName #"|" acc)
+          | _ => loop (pos + 1) state (argName #"\\" acc))
+        | _ =>
+          if isblank chr then
+            loop (pos + 1) ArgStart acc
+          else
+            loop (pos + 1) state (argName chr acc)))
+end
 
 
 (* * PASS 2 *)

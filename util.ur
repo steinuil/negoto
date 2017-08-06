@@ -82,3 +82,19 @@ fun interpose [a] (sep : a) (ls : list a) : list a = case ls of
 
 fun capitalize str =
   str1 (Char.toUpper (strsub str 0)) ^ substring str 1 ((strlen str) - 1)
+
+
+(*
+fun mapNoneMonad [m] (_ : monad m) f2 f1 =
+  Monad.mp (fn x => case x of
+    | None => f2
+    | Some _ => return x) f1
+*)
+
+
+
+fun flip [a] [b] [c] (f : a -> b -> c) (x : b) (y : a) =
+  f y x
+
+
+datatype result = Ok | Error of string
