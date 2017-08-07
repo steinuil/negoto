@@ -35,14 +35,10 @@ type catalogThread =
   , Files   : list file }
 
 
+(* Query *)
 val allTags : transaction (list tag)
 
 val tagByName : string -> transaction (option tag)
-
-val newTag : tag -> transaction (option string)
-
-val deleteTag : string -> transaction (option string)
-
 
 val catalog : transaction (list catalogThread)
 
@@ -50,8 +46,22 @@ val catalogByTag : string -> transaction (list catalogThread)
 
 val threadById : int -> transaction (option thread)
 
-
 val postsByThread : int -> transaction (list post)
 
 
-val deleteFile : string -> transaction (option string)
+(* Insert *)
+val newTag : tag -> transaction Util.result
+
+val newPost :
+  { Nam : string
+  , Body : string
+  , Spoiler : bool
+  , Sage : bool
+  , Files : list string
+  , Thread : int } -> transaction Util.result
+
+
+(* Delete *)
+val deleteFile : string -> transaction Util.result
+
+val deleteTag : string -> transaction Util.result

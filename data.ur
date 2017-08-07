@@ -1,3 +1,43 @@
+open Util
+
+(* Output types *)
+type tag =
+  { Nam  : string
+  , Slug : string }
+
+type thread =
+  { Id      : int
+  , Updated : time
+  , Subject : string
+  , Locked  : bool
+  , Tags    : list string }
+
+type file =
+  { Hash    : string
+  , Nam     : string
+  , Ext     : string
+  , Spoiler : bool }
+
+type post =
+  { Id     : int
+  , Thread : int
+  , Nam    : string
+  , Time   : time
+  , Body   : string
+  , Files  : list file }
+
+type catalogThread =
+  { Id      : int
+  , Updated : time
+  , Subject : string
+  , Locked  : bool
+  , Tags    : list string
+  , Nam     : string
+  , Time    : time
+  , Body    : string
+  , Files   : list file }
+
+
 (* * Tables *)
 sequence thread_id
 sequence post_id
@@ -137,7 +177,6 @@ in
   (thread ++ { Tags = tagList } ++ { Files = fileList }) :: rest
 end
 
-
 fun coalesceThread' { ThreadView = t } acc = let
   val thread = t -- #Tag
 
@@ -172,7 +211,9 @@ end
 
 
 
-(* * Tag functions *)
+
+(* * QUERY *)
+(* * Tag *)
 val allTags =
   queryL1 (SELECT * FROM tags)
 
@@ -181,86 +222,83 @@ fun tagByName name =
     (SELECT * FROM tags
     WHERE tags.Nam = {[name]})
 
-fun deleteTag name =
-  tryDml
-    (DELETE FROM tags
-    WHERE Nam = {[name]})
 
-
-
-(* * Thread functions *)
+(* * Thread *)
 val catalog =
   query (SELECT * FROM catalogView)
-    (return `Util.compose2` coalesceCatalogThread)
+    (return `compose2` coalesceCatalogThread)
     []
 
 val catalogByTag tag =
   query (SELECT * FROM catalogView
         WHERE catalogView.Tag = {[tag]})
-    (return `Util.compose2` coalesceCatalogThread)
+    (return `compose2` coalesceCatalogThread)
     []
 
 fun threadById id =
   thread <- query (SELECT * FROM threadView WHERE threadView.Id = {[id]})
-    (return `Util.compose2` coalesceThread')
+    (return `compose2` coalesceThread')
     [];
   return (case thread of t :: _ => Some t | [] => None)
 
 
-
-(* * Post functions *)
+(* * Post *)
 fun postsByThread id =
   query (SELECT * FROM postView WHERE postView.Thread = {[id]})
-    (return `Util.compose2` coalescePost')
+    (return `compose2` coalescePost')
     []
 
 
-
-(* * File functions *)
+(* * File *)
 val orphanedFiles =
   queryL1
     (SELECT files.* FROM files
     WHERE files.Post IS NULL)
 
-(* FIXME: actually delete files *)
-fun deleteFile hash =
-  tryDml
-    (DELETE FROM files
-    WHERE Hash = {[hash]})
 
 
-
-(* * Inserting and checking *)
+(* * INSERT *)
 fun newTag { Nam = name, Slug = slug } =
-  if strlen name > 16
-  then return (Some "name too long")
-  else if strlen slug > 24
-  then return (Some "slug too long")
-  else tryDml (INSERT INTO tags (Nam, Slug)
-              VALUES ({[name]}, {[slug]}))
+  if strlen name > 16 then
+    return (Error "name too long")
+  else if strlen slug > 24 then
+    return (Error "slug too long")
+  else
+    dmlRes (INSERT INTO tags (Nam, Slug)
+           VALUES ({[name]}, {[slug]}))
 
-
-(*
 fun newPost { Nam = name, Body = body, Spoiler = spoil, Sage = sage
-            , Files = files, Thread = thread } =
-  if strlen name > 20
-  then return (Some "name too long")
-  else if strlen body > 2000
-  then return (Some "body too long")
+            , Files = files', Thread = thread } =
+  if strlen name > 20 then
+    return (Error "name too long")
+  else if strlen body > 2000 then
+    return (Error "body too long")
   else
     uid <- nextval thread_id;
-    lastid <- query (SELECT COUNT( * ) FROM posts WHERE posts.Thread = {[thread]});
-    Util.mapNoneMonad
-      (tryDml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
-             VALUES ({[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
-                    , CURRENT_TIMESTAMP, {[body]})))
-      (fn x => List.foldl (Util.flip (Util.mapNoneMonad (fn file =>
-        ayy <- show rand;
-        tryDml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
-               VALUES ({[ayy]}, "file", "jpg", {[spoil]}, {[uid]}))))) x files)
-*)
+    { Count = lastid } <- oneRow (SELECT COUNT( * ) AS Count FROM posts
+                                 WHERE posts.Thread = {[thread]});
+    List.foldr (flip mapResultM)
+      (dmlRes (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
+              VALUES ({[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
+                     , CURRENT_TIMESTAMP, {[body]})))
+      (List.mp (fn file =>
+          random <- rand;
+          dmlRes (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
+                 VALUES ({[show random]}, "file", "jpg"
+                        , {[spoil]}, {[Some uid]})))
+        files')
 
 
+
+(* * DELETE *)
+fun deleteTag name =
+  dmlRes (DELETE FROM tags
+         WHERE Nam = {[name]})
+
+(* FIXME: actually delete files *)
+fun deleteFile hash =
+  dmlRes (DELETE FROM files
+         WHERE Hash = {[hash]})
 
 
 (* * Tasks *)

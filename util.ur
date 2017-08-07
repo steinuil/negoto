@@ -84,17 +84,31 @@ fun capitalize str =
   str1 (Char.toUpper (strsub str 0)) ^ substring str 1 ((strlen str) - 1)
 
 
-(*
-fun mapNoneMonad [m] (_ : monad m) f2 f1 =
-  Monad.mp (fn x => case x of
-    | None => f2
-    | Some _ => return x) f1
-*)
-
-
-
 fun flip [a] [b] [c] (f : a -> b -> c) (x : b) (y : a) =
   f y x
 
 
+fun mapNoneM [a] (f2 : transaction (option a)) (f1 : transaction (option a)) : transaction (option a) =
+  r1 <- f1;
+  case r1 of
+  | None => f2
+  | Some _ => return r1
+
+
 datatype result = Ok | Error of string
+
+
+fun toResult x = case x of
+  | Some err => Error err
+  | None => Ok
+
+
+fun mapResultM f2 f1 : transaction result =
+  r1 <- f1;
+  case r1 of
+  | Ok => f2
+  | Error _ => return r1
+
+
+fun dmlRes st =
+  tryDml st |> Monad.mp toResult
