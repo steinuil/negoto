@@ -50,7 +50,7 @@ val postsByThread : int -> transaction (list post)
 
 
 (* Insert *)
-val newTag : tag -> transaction Util.result
+val newTag : tag -> transaction Result.t
 
 val newPost :
   { Nam : string
@@ -58,10 +58,10 @@ val newPost :
   , Spoiler : bool
   , Sage : bool
   , Files : list string
-  , Thread : int } -> transaction Util.result
+  , Thread : int } -> transaction Result.t
 
 
 (* Delete *)
-val deleteFile : string -> transaction Util.result
+val deleteFile : string -> transaction Result.t
 
-val deleteTag : string -> transaction Util.result
+val deleteTag : string -> transaction Result.t

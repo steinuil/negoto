@@ -7,16 +7,17 @@ style post_body
 style catalog_thread
 style separator
 style button
-style hidden_form
+style hidden_field
 style post_form
 
 style base_page
 style front_page
 style tag_page
 style thread_page
+style error_page
 
 
-val sourceUrl = bless "https://github.com/steinuil/negoto"
+val sourceUrl = bless 'https://github.com/steinuil/negoto'
 
 
 val errorPage =
@@ -35,12 +36,12 @@ val show_tag =
     "/" ^ name ^ "/ - " ^ slug)
 
 
-fun layout (title' : string) typ body' = return <xml>
+fun layout (title' : string) (class' : css_class) body' = return <xml>
   <head>
     <title>{[title']}</title>
     <link type="text/css" rel="stylesheet" href="/style.css" />
   </head>
-  <body class={typ}>{body'}</body>
+  <body class={class'}>{body'}</body>
 </xml>
 
 
@@ -68,32 +69,41 @@ and front () =
 and formHandler f =
   layout "Inspect post" base_page <xml>
     <main>
-      {SexpCode.xml_of_sexpCode f.Body}
+      {[f.Body]}
     </main>
   </xml>
 
 
 and threadForm id =
   submitButton <- fresh;
-  fileButton <- fresh;
   sageButton <- fresh;
   spoilerButton <- fresh;
+  (* fileButton <- fresh; *)
+  (* fileName <- source ""; *)
   return <xml><form class="post-form">
-    <textbox{#Nam} placeholder="Name" />
-    <label for={submitButton} class="button">Post</label>
-    <br/>
+    <div>
+      <textbox{#Nam} placeholder="Name" />
+      <label for={submitButton} class="button">Post</label>
+    </div>
     <textarea{#Body} placeholder="Comment" />
-    <br/>
-    <label for={fileButton} class="button">Add file</label>
+    <div>
+      <upload{#File} />
+      <!-- <label for={fileButton} class="button">
+        <dyn signal={
+          n <- signal fileName;
+          return <| if n = "" then <xml>Add file</xml> else <xml>{[n]}</xml>
+          } />
+      </label> -->
 
-    <checkbox{#Spoiler} class="hidden-form" id={spoilerButton} />
-    <label for={spoilerButton} class="button">Spoiler</label>
+      <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
+      <label for={spoilerButton} class="button">Spoiler</label>
 
-    <checkbox{#Sage} class="hidden-form" id={sageButton} />
-    <label for={sageButton} class="button">Sage</label>
-    <upload{#File} class="hidden-form" id={fileButton} />
-    <hidden{#Thread} value={show id} />
-    <submit action={formHandler} class="hidden-form" id={submitButton} />
+      <checkbox{#Sage} class="hidden-field" id={sageButton} />
+      <label for={sageButton} class="button">Sage</label>
+
+      <hidden{#Thread} value={show id} />
+      <submit action={formHandler} class="hidden-field" id={submitButton} />
+    </div>
   </form></xml>
 
 
@@ -121,17 +131,7 @@ and readme () =
       <h1>Readme</h1>
     </header>
     <main>
-      {SexpCode.xml_of_sexpCode
-"{b|Bold} -> {-{b|Bold}-}
-{i|Italic} -> {-{i|Italic}-}
-{o|Overline} -> {-{o|Overline}-}
-{u|Underline} -> {-{u|Underline}-}
-{s|Strikethrough} -> {-{s|Strikethrough}-}
-{m|Monospace} -> {-{m|Monospace}-}
-{sup|Superscript} -> {-{sup|Superscript}-}
-{sub|Subscript} -> {-{sub|Subscript}-}
-{spoiler|Spoiler} -> {-{spoiler|Spoiler}-}
-{- Verbatim (unbalanced braces allowed {}{}}}}}{{}} -} -> \{- Verbatim -\}"}
+      README HERE
     </main>
   </xml>
 
@@ -141,8 +141,7 @@ and tag name =
   case List.find (fn t => t.Nam = name) tags of
   | None => error errorPage
   | Some tag' =>
-    threads <- Data.catalogByTag tag'.Nam;
-    threads <- List.mapXM catalogThread threads;
+    threads <- (Data.catalogByTag tag'.Nam `bind` List.mapXM catalogThread);
     layout (show tag') tag_page <xml>
       <header>
         {navigation tags}
@@ -160,8 +159,7 @@ and thread id =
   | None => error errorPage
   | Some t =>
     tags <- Data.allTags;
-    posts <- Data.postsByThread t.Id;
-    posts <- List.mapXM threadPost posts;
+    posts <- (Data.postsByThread t.Id `bind` List.mapXM threadPost);
     tForm <- threadForm t.Id;
     let
       val title' = case t.Tags of
@@ -194,13 +192,13 @@ and catalogThread thread' =
     <div class="catalog-thread">
       <figure>
         <a href={url (thread thread'.Id)}>
-          {case Util.head thread'.Files of
-          | None => <xml/>
-          | Some file => <xml>&lt;image here&gt;</xml>}
+          {case thread'.Files of
+          | [] => <xml/>
+          | file :: _ => <xml>&lt;image here&gt;</xml>}
         </a>
       </figure>
       <div class="info">
-        <time>{[updated]}</time>
+        <time>{updated}</time>
         <span class="separator">/</span>
         &lt;count here&gt;
       </div>
