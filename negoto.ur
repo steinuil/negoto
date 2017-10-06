@@ -38,9 +38,10 @@ val show_tag =
     "/" ^ name ^ "/ - " ^ slug)
 
 
+(*
 (* FIXME fails with `unhandled exception: CUnify`
-val filesForm [form ::: {Type}]
-  : [[Files] ~ form ] =>
+val filesForm [form ::: {Type}] :
+  [[Files] ~ form ] =>
     transaction (xml [Form, Dyn, Body] form [Files = list {File : file, Spoiler : bool}])
 = let *)
 val filesForm = let
@@ -78,6 +79,7 @@ in
     </div-->
   </xml>
 end
+*)
 
 
 fun layout (title' : string) (class' : css_class) body' = return <xml>
@@ -112,7 +114,7 @@ and front () =
 
 and catalogForm (boardId : string) : transaction xbody =
   submitButton <- fresh;
-  files <- filesForm;
+  spoilerButton <- fresh;
   return <xml><form class="post-form">
     <div>
       <textbox{#Subject} class="subject-field" required placeholder="Subject" />
@@ -122,18 +124,36 @@ and catalogForm (boardId : string) : transaction xbody =
       <label for={submitButton} class="button">Post</label>
     </div>
     <textarea{#Body} placeholder="Comment" />
-    {files}
-    <hidden{#Board} value={show boardId} />
+    <div>
+      <upload{#File} />
+      <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
+      <label for={spoilerButton} class="button">Spoiler</label>
+    </div>
+    <subforms{#Tags}>
+      <entry><hidden{#Id} value={show boardId} /></entry>
+    </subforms>
     <submit action={formHandler'} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
-and formHandler' f =
+and formHandler' f = let
+  val files =
+    if blobSize (fileData f.File) > 0 then
+      let val _ = naughtyDebug "ayy lmao" in
+      { File = f.File, Spoiler = f.Spoiler } :: []
+      end
+    else []
+
+  val thread = f -- #Tags -- #File -- #Spoiler ++
+    { Tags = List.mp (fn x => x.Id) f.Tags, Files = files }
+in
+  res <- Data.newThread thread;
   layout "Inspect post" base_page <xml>
     <main>
       {[f.Body]}
     </main>
   </xml>
+end
 
 
 and threadForm (threadId : int) : transaction xbody =
@@ -149,19 +169,18 @@ and threadForm (threadId : int) : transaction xbody =
       <label for={submitButton} class="button">Post</label>
     </div>
     <textarea{#Body} placeholder="Comment" />
-    <subforms{#Files}>
-      <div><entry>
-        <upload{#File} />
-        <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
-        <label for={spoilerButton} class="button">Spoiler</label>
-      </entry></div>
-    </subforms>
+    <div>
+      <upload{#File} />
+      <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
+      <label for={spoilerButton} class="button">Spoiler</label>
+    </div>
     <hidden{#Thread} value={show threadId} />
     <submit action={formHandler} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
 (* FIXME replace with this once filesForm compiles with the correct signature
+ * FIXME fails with `Fatal error: Tried to read a normal form input as files` when files in subforms
 and threadForm (threadId : int) : transaction xbody =
   submitButton <- fresh;
   bumpButton <- fresh;
@@ -182,9 +201,10 @@ and threadForm (threadId : int) : transaction xbody =
 
 
 and formHandler f =
+  res <- Data.newPost (f -- #Thread -- #File -- #Spoiler ++ { Thread = readError f.Thread, Files = { File = f.File, Spoiler = f.Spoiler } :: [] });
   layout "Inspect post" base_page <xml>
     <main>
-      {[f.Body]}
+      {[res]}
     </main>
   </xml>
 
@@ -277,8 +297,8 @@ and catalogThread thread' =
       <figure>
         <a href={url (thread thread'.Id)}>
           {case thread'.Files of
-          | [] => <xml/>
-          | file :: _ => <xml>&lt;image here&gt;</xml>}
+          | [] => <xml>link</xml>
+          | file :: _ => <xml>{[file.Hash]}</xml>}
         </a>
       </figure>
       <div class="info">

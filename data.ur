@@ -12,7 +12,7 @@ type thread =
   , Locked  : bool
   , Tags    : list string }
 
-type file =
+type postFile =
   { Hash    : string
   , Nam     : string
   , Ext     : string
@@ -24,7 +24,7 @@ type post =
   , Nam    : string
   , Time   : time
   , Body   : string
-  , Files  : list file }
+  , Files  : list postFile }
 
 type catalogThread =
   { Id      : int
@@ -35,7 +35,7 @@ type catalogThread =
   , Nam     : string
   , Time    : time
   , Body    : string
-  , Files   : list file }
+  , Files   : list postFile }
 
 
 (* * Tables *)
@@ -262,22 +262,42 @@ fun newTag { Nam = name, Slug = slug } =
   Result.dml (INSERT INTO tags (Nam, Slug)
               VALUES ( {[name]}, {[slug]} ))
 
-fun insertFile uid spoil file =
+fun insertFile uid file =
   random <- rand;
   Result.dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
               VALUES ( {[show random]}, "file", "jpg"
-                     , {[spoil]}, {[Some uid]} ))
+                     , {[file.Spoiler]}, {[Some uid]} ))
 
-fun newPost { Nam = name, Body = body, Spoiler = spoil
-            , Sage = sage, Files = files', Thread = thread } =
-  uid <- nextval thread_id;
+fun insertThreadTag thread tag =
+  Result.dml (INSERT INTO thread_tags (Thread, Tag)
+              VALUES ( {[thread]}, {[tag]} ))
+
+fun bumpThread id shouldBump =
+  if shouldBump then
+    tim <- now;
+    Result.dml (UPDATE threads SET Updated = {[tim]}
+                WHERE Id = {[id]})
+  else return Result.Ok
+
+fun newPost { Nam = name, Body = body, Bump = shouldBump
+            , Files = files', Thread = thread } =
+  uid <- nextval post_id;
   { Count = lastid } <- oneRow (SELECT COUNT( * ) AS Count FROM posts
                                 WHERE posts.Thread = {[thread]});
-  List.foldr (flip Result.mapM)
-    (Result.dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
-                 VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
-                        , CURRENT_TIMESTAMP, {[body]} )))
-    (List.mp (insertFile uid spoil) files')
+  res <- bumpThread thread shouldBump;
+  res <- Result.dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
+                     VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
+                            , CURRENT_TIMESTAMP, {[body]} ));
+  _ <- List.mapM (insertFile uid) files';
+  return res
+
+fun newThread { Nam = name, Subject = subj, Body = body
+              , Files = files', Tags = tags } =
+  id <- nextval thread_id;
+  res <- Result.dml (INSERT INTO threads (Id, Updated, Subject, Locked)
+                   VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, {[False]} ));
+  res <- List.mapM (insertThreadTag id) tags;
+  newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id }
 
 
 

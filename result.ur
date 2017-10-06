@@ -1,6 +1,11 @@
 datatype t = Ok | Error of string
 
 
+val show = mkShow (fn x => case x of
+  | Ok => "Ok"
+  | Error msg => "Error " ^ msg)
+
+
 fun ofOption x = case x of
   | None => Ok
   | Some err => Error err

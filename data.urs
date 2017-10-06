@@ -9,7 +9,7 @@ type thread =
   , Locked  : bool
   , Tags    : list string }
 
-type file =
+type postFile =
   { Hash    : string
   , Nam     : string
   , Ext     : string
@@ -21,7 +21,7 @@ type post =
   , Nam    : string
   , Time   : time
   , Body   : string
-  , Files  : list file }
+  , Files  : list postFile }
 
 type catalogThread =
   { Id      : int
@@ -32,7 +32,7 @@ type catalogThread =
   , Nam     : string
   , Time    : time
   , Body    : string
-  , Files   : list file }
+  , Files   : list postFile }
 
 
 (* Query *)
@@ -52,12 +52,22 @@ val postsByThread : int -> transaction (list post)
 (* Insert *)
 val newTag : tag -> transaction Result.t
 
+val newThread :
+  { Nam  : string
+  , Subject : string
+  , Body : string
+  , Files : list
+    { File : file
+    , Spoiler : bool }
+  , Tags : list string } -> transaction Result.t
+
 val newPost :
   { Nam : string
   , Body : string
-  , Spoiler : bool
-  , Sage : bool
-  , Files : list string
+  , Bump : bool
+  , Files : list
+    { File : file
+    , Spoiler : bool }
   , Thread : int } -> transaction Result.t
 
 
