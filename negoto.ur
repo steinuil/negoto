@@ -201,10 +201,10 @@ and threadForm (threadId : int) : transaction xbody =
 
 
 and formHandler f =
-  res <- Data.newPost (f -- #Thread -- #File -- #Spoiler ++ { Thread = readError f.Thread, Files = { File = f.File, Spoiler = f.Spoiler } :: [] });
+  Data.newPost (f -- #Thread -- #File -- #Spoiler ++ { Thread = readError f.Thread, Files = { File = f.File, Spoiler = f.Spoiler } :: [] });
   layout "Inspect post" base_page <xml>
     <main>
-      {[res]}
+      {[f.Body]}
     </main>
   </xml>
 

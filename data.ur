@@ -259,55 +259,55 @@ val orphanedFiles =
 
 (* * INSERT *)
 fun newTag { Nam = name, Slug = slug } =
-  Result.dml (INSERT INTO tags (Nam, Slug)
-              VALUES ( {[name]}, {[slug]} ))
+  dml (INSERT INTO tags (Nam, Slug)
+       VALUES ( {[name]}, {[slug]} ))
 
-fun insertFile uid file =
+fun insertFile uid ({ Spoiler = spoiler, File = file } : {Spoiler:bool,File:file}) =
   random <- rand;
-  Result.dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
-              VALUES ( {[show random]}, "file", "jpg"
-                     , {[file.Spoiler]}, {[Some uid]} ))
+  dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
+       VALUES ( {[show random]}, "file", "jpg"
+                     , {[spoiler]}, {[Some uid]} ))
 
 fun insertThreadTag thread tag =
-  Result.dml (INSERT INTO thread_tags (Thread, Tag)
-              VALUES ( {[thread]}, {[tag]} ))
+  dml (INSERT INTO thread_tags (Thread, Tag)
+       VALUES ( {[thread]}, {[tag]} ))
 
 fun bumpThread id shouldBump =
   if shouldBump then
     tim <- now;
-    Result.dml (UPDATE threads SET Updated = {[tim]}
-                WHERE Id = {[id]})
-  else return Result.Ok
+    dml (UPDATE threads SET Updated = {[tim]}
+         WHERE Id = {[id]})
+  else return ()
 
 fun newPost { Nam = name, Body = body, Bump = shouldBump
             , Files = files', Thread = thread } =
   uid <- nextval post_id;
   { Count = lastid } <- oneRow (SELECT COUNT( * ) AS Count FROM posts
                                 WHERE posts.Thread = {[thread]});
-  res <- bumpThread thread shouldBump;
-  res <- Result.dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
-                     VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
-                            , CURRENT_TIMESTAMP, {[body]} ));
-  _ <- List.mapM (insertFile uid) files';
-  return res
+  bumpThread thread shouldBump;
+  dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
+       VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
+              , CURRENT_TIMESTAMP, {[body]} ));
+  List.app (insertFile uid) files'
+
 
 fun newThread { Nam = name, Subject = subj, Body = body
               , Files = files', Tags = tags } =
   id <- nextval thread_id;
-  res <- Result.dml (INSERT INTO threads (Id, Updated, Subject, Locked)
-                   VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, {[False]} ));
-  res <- List.mapM (insertThreadTag id) tags;
+  dml (INSERT INTO threads (Id, Updated, Subject, Locked)
+       VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, {[False]} ));
+  List.app (insertThreadTag id) tags;
   newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id }
 
 
 
 (* * DELETE *)
 fun deleteTag name =
-  Result.dml (DELETE FROM tags WHERE Nam = {[name]})
+  dml (DELETE FROM tags WHERE Nam = {[name]})
 
 (* FIXME: actually delete files *)
 fun deleteFile hash =
-  Result.dml (DELETE FROM files WHERE Hash = {[hash]})
+  dml (DELETE FROM files WHERE Hash = {[hash]})
 
 
 (* * Tasks *)
@@ -315,5 +315,5 @@ fun deleteFile hash =
  * and delete them from the database/filesystem *)
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
-  _ <- List.mapM (fn x => deleteFile x.Hash) files;
+  List.app (fn x => deleteFile x.Hash) files;
   Log.log "data" "checking for orphaned files"
