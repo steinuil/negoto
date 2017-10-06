@@ -8,7 +8,9 @@ style catalog_thread
 style separator
 style button
 style hidden_field
+style subject_field
 style post_form
+style container
 
 style base_page
 style front_page
@@ -34,6 +36,48 @@ val menu : list (url * string * string) -> xbody =
 val show_tag =
   mkShow (fn { Nam = name, Slug = slug } =>
     "/" ^ name ^ "/ - " ^ slug)
+
+
+(* FIXME fails with `unhandled exception: CUnify`
+val filesForm [form ::: {Type}]
+  : [[Files] ~ form ] =>
+    transaction (xml [Form, Dyn, Body] form [Files = list {File : file, Spoiler : bool}])
+= let *)
+val filesForm = let
+  val newFile =
+    spoil <- fresh;
+    return <xml><div><entry>
+      <upload{#File} />
+      <checkbox{#Spoiler} class="hidden-field" id={spoil} />
+      <label for={spoil} class="button">Spoiler</label>
+    </entry></div></xml>
+
+  fun files' ls = case ls of
+    | [] => <xml/>
+    | f :: rs => <xml>{f}{files' rs}</xml>
+in
+  f1 <- newFile;
+  files <- source (f1 :: []);
+  return <xml>
+    <subforms{#Files}>
+      <dyn signal={fs <- signal files; return (files' fs)} />
+    </subforms>
+    <!--div>
+      <span onclick={fn _ =>
+        f <- get files;
+        if List.length f >= 4 then return () else
+          newF <- newFile;
+          set files (newF :: f)
+      }>+</span>
+      <span onclick={fn _ =>
+        f <- get files; case f of
+        | f' :: [] => return ()
+        | ls :: rs => set files rs
+        | [] => return ()
+      }>-</span>
+    </div-->
+  </xml>
+end
 
 
 fun layout (title' : string) (class' : css_class) body' = return <xml>
@@ -66,7 +110,25 @@ and front () =
   </xml>
 
 
-and formHandler f =
+and catalogForm (boardId : string) : transaction xbody =
+  submitButton <- fresh;
+  files <- filesForm;
+  return <xml><form class="post-form">
+    <div>
+      <textbox{#Subject} class="subject-field" required placeholder="Subject" />
+    </div>
+    <div>
+      <textbox{#Nam} required placeholder="Name" value="Anonymous" />
+      <label for={submitButton} class="button">Post</label>
+    </div>
+    <textarea{#Body} placeholder="Comment" />
+    {files}
+    <hidden{#Board} value={show boardId} />
+    <submit action={formHandler'} class="hidden-field" id={submitButton} />
+  </form></xml>
+
+
+and formHandler' f =
   layout "Inspect post" base_page <xml>
     <main>
       {[f.Body]}
@@ -74,37 +136,57 @@ and formHandler f =
   </xml>
 
 
-and threadForm id =
+and threadForm (threadId : int) : transaction xbody =
   submitButton <- fresh;
-  sageButton <- fresh;
+  bumpButton <- fresh;
   spoilerButton <- fresh;
-  (* fileButton <- fresh; *)
-  (* fileName <- source ""; *)
   return <xml><form class="post-form">
     <div>
-      <textbox{#Nam} placeholder="Name" />
+      <textbox{#Nam} required placeholder="Name" value="Anonymous" />
+
+      <checkbox{#Bump} class="hidden-field" checked id={bumpButton} />
+      <label for={bumpButton} class="button">Bump</label>
       <label for={submitButton} class="button">Post</label>
     </div>
     <textarea{#Body} placeholder="Comment" />
-    <div>
-      <upload{#File} />
-      <!-- <label for={fileButton} class="button">
-        <dyn signal={
-          n <- signal fileName;
-          return <| if n = "" then <xml>Add file</xml> else <xml>{[n]}</xml>
-          } />
-      </label> -->
-
-      <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
-      <label for={spoilerButton} class="button">Spoiler</label>
-
-      <checkbox{#Sage} class="hidden-field" id={sageButton} />
-      <label for={sageButton} class="button">Sage</label>
-
-      <hidden{#Thread} value={show id} />
-      <submit action={formHandler} class="hidden-field" id={submitButton} />
-    </div>
+    <subforms{#Files}>
+      <div><entry>
+        <upload{#File} />
+        <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
+        <label for={spoilerButton} class="button">Spoiler</label>
+      </entry></div>
+    </subforms>
+    <hidden{#Thread} value={show threadId} />
+    <submit action={formHandler} class="hidden-field" id={submitButton} />
   </form></xml>
+
+
+(* FIXME replace with this once filesForm compiles with the correct signature
+and threadForm (threadId : int) : transaction xbody =
+  submitButton <- fresh;
+  bumpButton <- fresh;
+  files <- filesForm;
+  return <xml><form class="post-form">
+    <div>
+      <textbox{#Nam} required placeholder="Name" value="Anonymous" />
+
+      <checkbox{#Bump} class="hidden-field" checked id={bumpButton} />
+      <label for={bumpButton} class="button">Bump</label>
+      <label for={submitButton} class="button">Post</label>
+    </div>
+    <textarea{#Body} placeholder="Comment" />
+    {files}
+    <hidden{#Thread} value={show threadId} />
+    <submit action={formHandler} class="hidden-field" id={submitButton} />
+  </form></xml> *)
+
+
+and formHandler f =
+  layout "Inspect post" base_page <xml>
+    <main>
+      {[f.Body]}
+    </main>
+  </xml>
 
 
 and tagLinks tags =
@@ -142,13 +224,15 @@ and tag name =
   | None => error errorPage
   | Some tag' =>
     threads <- (Data.catalogByTag tag'.Nam `bind` List.mapXM catalogThread);
+    postForm <- catalogForm tag'.Nam;
     layout (show tag') tag_page <xml>
       <header>
         {navigation tags}
         <h1>{[tag']}</h1>
       </header>
       <main>
-        {threads}
+        {postForm}
+        <div class="container">{threads}</div>
       </main>
     </xml>
 

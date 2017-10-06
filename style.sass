@@ -54,6 +54,7 @@ button::-moz-focus-inner,
   padding: 0
 
 
+
 // Negoto
 body
   font-family: sans-serif
@@ -65,10 +66,10 @@ body
   justify-content: center
 
 
+
 a
   color: unset
   text-decoration: underline dotted
-
 
 /* .text
   &-underline
@@ -85,6 +86,7 @@ a
     color: green */
 
 
+
 header, main, footer
   margin: 4px
 
@@ -96,8 +98,9 @@ header, footer
   font-size: .8em
 
 
+
 .tag-page
-  main
+  main>.container
     display: flex
     flex-flow: row wrap
     justify-content: center
@@ -116,6 +119,7 @@ header, footer
       font-weight: bold
 
 
+
 .thread-page
   .post
     .info
@@ -124,6 +128,7 @@ header, footer
 
     .name
       font-weight: bold
+
 
 
 .post-form
@@ -137,7 +142,7 @@ header, footer
   // All visible inputs (except file)
   .button, input[type="text"], textarea
     display: inline-block
-    padding: 4px
+    padding: 4px 6px
     font-family: inherit
     font-size:   inherit
 
@@ -151,11 +156,15 @@ header, footer
 
   .button
     margin-left: 4px
+    background-color: lightgrey
+
+  .subject-field
+    margin-bottom: 4px
 
   textarea
     margin: 4px 0
     min-width:  256px - (4px * 2)
-    min-height: 6em
+    min-height: 6.3em
 
   input[type="text"], input[type="file"]
     flex-grow: 1
@@ -163,7 +172,9 @@ header, footer
 
   input[type="file"]
     margin-right: auto
-    height: 1.8em
+    height: 1.9em
 
   input[type="checkbox"]:checked + .button
-    background-color: red
+    font-weight: bold
+    background-color: black
+    color: lightgrey
