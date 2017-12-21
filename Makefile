@@ -1,6 +1,6 @@
 DB = test.db
 NAME = negoto
-FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur util.ur result.ur style.css
+FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur util.ur style.css
 URWEB = urweb
 
 all: negoto
@@ -12,11 +12,11 @@ negoto.sql negoto.exe: $(FILES)
 	$(URWEB) $(NAME) -dbms sqlite -db $(DB)
 
 $(DB): $(NAME).sql
-	rm -f $(.TARGET)
-	sqlite3 $(.TARGET) < $(.ALLSRC)
+	rm -f $@
+	sqlite3 $@ < $<
 
 style.css: style.sass
-	sass --sourcemap=none --style=expanded -C $(.ALLSRC) $(.TARGET)
+	sass --sourcemap=none --style=expanded -C $< $@
 
 .PHONY: run
 run: negoto

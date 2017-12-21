@@ -235,7 +235,7 @@ val catalogByTag tag =
     (return `compose2` coalesceCatalogThread)
     []
 
-fun threadById id =
+fun threadInfoById id =
   thread <- query (SELECT * FROM threadView WHERE threadView.Id = {[id]})
     (return `compose2` coalesceThread')
     [];
@@ -247,6 +247,14 @@ fun postsByThread id =
   query (SELECT * FROM postView WHERE postView.Thread = {[id]})
     (return `compose2` coalescePost')
     []
+
+fun threadById id =
+  thread' <- threadInfoById id;
+  case thread' of
+  | None => return None
+  | Some t =>
+    posts <- postsByThread id;
+    return (Some (t, posts))
 
 
 (* * File *)

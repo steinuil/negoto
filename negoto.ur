@@ -26,11 +26,17 @@ val errorPage =
   <xml>Error</xml>
 
 
-val menu : list (url * string * string) -> xbody =
-  List.mp (fn (url', title', name') =>
-    <xml><a href={url'} title={title'}>{[name']}</a></xml>)
-  >>> Util.interpose <xml> / </xml>
-  >>> fn els => <xml>[ {List.mapX (fn x => x) els} ]</xml>
+val menu els : xbody = let
+  fun toLink (url', title', name') =
+    <xml><a href={url'} title={title'}>{[name']}</a></xml>
+
+  val links =
+    List.mp toLink els
+    |> Util.interpose <xml> / </xml>
+    |> List.mapX (fn x => x)
+in
+  <xml>[ {links} ]</xml>
+end
 
 
 val show_tag =
@@ -200,13 +206,23 @@ and threadForm (threadId : int) : transaction xbody =
   </form></xml> *)
 
 
-and formHandler f =
-  Data.newPost (f -- #Thread -- #File -- #Spoiler ++ { Thread = readError f.Thread, Files = { File = f.File, Spoiler = f.Spoiler } :: [] });
+and formHandler f = let
+  val files =
+    if blobSize (fileData f.File) > 0 then
+      { File = f.File, Spoiler = f.Spoiler } :: []
+    else
+      []
+
+  val post = f -- #Thread -- #File -- #Spoiler ++
+    { Thread = readError f.Thread, Files = files }
+in
+  Data.newPost post;
   layout "Inspect post" base_page <xml>
     <main>
       {[f.Body]}
     </main>
   </xml>
+end
 
 
 and tagLinks tags =
@@ -261,9 +277,9 @@ and thread id =
   thread' <- Data.threadById id;
   case thread' of
   | None => error errorPage
-  | Some t =>
+  | Some (t, posts) =>
     tags <- Data.allTags;
-    posts <- (Data.postsByThread t.Id `bind` List.mapXM threadPost);
+    posts <- List.mapXM threadPost posts;
     tForm <- threadForm t.Id;
     let
       val title' = case t.Tags of
@@ -320,7 +336,7 @@ and threadPost post' = return <xml>
     {case post'.Files of
     | [] => <xml/>
     | file :: _ => <xml><figure>
-      &lt;image here&gt;
+      {[file.Nam]}
     </figure></xml>}
     <div class="info">
       <span class="name">{[post'.Nam]}</span>
