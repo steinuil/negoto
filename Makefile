@@ -1,34 +1,44 @@
-DB = test.db
-NAME = negoto
-FILES = $(NAME).ur $(NAME).urp $(NAME).urs data.ur data.urs log.ur util.ur style.css
-URWEB = urweb
+urweb = urweb
+sqlite = sqlite3
+sass = sass
+cc = gcc
 
-all: negoto
-	sqlite3 $(DB) < stuff.sql
+db_file = test.db
 
-negoto: negoto.exe $(DB)
+cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-braces
+cc_include = -I$(HOME)/.local/brew/include/urweb
 
-negoto.sql negoto.exe: $(FILES)
-	$(URWEB) $(NAME) -dbms sqlite -db $(DB)
+negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur
+save_files = save/save.h save/save.urs save/lib.urp
 
-$(DB): $(NAME).sql
-	rm -f $@
-	sqlite3 $@ < $<
+
+negoto: negoto.exe $(db_file)
+
+
+# File rules
+negoto.exe negoto.sql: $(project_files) $(save_files) style.css save.o
+	$(urweb) negoto -dbms sqlite -db $(db_file)
+
+save.o: save/save.c
+	$(cc) -c $(cc_flags) $< -o $@ $(cc_include)
 
 style.css: style.sass
-	sass --sourcemap=none --style=expanded -C $< $@
+	$(sass) --sourcemap=none --style=expanded -C $< $@
 
-.PHONY: run
+$(db_file): negoto.sql init.sql
+	rm -f $@
+	$(sqlite) $@ < negoto.sql
+	$(sqlite) $@ < init.sql
+
+
+# Phony rules
+check:
+	$(urweb) -tc negoto
+
 run: negoto
 	./negoto.exe
 
-.PHONY: check
-check:
-	$(URWEB) -tc $(NAME)
-
-.PHONY: clean
 clean:
-	rm -f $(DB) $(NAME).exe $(NAME).sql style.css
+	rm -f $(db_file) save.o style.css negoto.exe negoto.sql
 
-.PHONY: refresh
-refresh: clean run
+.PHONY: negoto check run clean

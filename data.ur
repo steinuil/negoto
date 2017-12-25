@@ -272,9 +272,10 @@ fun newTag { Nam = name, Slug = slug } =
 
 fun insertFile uid ({ Spoiler = spoiler, File = file } : {Spoiler:bool,File:file}) =
   random <- rand;
+  Save.save (show random) file;
   dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
        VALUES ( {[show random]}, "file", "jpg"
-                     , {[spoiler]}, {[Some uid]} ))
+              , {[spoiler]}, {[Some uid]} ))
 
 fun insertThreadTag thread tag =
   dml (INSERT INTO thread_tags (Thread, Tag)

@@ -45,7 +45,7 @@ val show_tag =
 
 
 (* Create a subform that can hold up to `max` files. *)
-(* FIXME fails with `Fatal error: Tried to read a normal form input as files` when files in subforms *)
+(* FIXME: fails with `Fatal error: Tried to read a normal form input as files` when files in subforms *)
 fun filesForm [form ::: {Type}] [[Files] ~ form] max
   : transaction (xml [Form, Dyn, Body] form [Files = list { File : file, Spoiler : bool }])
 = let
@@ -257,11 +257,11 @@ and catalogForm (boardId : string) : transaction xbody =
     <subforms{#Tags}>
       <entry><hidden{#Id} value={show boardId} /></entry>
     </subforms>
-    <submit action={formHandler'} class="hidden-field" id={submitButton} />
+    <submit action={catalogFormHandler} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
-and formHandler' f = let
+and catalogFormHandler f = let
   val files =
     if blobSize (fileData f.File) > 0 then
       let val _ = naughtyDebug "ayy lmao" in
@@ -300,11 +300,11 @@ and threadForm (threadId : int) : transaction xbody =
       <label for={spoilerButton} class="button">Spoiler</label>
     </div>
     <hidden{#Thread} value={show threadId} />
-    <submit action={formHandler} class="hidden-field" id={submitButton} />
+    <submit action={threadFormHandler} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
-and formHandler f = let
+and threadFormHandler f = let
   val files =
     if blobSize (fileData f.File) > 0 then
       { File = f.File, Spoiler = f.Spoiler } :: []
