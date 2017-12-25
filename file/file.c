@@ -55,7 +55,7 @@ static void delete_file(void *data) {
 }
 
 
-uw_unit uw_Save_save(uw_context ctx, uw_Basis_string name, uw_Basis_file file) {
+uw_unit uw_File_save(uw_context ctx, uw_Basis_string name, uw_Basis_file file) {
   struct args *data = (struct args *)malloc(sizeof(struct args));
   data->ctx = ctx;
   data->name = strdup(name);
@@ -75,7 +75,7 @@ uw_unit uw_Save_save(uw_context ctx, uw_Basis_string name, uw_Basis_file file) {
 }
 
 
-uw_unit uw_Save_delete(uw_context ctx, uw_Basis_string name) {
+uw_unit uw_File_delete(uw_context ctx, uw_Basis_string name) {
   int ok = uw_register_transactional(ctx, strdup(name),
       delete_file, NULL, free_filename);
 

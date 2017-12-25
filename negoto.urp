@@ -7,8 +7,8 @@ timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 file /style.css style.css
 allow url /style.css
-library save
-link save.o
+library file
+link file.o
 
 $/list
 $/option

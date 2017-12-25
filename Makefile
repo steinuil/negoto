@@ -9,17 +9,17 @@ cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-br
 cc_include = -I$(HOME)/.local/brew/include/urweb
 
 negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur
-save_files = save/save.h save/save.urs save/lib.urp
+file_lib = file/file.h file/file.urs file/lib.urp
 
 
 negoto: negoto.exe $(db_file)
 
 
 # File rules
-negoto.exe negoto.sql: $(project_files) $(save_files) style.css save.o
+negoto.exe negoto.sql: $(project_files) $(file_lib) style.css file.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
-save.o: save/save.c
+file.o: file/file.c
 	$(cc) -c $(cc_flags) $< -o $@ $(cc_include)
 
 style.css: style.sass
@@ -39,6 +39,6 @@ run: negoto
 	./negoto.exe
 
 clean:
-	rm -f $(db_file) save.o style.css negoto.exe negoto.sql
+	rm -f $(db_file) file.o style.css negoto.exe negoto.sql
 
 .PHONY: negoto check run clean
