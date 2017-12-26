@@ -261,26 +261,6 @@ and catalogForm (boardId : string) : transaction xbody =
   </form></xml>
 
 
-and catalogFormHandler f = let
-  val files =
-    if blobSize (fileData f.File) > 0 then
-      let val _ = naughtyDebug "ayy lmao" in
-      { File = f.File, Spoiler = f.Spoiler } :: []
-      end
-    else []
-
-  val thread = f -- #Tags -- #File -- #Spoiler ++
-    { Tags = List.mp (fn x => x.Id) f.Tags, Files = files }
-in
-  res <- Data.newThread thread;
-  layout "Inspect post" base_page <xml>
-    <main>
-      {[f.Body]}
-    </main>
-  </xml>
-end
-
-
 and threadForm (threadId : int) : transaction xbody =
   submitButton <- fresh;
   bumpButton <- fresh;
@@ -303,6 +283,22 @@ and threadForm (threadId : int) : transaction xbody =
   </form></xml>
 
 
+and catalogFormHandler f = let
+  val files =
+    if blobSize (fileData f.File) > 0 then
+      let val _ = naughtyDebug "ayy lmao" in
+      { File = f.File, Spoiler = f.Spoiler } :: []
+      end
+    else []
+
+  val thread' = f -- #Tags -- #File -- #Spoiler ++
+    { Tags = List.mp (fn x => x.Id) f.Tags, Files = files }
+in
+  id <- Data.newThread thread';
+  redirect (url (thread id))
+end
+
+
 and threadFormHandler f = let
   val files =
     if blobSize (fileData f.File) > 0 then
@@ -313,12 +309,8 @@ and threadFormHandler f = let
   val post = f -- #Thread -- #File -- #Spoiler ++
     { Thread = readError f.Thread, Files = files }
 in
-  Data.newPost post;
-  layout "Inspect post" base_page <xml>
-    <main>
-      {[f.Body]}
-    </main>
-  </xml>
+  _ <- Data.newPost post;
+  redirect (url (thread post.Thread))
 end
 
 

@@ -73,7 +73,7 @@ val newThread :
   , Files : list
     { File : file
     , Spoiler : bool }
-  , Tags : list string } -> transaction unit
+  , Tags : list string } -> transaction int
 
 val newPost :
   { Nam : string
@@ -82,7 +82,7 @@ val newPost :
   , Files : list
     { File : file
     , Spoiler : bool }
-  , Thread : int } -> transaction unit
+  , Thread : int } -> transaction int
 
 
 (* Delete *)

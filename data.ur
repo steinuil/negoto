@@ -297,7 +297,8 @@ fun newPost { Nam = name, Body = body, Bump = shouldBump
   dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
        VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
               , CURRENT_TIMESTAMP, {[body]} ));
-  List.app (insertFile uid) files'
+  List.app (insertFile uid) files';
+  return uid
 
 
 fun newThread { Nam = name, Subject = subj, Body = body
@@ -306,7 +307,8 @@ fun newThread { Nam = name, Subject = subj, Body = body
   dml (INSERT INTO threads (Id, Updated, Subject, Locked)
        VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, {[False]} ));
   List.app (insertThreadTag id) tags;
-  newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id }
+  _ <- newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id };
+  return id
 
 
 
