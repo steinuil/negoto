@@ -1,3 +1,5 @@
+#pragma once
+
 #include <urweb.h>
 
 uw_unit uw_File_save(uw_context, uw_Basis_string, uw_Basis_file);

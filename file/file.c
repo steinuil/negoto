@@ -4,6 +4,8 @@
 
 #include <urweb.h>
 
+#include "file.h"
+
 
 struct args {
   uw_context ctx;

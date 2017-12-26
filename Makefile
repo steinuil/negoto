@@ -16,7 +16,7 @@ negoto: negoto.exe $(db_file)
 
 
 # File rules
-negoto.exe negoto.sql: $(project_files) $(file_lib) style.css file.o
+negoto.exe negoto.sql: $(negoto_files) $(file_lib) style.css file.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
 file.o: file/file.c
