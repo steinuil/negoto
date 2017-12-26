@@ -288,7 +288,6 @@ and threadForm (threadId : int) : transaction xbody =
   return <xml><form class="post-form">
     <div>
       <textbox{#Nam} required placeholder="Name" value="Anonymous" />
-
       <checkbox{#Bump} class="hidden-field" checked id={bumpButton} />
       <label for={bumpButton} class="button">Bump</label>
       <label for={submitButton} class="button">Post</label>

@@ -271,10 +271,10 @@ fun newTag { Nam = name, Slug = slug } =
        VALUES ( {[name]}, {[slug]} ))
 
 fun insertFile uid ({ Spoiler = spoiler, File = file } : {Spoiler:bool,File:file}) =
-  random <- rand;
-  File.save (show random) file;
+  hash <- rand;
+  File.save (show hash) file;
   dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
-       VALUES ( {[show random]}, "file", "jpg"
+       VALUES ( {[show hash]}, "file", "jpg"
               , {[spoiler]}, {[Some uid]} ))
 
 fun insertThreadTag thread tag =
@@ -314,9 +314,18 @@ fun newThread { Nam = name, Subject = subj, Body = body
 fun deleteTag name =
   dml (DELETE FROM tags WHERE Nam = {[name]})
 
-(* FIXME: actually delete files *)
-fun deleteFile hash =
+fun deleteFile { Hash = hash, Ext = ext, ... } =
+  File.delete hash;
   dml (DELETE FROM files WHERE Hash = {[hash]})
+
+fun deleteThread id =
+  dml (DELETE FROM threads WHERE Id = {[id]})
+
+fun deletePost thread id =
+  dml (DELETE FROM posts WHERE Thread = {[thread]} AND Id = {[id]})
+
+fun deletePostByUid uid =
+  dml (DELETE FROM posts WHERE Uid = {[uid]})
 
 
 (* * Tasks *)
@@ -324,5 +333,5 @@ fun deleteFile hash =
  * and delete them from the database/filesystem *)
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
-  List.app (fn x => deleteFile x.Hash) files;
+  List.app (fn f => deleteFile (f -- #Post))  files;
   Log.log "data" "checking for orphaned files"

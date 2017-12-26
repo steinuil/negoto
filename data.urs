@@ -86,6 +86,14 @@ val newPost :
 
 
 (* Delete *)
-val deleteFile : string -> transaction unit
-
 val deleteTag : string -> transaction unit
+
+val deleteFile : postFile -> transaction unit
+
+val deleteThread : int -> transaction unit
+
+val deletePost : int -> int -> transaction unit
+  (** `deletePost thread id` deletes a post given its thread ID and non-unique ID *)
+
+val deletePostByUid : int -> transaction unit
+  (** Delete a post given its unique ID. *)
