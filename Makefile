@@ -1,7 +1,7 @@
 urweb = urweb
 sqlite = sqlite3
 sass = sass
-cc = gcc
+CC ?= gcc
 
 db_file = test.db
 
@@ -20,7 +20,7 @@ negoto.exe negoto.sql: $(negoto_files) $(file_lib) style.css file.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
 file.o: file/file.c
-	$(cc) -c $(cc_flags) $< -o $@ $(cc_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(cc_include) $(URWEB_INCLUDES)
 
 style.css: style.sass
 	$(sass) --sourcemap=none --style=expanded -C $< $@

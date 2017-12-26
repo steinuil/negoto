@@ -1,0 +1,20 @@
+language: c
+sudo: enabled
+os: linux
+compiler: gcc
+
+git:
+  depth: 3
+
+env:
+  - URWEB_INCLUDES=-I/usr/include/urweb
+
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq mlton sqlite3
+  - git clone https://github.com/urweb/urweb
+  - pushd urweb && ./autogen.sh && ./configure --prefix=/usr && sudo make install && popd
+
+install: gem install sass
+
+script: make negoto.exe
