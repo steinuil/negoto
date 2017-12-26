@@ -160,6 +160,10 @@ header, footer
   .button
     margin-left: 4px
     background-color: lightgrey
+    user-select: none
+    -moz-user-select: none
+    -ms-user-select: none
+    -webkit-user-select: none
 
   .subject-field
     margin-bottom: 4px
@@ -178,6 +182,9 @@ header, footer
     height: 1.9em
 
   input[type="checkbox"]:checked + .button
-    font-weight: bold
     background-color: black
+    color: lightgrey
+
+  .button:active
+    background-color: darkgrey
     color: lightgrey

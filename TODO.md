@@ -1,26 +1,49 @@
-- [ ] frontend that mimics the old negoto, using only part of the features
+## Version 1.0
+A basic frontend that mimics imageboards like 4chan, where threads can only be
+associated with one tag, posts can only hold one file and with limited markup
+in the post body.
 
-- [ ] new frontend that uses all features
+* File handling library
+  * [X] save and delete files
+  * [ ] generate a filename with an appropriate extension
+  * [ ] configure the position of the saved files
+  * [ ] return a checksum and image dimensions
+  * [ ] process thumbnails for images (and PDFs?) with libvips
+    * figure out how to statically link libvips and all its dependencies
+  * [ ] process thumbnails for webms with ???
 
-- [ ] external library that:
-  - saves files
-  - processes their thumbnails
-  - returns some info (dimensions?)
-  - deletes them on demand
+* Post handling library
+  * [ ] validate all the post fields
+  * [ ] parse newlines, quote arrows and backlinks into some kind of AST
+  * [ ] parse spoiler tags too
 
-- [ ] pull in libvpx to support webms
-  - actually we need something to demux webms too
+* Ajax post forms
+  * [ ] convert fields to their ajax counterparts
+  * [ ] use [ajaxUpload](https://github.com/urweb/ajaxUpload) library for files
 
-- [X] [sexpcode](http://cairnarvon.rotahall.org/misc/sexpcode.html) library
-  - [X] add a "post" function of arity 2 to link to a post
-  - [ ] have `>>num` desugar to `{post <thread> <num>}`
-  - [ ] and `>text` desugar to `{quote|text}`
+* Limits on number of threads and posts
+  * [ ] bump old threads off the board
+  * [ ] lock threads when they're over their post limit
+
+* Admin control panel
+  * [ ] implement admin accounts
+  * [ ] interface for deleting boards, posts, threads and files
+  * [ ] interface for adding boards
+  * [ ] interface for editing the readme file
+    * some kind of markup language parser?
 
 
-Ur/Web fucking sucks for doing operations on strings. Even calling fucking strlen makes the server allocate everybody and their dog on the heap and makes it double its size at least a dozen times in a single request, so it's better to pull all that shit off. The functions operating on strings are painfully minimalistic anyway.
+## Advanced frontend
+* [SexpCode](https://web.archive.org/web/20160321174220/http://cairnarvon.rotahall.org/misc/sexpcode.html)
+  * [ ] desugaring of post reference and quote into SexpCode
+  * [ ] base tags
+  * [ ] iterated functions
+  * [ ] function composition
+  * [ ] higher arity functions
+  * [ ] user-defined functions
+  * [ ] JS version for in-browser live preview
+    * maybe write it in OCaml and use C callbacks + `js_of_ocaml`?
 
-- [ ] throw away all the stuff involving strings and put it in external libraries
-  - [ ] reimplement validation
-  - [ ] reimplement sexpcode (make it still output some sexpcode AST)
-  - [ ] maybe find out how to do it in OCaml with minimal C glue code
-    - the sexpcode library would be great to implement in OCaml because you could compile it to JS with bucklescript or js\_of\_ocaml
+* A frontend that supports new features
+  * [ ] multiple file forms
+  * [ ] filter threads by tags
