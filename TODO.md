@@ -32,6 +32,16 @@ in the post body.
   * [ ] interface for editing the readme file
     * some kind of markup language parser?
 
+* Frontend niceties
+  * [ ] clicking on a post number should quote it in the comment box
+  * [ ] links to single posts should focus that post in its thread
+  * [ ] clicking on an image should expand it inline
+
+* JSON API
+  * [ ] boards endpoint
+  * [ ] catalog endpoint
+  * [ ] thread endpoint
+
 
 ## Advanced frontend
 * [SexpCode](https://web.archive.org/web/20160321174220/http://cairnarvon.rotahall.org/misc/sexpcode.html)

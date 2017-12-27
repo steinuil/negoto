@@ -6,7 +6,7 @@ CC ?= gcc
 db_file = test.db
 
 cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-braces
-cc_include = -I$(HOME)/.local/brew/include/urweb
+ur_include = -I$(shell urweb -print-cinclude)
 
 negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur
 file_lib = file/file.h file/file.urs file/lib.urp
@@ -20,7 +20,7 @@ negoto.exe negoto.sql: $(negoto_files) $(file_lib) style.css file.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
 file.o: file/file.c
-	$(CC) -c $(cc_flags) $< -o $@ $(cc_include) $(URWEB_INCLUDES)
+	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 style.css: style.sass
 	$(sass) --sourcemap=none --style=expanded -C $< $@

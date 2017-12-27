@@ -6,9 +6,6 @@ compiler: gcc
 git:
   depth: 3
 
-env:
-  - URWEB_INCLUDES=-I/usr/include/urweb
-
 before_install:
   - sudo apt-get update -qq
   - sudo apt-get install -qq mlton sqlite3
