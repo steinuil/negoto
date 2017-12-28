@@ -9,6 +9,8 @@ file /style.css style.css
 allow url /style.css
 library file
 link file.o
+library post
+link post.o
 
 $/list
 $/option

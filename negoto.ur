@@ -216,7 +216,7 @@ and threadPost post' = return <xml>
       <span class="name">{[post'.Nam]}</span>
       <time>{[post'.Time]}</time> &#8470;{[post'.Id]}
     </div>
-    <div class="post-body">{[post'.Body]}</div>
+    <div class="post-body">{Post.toHtml post'.Body}</div>
   </div>
 </xml>
 
@@ -286,16 +286,17 @@ and threadForm (threadId : int) : transaction xbody =
 and catalogFormHandler f = let
   val files =
     if blobSize (fileData f.File) > 0 then
-      let val _ = naughtyDebug "ayy lmao" in
       { File = f.File, Spoiler = f.Spoiler } :: []
-      end
     else []
 
   val thread' = f -- #Tags -- #File -- #Spoiler ++
     { Tags = List.mp (fn x => x.Id) f.Tags, Files = files }
 in
-  id <- Data.newThread thread';
-  redirect (url (thread id))
+  if Post.isValid f.Body then
+    id <- Data.newThread thread';
+    redirect (url (thread id))
+  else
+    error errorPage
 end
 
 
@@ -309,8 +310,11 @@ and threadFormHandler f = let
   val post = f -- #Thread -- #File -- #Spoiler ++
     { Thread = readError f.Thread, Files = files }
 in
-  _ <- Data.newPost post;
-  redirect (url (thread post.Thread))
+  if Post.isValid f.Body then
+    _ <- Data.newPost post;
+    redirect (url (thread post.Thread))
+  else
+    error errorPage
 end
 
 

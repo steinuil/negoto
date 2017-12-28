@@ -10,16 +10,20 @@ ur_include = -I$(shell urweb -print-cinclude)
 
 negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur
 file_lib = file/file.h file/file.urs file/lib.urp
+post_lib = post/post.h post/post.urs post/lib.urp
 
 
 negoto: negoto.exe $(db_file)
 
 
 # File rules
-negoto.exe negoto.sql: $(negoto_files) $(file_lib) style.css file.o
+negoto.exe negoto.sql: $(negoto_files) style.css $(file_lib) file.o $(post_lib) post.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
 file.o: file/file.c
+	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
+
+post.o: post/post.c
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 style.css: style.sass
