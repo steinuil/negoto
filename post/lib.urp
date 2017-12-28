@@ -1,2 +1,4 @@
-ffi post
-include post.h
+ffi postFfi
+include postFfi.h
+
+post
