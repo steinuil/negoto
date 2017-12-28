@@ -5,7 +5,7 @@ CC ?= gcc
 
 db_file = test.db
 
-cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-braces
+cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-sign-compare -Wno-missing-braces -std=gnu11
 ur_include = -I$(shell urweb -print-cinclude)
 
 negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur
