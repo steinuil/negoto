@@ -1,1 +1,3 @@
-val toHtml : css_class -> css_class -> string -> xbody
+val mkId : int -> id
+
+val toHtml : css_class -> css_class -> css_class -> string -> string -> xbody

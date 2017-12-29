@@ -1,3 +1,5 @@
 val isValid : string -> bool
 
-val toHtml : string -> xbody
+val id : int -> id
+
+val toHtml : url -> string -> xbody

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <math.h>
 
 #include <urweb.h>
 
@@ -12,6 +13,36 @@
 #define zero(x) ((x) > 0 ? (x) : 0)
 
 
+int parse_num(char *buf, int *d) {
+  int digits = 0;
+
+  for (;;) {
+    char cur_char = buf[digits];
+    if (cur_char >= '0' && cur_char <= '9') {
+      digits += 1;
+    } else if (cur_char == ' ' || cur_char == '\r' || cur_char == '\n' || cur_char == '\0') {
+      break;
+    } else {
+      return 0;
+    }
+  }
+
+  *d = digits;
+  int n = 0;
+
+  for (int i = 0; i < digits; i++) {
+    char x = buf[i] - 48;
+    n += x * pow(10, digits - 1 - i);
+  }
+
+  if (n > 0) {
+    return n;
+  } else {
+    return 0;
+  }
+}
+
+
 enum spoiler_state {
   SPOILER_NONE,
   SPOILER_INSIDE,
@@ -20,7 +51,14 @@ enum spoiler_state {
 };
 
 
-uw_Basis_xbody uw_PostFfi_toHtml(uw_context ctx, uw_Basis_css_class css_spoiler, uw_Basis_css_class css_quote, uw_Basis_string post) {
+uw_Basis_string uw_PostFfi_mkId(uw_context ctx, uw_Basis_int num) {
+  char *buf = (char *)uw_malloc(ctx, 8);
+  sprintf(buf, "post%lld", num);
+  return buf;
+}
+
+
+uw_Basis_xbody uw_PostFfi_toHtml(uw_context ctx, uw_Basis_css_class css_spoiler, uw_Basis_css_class css_quote, uw_Basis_css_class css_backlink, uw_Basis_string curr_url, uw_Basis_string post) {
   char *buf = (char *)uw_malloc(ctx, BUF_LEN);
   int buf_pos = 0;
   int post_pos = 0;
@@ -64,6 +102,15 @@ uw_Basis_xbody uw_PostFfi_toHtml(uw_context ctx, uw_Basis_css_class css_spoiler,
       // Meme arrows
       // TODO: backlinks
       case '>':
+        if (post[post_pos + 1] == '>') {
+          int digits = 0;
+          int num = parse_num(post + post_pos + 2, &digits);
+          if (num) {
+            buf_pos += snprintf(buf + buf_pos, BUF_LEN - buf_pos, "<a href=\"%s#post%d\" class=\"%s\">%d</a>", curr_url, num, css_backlink, num);
+            post_pos += 1 + digits;
+            break;
+          }
+        }
         if (line_start && quote_level < MAX_QUOTE_LEVEL) {
           quote_level += 1;
           buf_pos += snprintf(buf + buf_pos, BUF_LEN - buf_pos, "<span class=\"%s\">", css_quote);

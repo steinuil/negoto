@@ -14,8 +14,8 @@ in the post body.
 
 * Post handling library
   * [ ] validate all the post fields
-  * [ ] parse newlines, quote arrows and backlinks into some kind of AST
-  * [ ] parse spoiler tags too
+  * [X] parse newlines, quote arrows, backlinks, spoilers
+  * [ ] parse inter-thread backlinks
 
 * Ajax post forms
   * [ ] convert fields to their ajax counterparts

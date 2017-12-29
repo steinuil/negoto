@@ -205,20 +205,22 @@ and catalogThread thread' =
   </xml>
 
 
-and threadPost post' = return <xml>
-  <div class="post">
-    {case post'.Files of
-    | [] => <xml/>
-    | file :: _ => <xml><figure>
-      {[file.Nam]}
-    </figure></xml>}
-    <div class="info">
-      <span class="name">{[post'.Nam]}</span>
-      <time>{[post'.Time]}</time> &#8470;{[post'.Id]}
+and threadPost post' =
+  currUrl <- currentUrl;
+  return <xml>
+    <div class="post" id={Post.id post'.Id}>
+      {case post'.Files of
+      | [] => <xml/>
+      | file :: _ => <xml><figure>
+        {[file.Nam]}
+      </figure></xml>}
+      <div class="info">
+        <span class="name">{[post'.Nam]}</span>
+        <time>{[post'.Time]}</time> &#8470;{[post'.Id]}
+      </div>
+      <div class="post-body">{Post.toHtml currUrl post'.Body}</div>
     </div>
-    <div class="post-body">{Post.toHtml post'.Body}</div>
-  </div>
-</xml>
+  </xml>
 
 
 and tagLinks tags =
