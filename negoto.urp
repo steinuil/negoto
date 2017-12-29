@@ -10,7 +10,7 @@ allow url /style.css
 library file
 link file.o
 library post
-link postFfi.o
+link postFfi.o -lm
 
 $/list
 $/option

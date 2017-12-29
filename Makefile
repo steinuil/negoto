@@ -24,7 +24,7 @@ file.o: file/file.c
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 postFfi.o: post/postFfi.c post/postFfi.h
-	$(CC) -c $(cc_flags) -lm $< -o $@ $(ur_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 style.css: style.sass
 	$(sass) --sourcemap=none --style=expanded -C $< $@
