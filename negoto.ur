@@ -124,6 +124,7 @@ and readme () =
     </header>
     <main>
       README HERE
+      <a href={url (Api.boards)}>boards json</a>
     </main>
   </xml>
 

@@ -5,6 +5,7 @@ rewrite style Negoto/* [-]
 rewrite style Post/* text_ [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
+allow mime text/plain
 file /style.css style.css
 allow url /style.css
 library file
@@ -14,9 +15,11 @@ link postFfi.o -lm
 
 $/list
 $/option
-$/monad
 $/char
+$/string
+$/json
 util
 log
 data
+api
 negoto

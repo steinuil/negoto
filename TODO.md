@@ -34,13 +34,14 @@ in the post body.
 
 * Frontend niceties
   * [ ] clicking on a post number should quote it in the comment box
-  * [ ] links to single posts should focus that post in its thread
+  * [X] links to single posts should focus that post in its thread
   * [ ] clicking on an image should expand it inline
 
 * JSON API
-  * [ ] boards endpoint
-  * [ ] catalog endpoint
-  * [ ] thread endpoint
+  * [X] boards endpoint
+  * [X] catalog endpoint
+  * [X] thread endpoint
+  * [ ] include API links without linking it from the readme page
 
 
 ## Advanced frontend
