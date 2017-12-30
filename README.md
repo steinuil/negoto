@@ -27,3 +27,7 @@ To compile, simply invoke:
 ```
 make
 ```
+
+
+## JSON API
+Negoto comes with a read-only JSON API. The endpoints are described in [API.md](API.md).

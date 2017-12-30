@@ -14,7 +14,7 @@ fun jsonPage [a] (_ : json a) (f : transaction a) : transaction page =
  * since Ur/Web doesn't do record name serialization automatically. *)
 val json_Time : json time =
   mkJson
-    { ToJson   = show
+    { ToJson   = toSeconds >>> show
     , FromJson = fn x => (readError x, "") (* dummy conversion *) }
 
 val json_Tag : json Data.tag =
@@ -40,9 +40,9 @@ val json_Post : json Data.post =
     , Body   = "body"
     , Files  = "files" }
 
-type thread' = { Op : Data.thread, Posts : list Data.post }
+type thread' = { Thread : Data.thread, Posts : list Data.post }
 val json_Thread' : json thread' =
-  json_record { Op = "op", Posts = "posts" }
+  json_record { Thread = "op", Posts = "posts" }
 
 val json_CatalogThread : json Data.catalogThread =
   json_record
@@ -68,7 +68,7 @@ fun catalog board =
 fun thread id =
   t <- Data.threadById id;
   let val x = case t of
-    | Some (t, p) => Some { Op = t, Posts = p }
+    | Some (t, p) => Some { Thread = t, Posts = p }
     | None => None
   in
     jsonPage (return x)
