@@ -124,7 +124,6 @@ and readme () =
     </header>
     <main>
       README HERE
-      <a href={url (Api.boards)}>boards json</a>
     </main>
   </xml>
 
@@ -358,4 +357,13 @@ end
 *)
 
 
-val main = redirect (url (front ()))
+val main =
+  let
+    (* Put the API endpoints into the dependency graph,
+     * so that they're accessible at /Api/ *)
+    val _ = url Api.boards
+    val _ = url (Api.catalog "snw")
+    val _ = url (Api.thread 1)
+  in
+    redirect (url (front ()))
+  end

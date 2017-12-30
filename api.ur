@@ -1,10 +1,5 @@
-  (*
-  * [ ] boards endpoint
-  * [ ] catalog endpoint
-  * [ ] thread endpoint
-  *)
-
 open Json
+
 
 fun json' [m] (_ : monad m) [a] (_ : json a) (f : m a) : m string =
   x <- f;
@@ -14,11 +9,13 @@ fun jsonPage [a] (_ : json a) (f : transaction a) : transaction page =
   x <- f;
   returnBlob (textBlob (toJson x)) (blessMime "text/plain")
 
+
+(* Provide implementations of the `json` typeclass for the types we need,
+ * since Ur/Web doesn't do record name serialization automatically. *)
 val json_Time : json time =
   mkJson
     { ToJson   = show
-    , FromJson = fn x => (readError x, "") }
-    (* Dummy conversion since we don't need to read json anyway *)
+    , FromJson = fn x => (readError x, "") (* dummy conversion *) }
 
 val json_Tag : json Data.tag =
   json_record { Nam = "name", Slug = "slug" }
@@ -59,6 +56,9 @@ val json_CatalogThread : json Data.catalogThread =
     , Body    = "body"
     , Files   = "files" }
 
+
+(* The actual endpoints *)
+(* TODO: return 404 with an error on error? *)
 val boards =
   jsonPage Data.allTags
 

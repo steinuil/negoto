@@ -41,7 +41,7 @@ in the post body.
   * [X] boards endpoint
   * [X] catalog endpoint
   * [X] thread endpoint
-  * [ ] include API links without linking it from the readme page
+  * [X] include API links without linking it from the readme page
 
 
 ## Advanced frontend
