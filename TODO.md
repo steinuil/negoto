@@ -31,6 +31,7 @@ in the post body.
   * [ ] interface for adding boards
   * [ ] interface for editing the readme file
     * some kind of markup language parser?
+  * [ ] interface for adding/editing/deleting news
 
 * Frontend niceties
   * [ ] clicking on a post number should quote it in the comment box
@@ -44,6 +45,10 @@ in the post body.
   * [X] include API links without linking it from the readme page
   * [ ] readme endpoint
   * [ ] return proper HTTP statuses on error
+  * [ ] news endpoint
+
+* News
+  * [ ] show some news on the front page
 
 
 ## Advanced frontend

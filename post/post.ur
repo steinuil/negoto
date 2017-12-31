@@ -10,4 +10,7 @@ fun isValid post =
 val id = PostFfi.mkId
 
 
-fun toHtml url = PostFfi.toHtml spoiler quote backlink (show url)
+fun toHtml url = PostFfi.toHtml spoiler quote backlink (Some (show url))
+
+
+val toHtml' = PostFfi.toHtml spoiler quote backlink None

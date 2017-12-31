@@ -8,7 +8,7 @@ db_file = test.db
 cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -std=gnu11
 ur_include = -I$(shell urweb -print-cinclude)
 
-negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur api.ur api.urs
+negoto_files = data.ur data.urs log.ur negoto.ur negoto.urp negoto.urs util.ur api.ur api.urs admin.ur
 file_lib = file/file.h file/file.urs file/lib.urp
 post_lib = post/post.urs post/post.ur post/lib.urp
 

@@ -94,7 +94,6 @@ table files :
     REFERENCES posts(Uid)
     ON DELETE SET NULL
 
-(* TODO: admins *)
 (* TODO: users for bans *)
 
 

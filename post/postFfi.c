@@ -102,7 +102,7 @@ uw_Basis_xbody uw_PostFfi_toHtml(uw_context ctx, uw_Basis_css_class css_spoiler,
       // Meme arrows
       // TODO: backlinks
       case '>':
-        if (post[post_pos + 1] == '>') {
+        if (curr_url && post[post_pos + 1] == '>') {
           int digits = 0;
           int num = parse_num(post + post_pos + 2, &digits);
           if (num) {

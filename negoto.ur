@@ -85,17 +85,26 @@ in
 end
 
 
-fun layout (title' : string) (class' : css_class) body' = return <xml>
-  <head>
-    <title>{[title']}</title>
-    <link type="text/css" rel="stylesheet" href="/style.css" />
-  </head>
-  <body class={class'}>{body'}</body>
-</xml>
+fun layout (title' : string) (class' : css_class) body' =
+  return <xml>
+    <head>
+      <title>{[title']}</title>
+      <link type="text/css" rel="stylesheet" href="/style.css" />
+    </head>
+    <body class={class'}>{body'}</body>
+  </xml>
+
+
+and newsItem item : xbody =
+  <xml><article>
+    <header>{[item.Title]} by {[item.Author]} at {[item.Time]}</header>
+    <div>{Post.toHtml' item.Body}</div>
+  </article></xml>
 
 
 and front () =
   tags <- Data.allTags;
+  news <- Admin.news;
   layout "Time-Telling Fortress" front_page <xml>
     <header>
       <div>Good Day, Brother.</div>
@@ -108,6 +117,10 @@ and front () =
           <a href={url (tag t.Nam)}>{[t]}</a>
         </li></xml>) tags}
       </ul>
+      <section>
+        <header>News</header>
+        <div>{List.mapX newsItem news}</div>
+      </section>
     </main>
     <footer>
       Powered by <a href={sourceUrl}>Negoto</a>
