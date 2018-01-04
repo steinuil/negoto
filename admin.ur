@@ -24,4 +24,5 @@ fun boards () =
 
 
 val news =
-  queryL1 (SELECT * FROM newsItems)
+  queryL1 (SELECT * FROM newsItems ORDER BY newsItems.Time ASC)
+  (* The order is inverted because queryL1 returns stuff like that *)

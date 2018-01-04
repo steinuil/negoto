@@ -6,6 +6,7 @@ style subject
 style post_body
 style catalog_thread
 style separator
+style clickable
 style button
 style hidden_field
 style subject_field
@@ -166,8 +167,8 @@ and thread id =
   | None => error errorPage
   | Some (t, posts) =>
     tags <- Data.allTags;
-    posts <- List.mapXM threadPost posts;
     tForm <- threadForm t.Id;
+    txtbx <- source "";
     let
       val title' = case t.Tags of
         | [] => ""
@@ -178,7 +179,12 @@ and thread id =
       val back = case t.Tags of
         | [] => <xml/>
         | t :: _ => <xml>[ <a href={url (tag t)}>back</a> ]</xml>
+
+      fun addTxt str =
+        t <- get txtbx;
+        set txtbx (t ^ str)
     in
+      posts <- List.mapXM (threadPost addTxt) posts;
       layout title' thread_page <xml>
         <header>
           {navigation tags}
@@ -188,6 +194,8 @@ and thread id =
           {back} {[t.Subject]}
           {posts}
           {tForm}
+          <ctextbox source={txtbx}/>
+          <div onclick={fn _ => x <- get txtbx; debug x}>click</div>
         </main>
       </xml>
     end
@@ -218,7 +226,7 @@ and catalogThread thread' =
   </xml>
 
 
-and threadPost post' =
+and threadPost addToPostBody post' =
   currUrl <- currentUrl;
   return <xml>
     <div class="post" id={Post.id post'.Id}>
@@ -229,7 +237,9 @@ and threadPost post' =
       </figure></xml>}
       <div class="info">
         <span class="name">{[post'.Nam]}</span>
-        <time>{[post'.Time]}</time> &#8470;{[post'.Id]}
+        <time>{[post'.Time]}</time>
+        <a class="clickable" href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="clickable"
+          onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
       </div>
       <div class="post-body">{Post.toHtml currUrl post'.Body}</div>
     </div>

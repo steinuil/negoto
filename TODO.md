@@ -34,7 +34,7 @@ in the post body.
   * [ ] interface for adding/editing/deleting news
 
 * Frontend niceties
-  * [ ] clicking on a post number should quote it in the comment box
+  * [X] clicking on a post number should quote it in the comment box
   * [X] links to single posts should focus that post in its thread
   * [ ] clicking on an image should expand it inline
 
@@ -48,7 +48,7 @@ in the post body.
   * [ ] news endpoint
 
 * News
-  * [ ] show some news on the front page
+  * [X] show some news on the front page
 
 
 ## Advanced frontend
