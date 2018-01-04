@@ -1,35 +1,18 @@
-datatype level =
-  | Debug
-  | Info
-  | Warning
-  | Error
-
-
-val show_level =
-  mkShow (fn x =>
-    case x of
-    | Debug   => "[DEBUG]"
-    | Info    => "[INFO]"
-    | Warning => "[WARNING]"
-    | Error   => "[ERROR]")
-
-
 signature M = sig
   val section : string
 end
 
 
-signature S = sig
-  val log : level -> string -> transaction unit
-  val debug   : string -> transaction unit
-  val info    : string -> transaction unit
-  val warning : string -> transaction unit
-  val error   : string -> transaction unit
-end
+functor Make(M : M) = struct
+  datatype level = Debug | Info | Warning | Error
 
-
-functor Make(M : M) : S = struct
-  type level = level
+  val show_level =
+    mkShow (fn x =>
+      case x of
+      | Debug   => "[DEBUG]"
+      | Info    => "[INFO]"
+      | Warning => "[WARNING]"
+      | Error   => "[ERROR]")
 
   val time =
     timestamp <- now;
