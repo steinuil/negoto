@@ -1,5 +1,5 @@
 database dbname=negoto
-sql negoto.sql
+sql schema.sql
 allow url https://github.com/steinuil/negoto
 rewrite style Negoto/* [-]
 rewrite style Post/* text_ [-]
@@ -19,7 +19,7 @@ $/char
 $/string
 $/json
 util
-log
+logger
 data
 admin
 api

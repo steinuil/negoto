@@ -1,5 +1,24 @@
-fun log namespace str =
+datatype level =
+  | Debug
+  | Info
+  | Warning
+  | Error
+
+
+val show_level =
+  mkShow (fn x =>
+    case x of
+    | Debug   => "[DEBUG]"
+    | Info    => "[INFO]"
+    | Warning => "[WARNING]"
+    | Error   => "[ERROR]")
+
+
+val time =
   timestamp <- now;
-  debug <|
-    timef "%Y/%m/%d@%H:%M:%S" timestamp
-    ^ " [" ^ namespace ^ "] " ^ str
+  return (timef "%Y/%m/%d %H:%M:%S" timestamp)
+
+
+fun log section (lvl : level) msg =
+  t <- time;
+  debug <| t ^ "\t" ^ show lvl ^ "\t" ^ section ^ "\t" ^ msg

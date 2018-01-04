@@ -1,5 +1,8 @@
 open Util
 
+structure Log = Logger.Make(struct val section = "data" end)
+
+
 (* Output types *)
 type tag =
   { Nam  : string
@@ -335,4 +338,4 @@ fun deletePostByUid uid =
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
   List.app (fn f => deleteFile (f -- #Post))  files;
-  Log.log "data" "checking for orphaned files"
+  Log.info "checking for orphaned files"
