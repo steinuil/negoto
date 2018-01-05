@@ -56,6 +56,13 @@ val json_CatalogThread : json Data.catalogThread =
     , Body    = "body"
     , Files   = "files" }
 
+val json_newsItem : json Admin.newsItem =
+  json_record
+    { Title  = "title"
+    , Author = "author"
+    , Time   = "time"
+    , Body   = "body" }
+
 
 (* The actual endpoints *)
 (* TODO: return 404 with an error on error? *)
@@ -63,7 +70,7 @@ val boards =
   jsonPage Data.allTags
 
 fun catalog board =
-  jsonPage (Data.catalogByTag board)
+  jsonPage (Data.catalogByTag' board)
 
 fun thread id =
   t <- Data.threadById id;
@@ -73,3 +80,6 @@ fun thread id =
   in
     jsonPage (return x)
   end
+
+val news =
+  jsonPage Admin.news

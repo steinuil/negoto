@@ -46,7 +46,7 @@ in the post body.
   * [X] include API links without linking it from the readme page
   * [ ] readme endpoint
   * [ ] return proper HTTP statuses on error
-  * [ ] news endpoint
+  * [X] news endpoint
 
 * News
   * [X] show some news on the front page

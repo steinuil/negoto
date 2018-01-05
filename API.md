@@ -56,6 +56,13 @@ interface Post {
   body: string;
   files: Array<string>
 }
+
+interface NewsItem {
+  title: string;
+  author: string;
+  time: unix_time;
+  body: string;
+}
 ```
 
 
@@ -65,6 +72,8 @@ URL: `/Api/boards`
 
 Returns: `Array<Board>`
 
+Errors: none
+
 
 ## Board catalog
 
@@ -72,7 +81,8 @@ URL: `/Api/catalog/<id>`
 
 Returns: `Array<ThreadOp>`
 
-When the board doesn't exist, the endpoint will return an empty array.
+Errors:
+* When the board doesn't exist, the endpoint will return `null`.
 
 
 ## Thread
@@ -81,4 +91,14 @@ Url: `/Api/thread/<id>`
 
 Returns: `{ thread: Thread, posts: Array<Post> }`
 
-When the thread pointed at doesn't exist, the endpoints will return `null`.
+Errors:
+* When the thread pointed at doesn't exist, the endpoint will return `null`.
+
+
+## News
+
+Url: `/Api/news`
+
+Returns: `Array<NewsItem>`
+
+Errors: none
