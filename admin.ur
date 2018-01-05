@@ -1,20 +1,47 @@
 structure Log = Logger.Make(struct val section = "admin" end)
 
 
+(* News *)
+sequence newsItems_id
+
 table newsItems :
-  { Title   : string
+  { Id      : int
+  , Title   : string
   , Author  : string
   , Time    : time
   , Body    : string }
+  PRIMARY KEY (Id)
 
 
 val news =
-  queryL1 (SELECT * FROM newsItems ORDER BY newsItems.Time ASC)
-  (* The order is inverted because queryL1 returns stuff like that *)
+  query (SELECT * FROM newsItems)
+    (fn { NewsItems = x } acc => return ((x -- #Id) :: acc)) []
 
 
+val allNews =
+  queryL1 (SELECT * FROM newsItems)
+
+
+fun addNews { Title = title, Author = author, Body = body } =
+  id <- nextval newsItems_id;
+  dml (INSERT INTO newsItems (Id, Title, Author, Time, Body)
+       VALUES ( {[id]}, {[title]}, {[author]}, CURRENT_TIMESTAMP, {[body]} ));
+  return id
+
+
+fun deleteNews (id : int) =
+  dml (DELETE FROM newsItems WHERE Id = {[id]})
+
+
+
+(* Admin stuff *)
 table admins :
   { Nam : string }
+
+
+fun confirmDel name _ =
+  ok <- confirm ("Do you really want to delete " ^ name ^ "?");
+  if ok then return () else preventDefault
 
 
 fun layout (body' : xbody) : transaction page =
@@ -22,11 +49,17 @@ fun layout (body' : xbody) : transaction page =
     <head>
       <title>Admin</title>
     </head>
-    <body>{body'}</body>
+    <body>
+      <nav><ul>
+        <a href={url (boards ())}>boards</a>
+        <a href={url (news_items ())}>news</a>
+      </ul></nav>
+      <main>{body'}</main>
+    </body>
   </xml>
 
 
-fun boards () =
+and boards () =
   tags <- Data.allTags;
   layout <xml>
     <table>
@@ -38,16 +71,11 @@ fun boards () =
         <xml><tr><td><a href={url (board name)}>{[name]}</a></td>
           <form><hidden{#Nam} value={name}/>
             <td><textbox{#Slug} required placeholder="Slug" value={slug}/></td>
-            <td><submit value="Edit slug" action={editSlug}/></td>
+            <td><submit value="Edit slug" action={edit_slug}/></td>
           </form>
           <td><form><hidden{#Nam} value={name}/>
-            <submit value="Delete board" action={deleteBoard}
-              onclick={fn ev =>
-                shouldDelete <- confirm ("Do you really want to delete /" ^ name ^ "/?");
-                if shouldDelete then
-                  return ()
-                else
-                  preventDefault}/>
+            <submit value="Delete board" action={delete_board}
+              onclick={confirmDel ("/" ^ name ^ "/")}/>
           </form></td>
         </tr></xml>)
         tags}
@@ -55,7 +83,7 @@ fun boards () =
         <tr>
           <td><textbox{#Nam} required placeholder="Name"/></td>
           <td><textbox{#Slug} required placeholder="Slug"/></td>
-          <td><submit value="Add boards" action={boardFormHandler}/></td>
+          <td><submit value="Create board" action={create_board}/></td>
         </tr>
       </form>
     </table>
@@ -63,21 +91,21 @@ fun boards () =
 
 
 (* TODO: validation *)
-and boardFormHandler f =
+and create_board f =
   Data.newTag f;
-  Log.info ("<admin> created /" ^ f.Nam ^ "/ - " ^ f.Slug);
+  Log.info ("<admin> created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
   redirect (url (boards ()))
 
 
-and deleteBoard { Nam = name } =
+and delete_board { Nam = name } =
   Data.deleteTag name;
-  Log.info ("<admin> deleted /" ^ name ^ "/");
+  Log.info ("<admin> deleted board /" ^ name ^ "/");
   redirect (url (boards ()))
 
 
-and editSlug f =
+and edit_slug f =
   Data.editSlug f;
-  Log.info ("<admin> changed /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
+  Log.info ("<admin> changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
   redirect (url (boards ()))
 
 
@@ -90,3 +118,39 @@ and board name =
       <xml><tr><td>{[id]}</td><td>{[subject]}</td></tr></xml>)
       threads}
   </table></xml>
+
+
+and news_items () =
+  n <- allNews;
+  layout <xml><table>
+    <tr><th>ID</th><th>Title</th><th>Author</th><th>Body</th></tr>
+    {List.mapX (fn n => <xml>
+        <tr>
+          <td>{[n.Id]}</td><td>{[n.Title]}</td>
+          <td>{[n.Author]}</td><td>{[n.Body]}</td>
+          <form>
+            <hidden{#Id} value={show n.Id}/>
+            <td><submit value="Delete item"
+              onclick={confirmDel n.Title}
+              action={delete_news_item}/></td>
+          </form>
+        </tr>
+      </xml>) n}
+  </table><form>
+    <hidden{#Author} value="steenuil"/>
+    <textbox{#Title} placeholder="Title" required/><br/>
+    <textarea{#Body} placeholder="Body" required/><br/>
+    <submit action={create_news_item} value="Post news"/>
+  </form></xml>
+
+
+and create_news_item x =
+  id <- addNews x;
+  Log.info ("<admin> added newsItem " ^ show id ^ ": " ^ x.Title);
+  redirect (url (news_items ()))
+
+
+and delete_news_item { Id = id } =
+  deleteNews (readError id);
+  Log.info ("<admin> deleted newsItem " ^ id);
+  redirect (url (news_items ()))

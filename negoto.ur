@@ -98,7 +98,7 @@ fun layout (title' : string) (class' : css_class) body' =
 
 and newsItem item : xbody =
   <xml><article>
-    <header>{[item.Title]} by {[item.Author]} at {[item.Time]}</header>
+    <header><strong>{[item.Title]}</strong> by {[item.Author]} at {[item.Time]}</header>
     <div>{Post.toHtml' item.Body}</div>
   </article></xml>
 

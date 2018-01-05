@@ -1,6 +1,7 @@
 database dbname=negoto
 sql schema.sql
 allow url https://github.com/steinuil/negoto
+allow env NEGOTO_LOGLEVEL
 rewrite style Negoto/* [-]
 rewrite style Post/* text_ [-]
 timeFormat %Y/%m/%d %H:%M:%S
