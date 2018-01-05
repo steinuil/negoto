@@ -4,6 +4,7 @@ allow url https://github.com/steinuil/negoto
 allow env NEGOTO_LOGLEVEL
 rewrite style Negoto/* [-]
 rewrite style Post/* text_ [-]
+rewrite url * [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 allow mime text/plain

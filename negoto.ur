@@ -15,7 +15,7 @@ style container
 
 style base_page
 style front_page
-style tag_page
+style catalog_page
 style thread_page
 style error_page
 
@@ -115,7 +115,7 @@ and front () =
     <main>
       <ul>
         {List.mapX (fn t => <xml><li>
-          <a href={url (tag t.Nam)}>{[t]}</a>
+          <a href={url (catalog t.Nam)}>{[t]}</a>
         </li></xml>) tags}
       </ul>
       <section>
@@ -142,14 +142,14 @@ and readme () =
   </xml>
 
 
-and tag name =
+and catalog name =
   tags <- Data.allTags;
   case List.find (fn t => t.Nam = name) tags of
   | None => error errorPage
   | Some tag' =>
     threads <- (Data.catalogByTag tag'.Nam `bind` List.mapXM catalogThread);
     postForm <- catalogForm tag'.Nam;
-    layout (show tag') tag_page <xml>
+    layout (show tag') catalog_page <xml>
       <header>
         {navigation tags}
         <h1>{[tag']}</h1>
@@ -178,7 +178,7 @@ and thread id =
 
       val back = case t.Tags of
         | [] => <xml/>
-        | t :: _ => <xml>[ <a href={url (tag t)}>back</a> ]</xml>
+        | t :: _ => <xml>[ <a href={url (catalog t)}>back</a> ]</xml>
 
       fun addTxt str =
         t <- get txtbx;
@@ -249,7 +249,7 @@ and threadPost addToPostBody post' =
 and tagLinks tags =
   menu <| (url (front ()), "Home", "Home")
        :: List.mp (fn { Nam = name, Slug = slug } =>
-         (url (tag name), slug, name)) tags
+         (url (catalog name), slug, name)) tags
 
 
 and otherLinks () =
@@ -282,7 +282,7 @@ and catalogForm (boardId : string) : transaction xbody =
     <subforms{#Tags}>
       <entry><hidden{#Id} value={show boardId} /></entry>
     </subforms>
-    <submit action={catalogFormHandler} class="hidden-field" id={submitButton} />
+    <submit action={create_thread} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
@@ -304,11 +304,11 @@ and threadForm (threadId : int) : transaction xbody =
       <label for={spoilerButton} class="button">Spoiler</label>
     </div>
     <hidden{#Thread} value={show threadId} />
-    <submit action={threadFormHandler} class="hidden-field" id={submitButton} />
+    <submit action={create_post} class="hidden-field" id={submitButton} />
   </form></xml>
 
 
-and catalogFormHandler f = let
+and create_thread f = let
   val files =
     if blobSize (fileData f.File) > 0 then
       { File = f.File, Spoiler = f.Spoiler } :: []
@@ -325,7 +325,7 @@ in
 end
 
 
-and threadFormHandler f = let
+and create_post f = let
   val files =
     if blobSize (fileData f.File) > 0 then
       { File = f.File, Spoiler = f.Spoiler } :: []
