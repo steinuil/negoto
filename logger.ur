@@ -1,19 +1,21 @@
+datatype level = Debug | Info | Warning | Error
+
+
+val show_level =
+  mkShow (fn x =>
+    case x of
+    | Debug   => "DEBUG"
+    | Info    => "INFO"
+    | Warning => "WARNING"
+    | Error   => "ERROR")
+
+
 signature M = sig
   val section : string
 end
 
 
 functor Make(M : M) = struct
-  datatype level = Debug | Info | Warning | Error
-
-  val show_level =
-    mkShow (fn x =>
-      case x of
-      | Debug   => "[DEBUG]"
-      | Info    => "[INFO]"
-      | Warning => "[WARNING]"
-      | Error   => "[ERROR]")
-
   val time =
     timestamp <- now;
     return (timef "%Y/%m/%d %H:%M:%S" timestamp)

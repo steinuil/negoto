@@ -52,6 +52,10 @@ val catalog : transaction (list catalogThread)
 val catalogByTag : string -> transaction (list catalogThread)
   (** Return previews for all threads associated with a certain tag. *)
 
+val catalogByTag' : string -> transaction (option (list catalogThread))
+  (* Like catalogByTag, but returns None if the tag doesn't exist while
+   * catalogByTag just returns an empty list. *)
+
 val threadById : int -> transaction (option (thread * list post))
   (** Convenience function to get both thread info and posts for a thread ID. *)
 
@@ -83,6 +87,10 @@ val newPost :
     { File : file
     , Spoiler : bool }
   , Thread : int } -> transaction int
+
+
+(* Edit *)
+val editSlug : tag -> transaction unit
 
 
 (* Delete *)

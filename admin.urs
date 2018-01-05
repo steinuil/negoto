@@ -5,3 +5,8 @@ type newsItem =
   , Body   : string }
 
 val news : transaction (list newsItem)
+
+(* Admin actions *)
+val boards : unit -> transaction page
+
+val board : string -> transaction page

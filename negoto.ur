@@ -387,6 +387,7 @@ val main =
     val _ = url Api.boards
     val _ = url (Api.catalog "snw")
     val _ = url (Api.thread 1)
+    val _ = url (Admin.boards ())
   in
     redirect (url (front ()))
   end

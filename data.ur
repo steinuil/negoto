@@ -237,6 +237,14 @@ val catalogByTag tag =
     (return `compose2` coalesceCatalogThread)
     []
 
+fun catalogByTag' tag =
+  t <- tagByName tag;
+  case t of
+  | None => return None
+  | Some _ =>
+    x <- catalogByTag tag;
+    return (Some x)
+
 fun threadInfoById id =
   thread <- query (SELECT * FROM threadView WHERE threadView.Id = {[id]})
     (return `compose2` coalesceThread')
@@ -311,6 +319,13 @@ fun newThread { Nam = name, Subject = subj, Body = body
   List.app (insertThreadTag id) tags;
   _ <- newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id };
   return id
+
+
+
+(* EDIT *)
+fun editSlug { Nam = name, Slug = slug } =
+  dml (UPDATE tags SET Slug = {[slug]}
+       WHERE Nam = {[name]})
 
 
 
