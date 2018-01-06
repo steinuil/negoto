@@ -1,3 +1,9 @@
+type readme =
+  { Body    : string
+  , Updated : time }
+
+val readme : transaction readme
+
 type newsItem =
   { Title  : string
   , Author : string

@@ -44,7 +44,7 @@ in the post body.
   * [X] catalog endpoint
   * [X] thread endpoint
   * [X] include API links without linking it from the readme page
-  * [ ] readme endpoint
+  * [X] readme endpoint
   * [ ] return proper HTTP statuses on error
   * [X] news endpoint
 

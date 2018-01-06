@@ -1,6 +1,21 @@
 structure Log = Logger.Make(struct val section = "admin" end)
 
 
+(* Readme *)
+table readmeT :
+  { Body    : string
+  , Updated : time }
+
+
+val readme =
+  oneRow1 (SELECT * FROM readmeT)
+
+
+fun updateReadme body =
+  dml (UPDATE readmeT SET Body = {[body]}, Updated = CURRENT_TIMESTAMP
+       WHERE TRUE)
+
+
 (* News *)
 sequence newsItems_id
 

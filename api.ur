@@ -63,6 +63,11 @@ val json_newsItem : json Admin.newsItem =
     , Time   = "time"
     , Body   = "body" }
 
+val json_readme : json Admin.readme =
+  json_record
+    { Body    = "body"
+    , Updated = "updated" }
+
 
 (* The actual endpoints *)
 (* TODO: return 404 with an error on error? *)
@@ -83,3 +88,6 @@ fun thread id =
 
 val news =
   jsonPage Admin.news
+
+val readme =
+  jsonPage Admin.readme

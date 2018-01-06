@@ -63,6 +63,11 @@ interface NewsItem {
   time: unix_time;
   body: string;
 }
+
+interface Readme {
+  body: string;
+  updated: unix_time;
+}
 ```
 
 
@@ -100,5 +105,14 @@ Errors:
 Url: `/Api/news`
 
 Returns: `Array<NewsItem>`
+
+Errors: none
+
+
+## Readme
+
+Url: `/Api/readme`
+
+Returns: `Readme`
 
 Errors: none

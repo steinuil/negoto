@@ -18,6 +18,7 @@ style front_page
 style catalog_page
 style thread_page
 style error_page
+style readme_page
 
 
 val sourceUrl = bless 'https://github.com/steinuil/negoto'
@@ -131,13 +132,15 @@ and front () =
 
 and readme () =
   tags <- Data.allTags;
-  layout "Readme" base_page <xml>
+  readme <- Admin.readme;
+  layout "Readme" readme_page <xml>
     <header>
       {navigation tags}
       <h1>Readme</h1>
     </header>
     <main>
-      README HERE
+      <article>{Post.toHtml' readme.Body}</article>
+      <footer>Last updated at {[readme.Updated]}</footer>
     </main>
   </xml>
 
@@ -388,6 +391,7 @@ val main =
     val _ = url (Api.catalog "snw")
     val _ = url (Api.thread 1)
     val _ = url Api.news
+    val _ = url Api.readme
     val _ = url (Admin.boards ())
   in
     redirect (url (front ()))
