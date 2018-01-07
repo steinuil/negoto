@@ -29,11 +29,9 @@ in the post body.
   * [ ] implement admin accounts
   * [ ] interface for deleting boards, posts, threads and files
   * [X] interface for adding boards
-  * [ ] interface for editing the readme file
-    * some kind of markup language parser?
+  * [X] interface for editing the readme file
   * [X] interface for adding/deleting news
-  * [ ] interface for editing news
-  * [X] interface for editing the readme
+  * [X] interface for editing news
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box

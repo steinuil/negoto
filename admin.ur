@@ -37,6 +37,10 @@ val allNews =
   queryL1 (SELECT * FROM newsItems)
 
 
+fun getNews id =
+  oneOrNoRows1 (SELECT * FROM newsItems WHERE newsItems.Id = {[id]})
+
+
 fun addNews { Title = title, Author = author, Body = body } =
   id <- nextval newsItems_id;
   dml (INSERT INTO newsItems (Id, Title, Author, Time, Body)
@@ -46,6 +50,11 @@ fun addNews { Title = title, Author = author, Body = body } =
 
 fun deleteNews (id : int) =
   dml (DELETE FROM newsItems WHERE Id = {[id]})
+
+
+fun editNews id { Title = title, Body = body } =
+  dml (UPDATE newsItems SET Title = {[title]}, Body = {[body]}
+       WHERE Id = {[id]})
 
 
 
@@ -144,6 +153,7 @@ and news_items () =
         <tr>
           <td>{[n.Id]}</td><td>{[n.Title]}</td>
           <td>{[n.Author]}</td><td>{[n.Body]}</td>
+          <td><a href={url (news_item n.Id)}>edit</a></td>
           <form>
             <hidden{#Id} value={show n.Id}/>
             <td><submit value="Delete item"
@@ -160,6 +170,19 @@ and news_items () =
   </form></xml>
 
 
+and news_item id =
+  n <- getNews id;
+  case n of
+  | None => error <xml>No such news item</xml>
+  | Some news =>
+    layout <xml><form>
+      <hidden{#Id} value={show id}/>
+      <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
+      <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+      <submit value="Edit news item" action={edit_news_item}/>
+    </form></xml>
+
+
 and create_news_item x =
   id <- addNews x;
   Log.info ("<admin> added newsItem " ^ show id ^ ": " ^ x.Title);
@@ -169,6 +192,12 @@ and create_news_item x =
 and delete_news_item { Id = id } =
   deleteNews (readError id);
   Log.info ("<admin> deleted newsItem " ^ id);
+  redirect (url (news_items ()))
+
+
+and edit_news_item f =
+  editNews (readError f.Id) (f -- #Id);
+  Log.info ("<admin> edited newsItem " ^ f.Id);
   redirect (url (news_items ()))
 
 
