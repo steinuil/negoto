@@ -141,7 +141,7 @@ and board name =
     <tr><th>ID</th><th>Subject</th></tr>
     {List.mapX (fn { Id = id, Subject = subject, ... } =>
       <xml><tr>
-        <td>{[id]}</td><td>{[subject]}</td>
+        <td><a href={url <| thread id}>{[id]}</a></td><td>{[subject]}</td>
         <td><form>
           <hidden{#Id} value={show id}/>
           <hidden{#Tag} value={name}/>
@@ -157,6 +157,49 @@ and delete_thread { Id = id, Tag = tag } =
   Data.deleteThread (readError id);
   Log.info ("<admin> deleted thread " ^ id);
   redirect (url (board tag))
+
+
+and thread tid =
+  x <- Data.threadById tid;
+  case x of None => error <xml>Thread not found</xml> | Some (_, posts) =>
+  layout <xml><table>
+    <tr><th>ID</th><th>Files</th></tr>
+    {List.mapX (fn { Id = id, Files = files, ... } =>
+      <xml><tr>
+        <td>{[id]}</td>
+        <td>{List.mapX (fn file =>
+            <xml><form>
+              <hidden{#Hash} value={file.Hash}/>
+              <hidden{#Nam} value={file.Nam}/>
+              <hidden{#Ext} value={file.Ext}/>
+              <hidden{#Spoiler} value={show file.Spoiler}/>
+              <hidden{#Thread} value={show tid}/>
+              <submit value={"Delete file " ^ file.Nam}
+                onclick={confirmDel file.Nam} action={delete_file}/>
+            </form></xml>
+          ) files}</td>
+        <td><form>
+          <hidden{#Id} value={show id}/>
+          <hidden{#Thread} value={show tid}/>
+          <submit value="Delete post" onclick={confirmDel (show id)}
+            action={delete_post}/>
+        </form></td>
+      </tr></xml>) posts}
+  </table></xml>
+
+
+and delete_post { Id = id, Thread = thread' } =
+  let val t = readError thread' in
+    Data.deletePost t (readError id);
+    Log.info ("<admin> deleted post " ^ id ^ "on thread " ^ thread');
+    redirect (url (thread t))
+  end
+
+
+and delete_file file =
+  Data.deleteFile (file -- #Thread -- #Spoiler ++ { Spoiler = readError file.Spoiler });
+  Log.info ("<admin> deleted file " ^ file.Hash);
+  redirect (url (thread (readError file.Thread)))
 
 
 and news_items () =

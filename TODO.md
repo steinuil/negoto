@@ -27,7 +27,7 @@ in the post body.
 
 * Admin control panel
   * [ ] implement admin accounts
-  * [ ] interface for deleting boards, posts, threads and files
+  * [X] interface for deleting boards, posts, threads and files
   * [X] interface for adding boards
   * [X] interface for editing the readme file
   * [X] interface for adding/deleting news
@@ -49,6 +49,9 @@ in the post body.
 
 * News
   * [X] show some news on the front page
+
+* Other
+  * [ ] Deleting the OP should delete the rest of the thread
 
 
 ## Advanced frontend
