@@ -33,6 +33,7 @@ in the post body.
     * some kind of markup language parser?
   * [X] interface for adding/deleting news
   * [ ] interface for editing news
+  * [X] interface for editing the readme
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box

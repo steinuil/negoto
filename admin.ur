@@ -68,6 +68,7 @@ fun layout (body' : xbody) : transaction page =
       <nav><ul>
         <a href={url (boards ())}>boards</a>
         <a href={url (news_items ())}>news</a>
+        <a href={url (readme_text ())}>readme</a>
       </ul></nav>
       <main>{body'}</main>
     </body>
@@ -169,3 +170,20 @@ and delete_news_item { Id = id } =
   deleteNews (readError id);
   Log.info ("<admin> deleted newsItem " ^ id);
   redirect (url (news_items ()))
+
+
+and readme_text () =
+  r <- readme;
+  layout <xml>
+    <div>{Post.toHtml' r.Body}</div>
+    <form>
+      <textarea{#Body} required placeholder="Readme">{[r.Body]}</textarea><br/>
+      <submit value="Edit readme" action={edit_readme}/>
+    </form>
+  </xml>
+
+
+and edit_readme { Body = body } =
+  updateReadme body;
+  Log.info "<admin> edited the readme";
+  redirect (url (readme_text ()))
