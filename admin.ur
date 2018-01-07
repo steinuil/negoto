@@ -140,9 +140,23 @@ and board name =
   layout <xml><table>
     <tr><th>ID</th><th>Subject</th></tr>
     {List.mapX (fn { Id = id, Subject = subject, ... } =>
-      <xml><tr><td>{[id]}</td><td>{[subject]}</td></tr></xml>)
+      <xml><tr>
+        <td>{[id]}</td><td>{[subject]}</td>
+        <td><form>
+          <hidden{#Id} value={show id}/>
+          <hidden{#Tag} value={name}/>
+          <submit value="Delete thread" onclick={confirmDel subject}
+            action={delete_thread}/>
+        </form></td>
+      </tr></xml>)
       threads}
   </table></xml>
+
+
+and delete_thread { Id = id, Tag = tag } =
+  Data.deleteThread (readError id);
+  Log.info ("<admin> deleted thread " ^ id);
+  redirect (url (board tag))
 
 
 and news_items () =
@@ -172,15 +186,13 @@ and news_items () =
 
 and news_item id =
   n <- getNews id;
-  case n of
-  | None => error <xml>No such news item</xml>
-  | Some news =>
-    layout <xml><form>
-      <hidden{#Id} value={show id}/>
-      <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
-      <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
-      <submit value="Edit news item" action={edit_news_item}/>
-    </form></xml>
+  case n of None => error <xml>No such news item</xml> | Some news =>
+  layout <xml><form>
+    <hidden{#Id} value={show id}/>
+    <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
+    <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+    <submit value="Edit news item" action={edit_news_item}/>
+  </form></xml>
 
 
 and create_news_item x =
