@@ -218,7 +218,7 @@ and catalogThread thread' =
       <div class="info">
         <time>{updated}</time>
         <span class="separator">/</span>
-        &lt;count here&gt;
+        {[thread'.Count]} posts
       </div>
       <div class="description">
         <span class="subject">{[thread'.Subject]}</span>

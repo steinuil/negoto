@@ -7,6 +7,7 @@ type thread =
   { Id      : int
   , Updated : time
   , Subject : string
+  , Count   : int
   , Locked  : bool
   , Tags    : list string }
   (** A thread which may belong to one or more tags. *)
@@ -31,6 +32,7 @@ type catalogThread =
   { Id      : int
   , Updated : time
   , Subject : string
+  , Count   : int
   , Locked  : bool
   , Tags    : list string
   , Nam     : string

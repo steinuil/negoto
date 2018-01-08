@@ -28,6 +28,7 @@ val json_Thread : json Data.thread =
     { Id      = "id"
     , Updated = "updated"
     , Subject = "subject"
+    , Count   = "count"
     , Locked  = "locked"
     , Tags    = "boards" }
 
@@ -49,6 +50,7 @@ val json_CatalogThread : json Data.catalogThread =
     { Id      = "id"
     , Updated = "updated"
     , Subject = "subject"
+    , Count   = "count"
     , Locked  = "locked"
     , Tags    = "boards"
     , Nam     = "name"

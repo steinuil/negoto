@@ -32,6 +32,7 @@ interface Thread {
   id: id;
   updated: unix_time;
   subject: string;
+  count: int;
   locked: boolean;
   boards: Array<string>;
 }
@@ -40,6 +41,7 @@ interface ThreadOp {
   id: id;
   updated: unix_time;
   subject: string;
+  count: int;
   locked: boolean;
   boards: Array<string>;
   name: string;

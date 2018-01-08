@@ -12,6 +12,7 @@ type thread =
   { Id      : int
   , Updated : time
   , Subject : string
+  , Count   : int
   , Locked  : bool
   , Tags    : list string }
 
@@ -33,6 +34,7 @@ type catalogThread =
   { Id      : int
   , Updated : time
   , Subject : string
+  , Count   : int
   , Locked  : bool
   , Tags    : list string
   , Nam     : string
@@ -56,6 +58,7 @@ table threads :
   { Id      : int
   , Updated : time
   , Subject : string
+  , Count   : int
   , Locked  : bool }
   PRIMARY KEY (Id)
 
@@ -107,6 +110,7 @@ view catalogView =
     , threads.Updated AS Updated
     , threads.Subject AS Subject
     , threads.Locked  AS Locked
+    , threads.Count   AS Count
     , thread_tags.Tag AS Tag
     , posts.Nam       AS Nam
     , posts.Time      AS Time
@@ -129,6 +133,7 @@ view threadView =
   SELECT threads.Id   AS Id
     , threads.Updated AS Updated
     , threads.Subject AS Subject
+    , threads.Count   AS Count
     , threads.Locked  AS Locked
     , thread_tags.Tag AS Tag
   FROM threads
@@ -301,12 +306,14 @@ fun bumpThread id shouldBump =
 fun newPost { Nam = name, Body = body, Bump = shouldBump
             , Files = files', Thread = thread } =
   uid <- nextval post_id;
-  { Count = lastid } <- oneRow (SELECT COUNT( * ) AS Count FROM posts
-                                WHERE posts.Thread = {[thread]});
+  { Count = lastCnt } <- oneRow1 (SELECT threads.Count FROM threads
+                                  WHERE threads.Id = {[thread]});
   bumpThread thread shouldBump;
   dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
-       VALUES ( {[uid]}, {[lastid + 1]}, {[thread]}, {[name]}
+       VALUES ( {[uid]}, {[lastCnt + 1]}, {[thread]}, {[name]}
               , CURRENT_TIMESTAMP, {[body]} ));
+  dml (UPDATE threads SET Count = {[lastCnt + 1]}
+       WHERE Id = {[thread]});
   List.app (insertFile uid) files';
   return uid
 
@@ -314,8 +321,8 @@ fun newPost { Nam = name, Body = body, Bump = shouldBump
 fun newThread { Nam = name, Subject = subj, Body = body
               , Files = files', Tags = tags } =
   id <- nextval thread_id;
-  dml (INSERT INTO threads (Id, Updated, Subject, Locked)
-       VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, {[False]} ));
+  dml (INSERT INTO threads (Id, Updated, Subject, Count, Locked)
+       VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, 0, {[False]} ));
   List.app (insertThreadTag id) tags;
   _ <- newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id };
   return id
