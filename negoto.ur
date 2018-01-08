@@ -171,7 +171,7 @@ and thread id =
   | Some (t, posts) =>
     tags <- Data.allTags;
     tForm <- threadForm t.Id;
-    txtbx <- source "";
+    postBody <- source "";
     let
       val title' = case t.Tags of
         | [] => ""
@@ -184,10 +184,11 @@ and thread id =
         | t :: _ => <xml>[ <a href={url (catalog t)}>back</a> ]</xml>
 
       fun addTxt str =
-        t <- get txtbx;
-        set txtbx (t ^ str)
+        t <- get postBody;
+        set postBody (t ^ str)
     in
       posts <- List.mapXM (threadPost addTxt) posts;
+      pForm <- postForm postBody id;
       layout title' thread_page <xml>
         <header>
           {navigation tags}
@@ -197,8 +198,7 @@ and thread id =
           {back} {[t.Subject]}
           {posts}
           {tForm}
-          <ctextbox source={txtbx}/>
-          <div onclick={fn _ => x <- get txtbx; debug x}>click</div>
+          {pForm}
         </main>
       </xml>
     end
@@ -346,6 +346,42 @@ in
 end
 
 
+and create_post' f =
+  let
+    val post = f -- #Spoiler ++ { Files = [] }
+  in
+    _ <- Data.newPost post;
+    return {}
+  end
+
+
+and postForm (body : source string) (threadId : int) : transaction xbody =
+  name <- source "Anonymous";
+  bump <- source True;
+  spoiler <- source False;
+  bumpId <- fresh;
+  spoilerId <- fresh;
+  let
+    val getForm =
+      n <- get name; b <- get bump; bd <- get body; s <- get spoiler;
+      return { Nam = n, Bump = b, Body = bd, Thread = threadId, Spoiler = s }
+  in
+    return <xml><div class="post-form">
+      <div>
+        <ctextbox source={name} placeholder="Name"/>
+        <ccheckbox source={bump} id={bumpId} class="hidden-field"/>
+        <label for={bumpId} class="button">Bump</label>
+        <span class="button" onclick={fn _ => f <- getForm; rpc (create_post' f)}>Post</span>
+      </div>
+      <ctextarea source={body}/>
+      <div>
+        <ccheckbox source={spoiler} id={spoilerId} class="hidden-field"/>
+        <label for={spoilerId} class="button">Spoiler</label>
+      </div>
+    </div></xml>
+  end
+
+
 (* FIXME: Can't use these until the fatal error in filesForm is fixed.
 and threadForm (threadId : int) : transaction xbody =
   submitButton <- fresh;
@@ -385,8 +421,7 @@ end
 
 val main =
   let
-    (* Put the API endpoints into the dependency graph,
-     * so that they're accessible at /Api/ *)
+    (* Put the API and Admin endpoints into the dependency graph *)
     val _ = url Api.boards
     val _ = url (Api.catalog "snw")
     val _ = url (Api.thread 1)
