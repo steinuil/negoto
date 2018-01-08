@@ -271,6 +271,12 @@ fun threadById id =
     posts <- postsByThread id;
     return (Some (t, posts))
 
+fun postsSince thread lastId =
+  query (SELECT * FROM postView
+         WHERE postView.Thread = {[thread]} AND postView.Id > {[lastId]})
+    (return `compose2` coalescePost')
+    []
+
 
 (* * File *)
 val orphanedFiles =
@@ -305,9 +311,12 @@ fun bumpThread id shouldBump =
 
 fun newPost { Nam = name, Body = body, Bump = shouldBump
             , Files = files', Thread = thread } =
+  { Count = lastCnt, Locked = locked } <-
+    oneRow1 (SELECT threads.Count, threads.Locked FROM threads
+             WHERE threads.Id = {[thread]});
+  if lastCnt >= 1000 then error <xml>Post limit exceeded</xml> else
+  if locked then error <xml>This thread is locked</xml> else
   uid <- nextval post_id;
-  { Count = lastCnt } <- oneRow1 (SELECT threads.Count FROM threads
-                                  WHERE threads.Id = {[thread]});
   bumpThread thread shouldBump;
   dml (INSERT INTO posts (Uid, Id, Thread, Nam, Time, Body)
        VALUES ( {[uid]}, {[lastCnt + 1]}, {[thread]}, {[name]}
@@ -334,6 +343,12 @@ fun editSlug { Nam = name, Slug = slug } =
   dml (UPDATE tags SET Slug = {[slug]}
        WHERE Nam = {[name]})
 
+fun lockThread id =
+  dml (UPDATE threads SET Locked = {[True]} WHERE Id = {[id]})
+
+fun unlockThread id =
+  dml (UPDATE threads SET Locked = {[False]} WHERE Id = {[id]})
+
 
 
 (* * DELETE *)
@@ -348,6 +363,8 @@ fun deleteThread id =
   dml (DELETE FROM threads WHERE Id = {[id]})
 
 fun deletePost thread id =
+  if id > 1 then return {} else
+    dml (DELETE FROM threads WHERE Id = {[thread]});
   dml (DELETE FROM posts WHERE Thread = {[thread]} AND Id = {[id]})
 
 fun deletePostByUid uid =

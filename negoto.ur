@@ -218,7 +218,7 @@ and catalogThread thread' =
       <div class="info">
         <time>{updated}</time>
         <span class="separator">/</span>
-        {[thread'.Count]} posts
+        {[thread'.Count]} post{if thread'.Count > 1 then <xml>s</xml> else <xml/>}
       </div>
       <div class="description">
         <span class="subject">{[thread'.Subject]}</span>
@@ -347,9 +347,7 @@ end
 
 
 and create_post' f =
-  let
-    val post = f -- #Spoiler ++ { Files = [] }
-  in
+  let val post = f -- #Spoiler ++ { Files = [] } in
     _ <- Data.newPost post;
     return {}
   end
@@ -362,16 +360,17 @@ and postForm (body : source string) (threadId : int) : transaction xbody =
   bumpId <- fresh;
   spoilerId <- fresh;
   let
-    val getForm =
+    val mkPost =
       n <- get name; b <- get bump; bd <- get body; s <- get spoiler;
-      return { Nam = n, Bump = b, Body = bd, Thread = threadId, Spoiler = s }
+      rpc <| create_post' { Nam = n, Bump = b, Body = bd
+                          , Thread = threadId, Spoiler = s }
   in
     return <xml><div class="post-form">
       <div>
         <ctextbox source={name} placeholder="Name"/>
         <ccheckbox source={bump} id={bumpId} class="hidden-field"/>
         <label for={bumpId} class="button">Bump</label>
-        <span class="button" onclick={fn _ => f <- getForm; rpc (create_post' f)}>Post</span>
+        <span class="button" onclick={fn _ => mkPost}>Post</span>
       </div>
       <ctextarea source={body}/>
       <div>

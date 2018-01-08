@@ -139,7 +139,7 @@ and board name =
   case t of None => error <xml>Board not found</xml> | Some threads =>
   layout <xml><table>
     <tr><th>ID</th><th>Subject</th></tr>
-    {List.mapX (fn { Id = id, Subject = subject, ... } =>
+    {List.mapX (fn { Id = id, Subject = subject, Locked = locked, ... } =>
       <xml><tr>
         <td><a href={url <| thread id}>{[id]}</a></td><td>{[subject]}</td>
         <td><form>
@@ -148,6 +148,20 @@ and board name =
           <submit value="Delete thread" onclick={confirmDel subject}
             action={delete_thread}/>
         </form></td>
+        <td>
+          {if locked then
+            <xml><form>
+              <hidden{#Id} value={show id}/>
+              <hidden{#Tag} value={name}/>
+              <submit value="Unlock thread" action={unlock_thread}/>
+            </form></xml>
+          else
+            <xml><form>
+              <hidden{#Id} value={show id}/>
+              <hidden{#Tag} value={name}/>
+              <submit value="Lock thread" action={lock_thread}/>
+            </form></xml>}
+        </td>
       </tr></xml>)
       threads}
   </table></xml>
@@ -156,6 +170,18 @@ and board name =
 and delete_thread { Id = id, Tag = tag } =
   Data.deleteThread (readError id);
   Log.info ("<admin> deleted thread " ^ id);
+  redirect (url (board tag))
+
+
+and unlock_thread { Id = id, Tag = tag } =
+  Data.unlockThread (readError id);
+  Log.info ("<admin> unlocked thread " ^ id);
+  redirect (url (board tag))
+
+
+and lock_thread { Id = id, Tag = tag } =
+  Data.lockThread (readError id);
+  Log.info ("<admin> locked thread " ^ id);
   redirect (url (board tag))
 
 

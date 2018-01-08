@@ -61,6 +61,9 @@ val catalogByTag' : string -> transaction (option (list catalogThread))
 val threadById : int -> transaction (option (thread * list post))
   (** Convenience function to get both thread info and posts for a thread ID. *)
 
+val postsSince : int -> int -> transaction (list post)
+  (* Get the new posts in a thread given the last seen ID. *)
+
 
 val threadInfoById : int -> transaction (option thread)
   (** Return thread info for a single thread by its ID. *)
@@ -93,6 +96,10 @@ val newPost :
 
 (* Edit *)
 val editSlug : tag -> transaction unit
+
+val lockThread : int -> transaction unit
+
+val unlockThread : int -> transaction unit
 
 
 (* Delete *)

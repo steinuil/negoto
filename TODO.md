@@ -18,12 +18,12 @@ in the post body.
   * [ ] parse inter-thread backlinks
 
 * Ajax post forms
-  * [ ] convert fields to their ajax counterparts
+  * [X] convert fields to their ajax counterparts
   * [ ] use [ajaxUpload](https://github.com/urweb/ajaxUpload) library for files
 
 * Limits on number of threads and posts
   * [ ] bump old threads off the board
-  * [ ] lock threads when they're over their post limit
+  * [X] lock threads when they're over their post limit
 
 * Admin control panel
   * [ ] implement admin accounts
@@ -51,7 +51,7 @@ in the post body.
   * [X] show some news on the front page
 
 * Other
-  * [ ] Deleting the OP should delete the rest of the thread
+  * [X] Deleting the OP should delete the rest of the thread
 
 
 ## Advanced frontend
