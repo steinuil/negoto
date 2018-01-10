@@ -26,7 +26,8 @@ in the post body.
   * [X] lock threads when they're over their post limit
 
 * Admin control panel
-  * [ ] implement admin accounts
+  * [X] implement admin accounts
+  * [ ] restrict admin privileges to admins
   * [X] interface for deleting boards, posts, threads and files
   * [X] interface for adding boards
   * [X] interface for editing the readme file

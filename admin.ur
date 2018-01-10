@@ -59,8 +59,106 @@ fun editNews id { Title = title, Body = body } =
 
 
 (* Admin stuff *)
-table admins :
-  { Nam : string }
+structure Account : sig
+  datatype role = Owner | Admin | Moderator
+
+  val add : string -> string -> role -> transaction unit
+
+  val changePassword : string -> string -> transaction unit
+
+  val delete : string -> transaction unit
+
+  val validate : string -> string -> transaction bool
+
+  val roleOf : string -> transaction (option role)
+end = struct
+  table admins :
+    { Nam  : string
+    , Role : int
+    , Hash : string
+    , Salt : string }
+    PRIMARY KEY Nam
+
+  datatype role = Owner | Admin | Moderator
+
+
+  fun int_of_role role =
+    case role of
+    | Owner => 0
+    | Admin => 1
+    | Moderator => 2
+
+  fun role_of_int role =
+    case role of
+    | 0 => Owner
+    | 1 => Admin
+    | 2 => Moderator
+    | _ => error <xml>Invalid role</xml>
+
+  (* Some typeclass implementations for roles *)
+  val ord_role =
+    mkOrd { Lt = (fn x y => lt (int_of_role x) (int_of_role y))
+          , Le = (fn x y => le (int_of_role x) (int_of_role y)) }
+
+  val read_role = let
+      fun read' x =
+        case x of
+        | "owner"     => Some Owner
+        | "admin"     => Some Admin
+        | "moderator" => Some Moderator
+        | _ => None
+    in
+      mkRead
+        (fn x => case read' x of
+          | None => error <xml>Invalid role: {[x]}</xml>
+          | Some x => x)
+        read'
+    end
+
+  val show_role =
+    mkShow (fn x =>
+      case x of
+      | Owner     => "owner"
+      | Admin     => "admin"
+      | Moderator => "moderator")
+
+
+  (* Manage accounts *)
+  fun hashPassword pass =
+    salt <- rand;
+    let val salt = show salt
+        val hash = crypt pass salt in
+      return (hash, salt)
+    end
+
+  fun add name pass role =
+    (hash, salt) <- hashPassword pass;
+    dml (INSERT INTO admins (Nam, Role, Hash, Salt)
+         VALUES ( {[name]}, {[int_of_role role]}, {[hash]}, {[salt]} ))
+
+  fun changePassword name pass =
+    (hash, salt) <- hashPassword pass;
+    dml (UPDATE admins SET Hash = {[hash]}, Salt = {[salt]}
+         WHERE Nam = {[name]})
+
+  fun delete name =
+    dml (DELETE FROM admins WHERE Nam = {[name]})
+
+  fun validate name pass =
+    x <- oneOrNoRows1 (SELECT admins.Salt, admins.Hash FROM admins
+                       WHERE admins.Nam = {[name]});
+    case x of
+    | Some { Salt = salt, Hash = hash } =>
+      return ((crypt pass salt) = hash)
+    | None =>
+      return False
+
+  fun roleOf name =
+    r <- oneOrNoRows1 (SELECT admins.Role FROM admins WHERE admins.Nam = {[name]});
+    case r of
+    | Some { Role = role } => return (Some (role_of_int role))
+    | None => return None
+end
 
 
 fun confirmDel name _ =
