@@ -49,3 +49,12 @@ fun mapNoneM [m] (_ : monad m) [a]
   case r1 of
   | None => f2
   | Some _ => return r1
+
+
+fun mapOptX [m] (_ : monad m) [a] [b]
+    (f : a -> m b) (x' : option a) : m (option b) =
+  case x' of
+  | None => return None
+  | Some x =>
+    res <- f x;
+    return (Some res)

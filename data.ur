@@ -363,9 +363,10 @@ fun deleteThread id =
   dml (DELETE FROM threads WHERE Id = {[id]})
 
 fun deletePost thread id =
-  if id > 1 then return {} else
-    dml (DELETE FROM threads WHERE Id = {[thread]});
-  dml (DELETE FROM posts WHERE Thread = {[thread]} AND Id = {[id]})
+  if id > 1 then
+    dml (DELETE FROM posts WHERE Thread = {[thread]} AND Id = {[id]})
+  else
+    deleteThread id
 
 fun deletePostByUid uid =
   dml (DELETE FROM posts WHERE Uid = {[uid]})

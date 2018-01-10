@@ -1,13 +1,16 @@
 open Json
 
 
-fun json' [m] (_ : monad m) [a] (_ : json a) (f : m a) : m string =
-  x <- f;
-  return (toJson x)
+fun jsonPage [a] (_ : json a) (x : a) : transaction page =
+  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
 
-fun jsonPage [a] (_ : json a) (f : transaction a) : transaction page =
+fun jsonPageM [a] (_ : json a) (f : transaction a) : transaction page =
   x <- f;
   returnBlob (textBlob (toJson x)) (blessMime "text/plain")
+
+fun jsonError (msg : string) : transaction page =
+  setHeader (blessResponseHeader "Status") "404 Not Found";
+  returnBlob (textBlob (toJson msg)) (blessMime "text/plain")
 
 
 (* Provide implementations of the `json` typeclass for the types we need,
@@ -74,22 +77,24 @@ val json_readme : json Admin.readme =
 (* The actual endpoints *)
 (* TODO: return 404 with an error on error? *)
 val boards =
-  jsonPage Data.allTags
+  jsonPageM Data.allTags
 
 fun catalog board =
-  jsonPage (Data.catalogByTag' board)
+  c <- Data.catalogByTag' board;
+  case c of
+  | Some cat => jsonPage cat
+  | None => jsonError "No such board"
 
 fun thread id =
   t <- Data.threadById id;
-  let val x = case t of
-    | Some (t, p) => Some { Thread = t, Posts = p }
-    | None => None
-  in
-    jsonPage (return x)
-  end
+  case t of
+  | Some (t, p) =>
+    jsonPage { Thread = t, Posts = p }
+  | None =>
+    jsonError "No such thread"
 
 val news =
-  jsonPage Admin.news
+  jsonPageM Admin.news
 
 val readme =
-  jsonPage Admin.readme
+  jsonPageM Admin.readme

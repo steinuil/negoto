@@ -44,7 +44,8 @@ in the post body.
   * [X] thread endpoint
   * [X] include API links without linking it from the readme page
   * [X] readme endpoint
-  * [ ] return proper HTTP statuses on error
+  * [X] return proper HTTP statuses on error
+    * this is only possible with the CGI modes
   * [X] news endpoint
 
 * News

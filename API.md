@@ -89,7 +89,8 @@ URL: `/Api/catalog/<id>`
 Returns: `Array<ThreadOp>`
 
 Errors:
-* When the board doesn't exist, the endpoint will return `null`.
+* When the board doesn't exist, the endpoint will return a JSON string
+  with the error message.
 
 
 ## Thread
@@ -99,7 +100,8 @@ Url: `/Api/thread/<id>`
 Returns: `{ thread: Thread, posts: Array<Post> }`
 
 Errors:
-* When the thread pointed at doesn't exist, the endpoint will return `null`.
+* When the thread pointed at doesn't exist, the endpoint will return a
+  JSON string with the error message.
 
 
 ## News
