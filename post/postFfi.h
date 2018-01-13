@@ -1,3 +1,5 @@
+#pragma once
+
 #include <urweb.h>
 
 uw_Basis_string uw_PostFfi_mkId(uw_context, uw_Basis_int);

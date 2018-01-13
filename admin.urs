@@ -16,3 +16,5 @@ val news : transaction (list newsItem)
 val boards : unit -> transaction page
 
 val board : string -> transaction page
+
+val login : unit -> transaction page

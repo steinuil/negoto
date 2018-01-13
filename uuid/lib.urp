@@ -1,0 +1,3 @@
+ffi uuid
+benignEffectful Uuid.random
+include uuid.h

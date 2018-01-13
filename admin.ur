@@ -161,6 +161,34 @@ end = struct
 end
 
 
+cookie loginToken : string
+
+
+table logged :
+  { User : string
+  , Hash : string
+  , Salt : string }
+
+
+fun addLogin user =
+  salt <- rand;
+  uuid <- Uuid.random;
+  let val salt = show salt
+      val hash = crypt uuid salt in
+    dml (INSERT INTO logged (User, Hash, Salt)
+         VALUES ( {[user]}, {[hash]}, {[salt]} ));
+    return uuid
+  end
+
+
+fun checkToken { Ok = ok, Fail = fail } user token : transaction page =
+  tokens <- queryL1 (SELECT logged.Hash, logged.Salt FROM logged
+                     WHERE logged.User = {[user]});
+  case List.find (fn x => crypt token x.Salt = x.Hash) tokens of
+  | Some _ => ok
+  | None   => fail
+
+
 fun confirmDel name _ =
   ok <- confirm ("Do you really want to delete " ^ name ^ "?");
   if ok then return () else preventDefault
@@ -395,3 +423,24 @@ and edit_readme { Body = body } =
   updateReadme body;
   Log.info "<admin> edited the readme";
   redirect (url (readme_text ()))
+
+
+and login () : transaction page =
+  return <xml>
+    <body>
+      <form>
+        <textbox{#Nam} placeholder="Name" required/><br/>
+        <password{#Password} placeholder="password" required/><br/>
+        <submit value="Log in" action={log_in}/>
+      </form>
+    </body>
+  </xml>
+
+
+and log_in { Nam = name, Password = pass } =
+  valid <- Account.validate name pass;
+  if valid then
+    token <- addLogin name;
+    setCookie loginToken { Value = token, Expires = None, Secure = True };
+    redirect (url (boards ()))
+  else error <xml>Incorrect username or password</xml>

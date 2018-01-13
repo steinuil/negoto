@@ -15,6 +15,8 @@ library file
 link file.o
 library post
 link postFfi.o -lm
+library uuid
+link uuid.o
 
 $/list
 $/option
@@ -27,3 +29,4 @@ data
 admin
 api
 negoto
+main
