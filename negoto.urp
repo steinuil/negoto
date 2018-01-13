@@ -16,7 +16,7 @@ link file.o
 library post
 link postFfi.o -lm
 library uuid
-link uuid.o
+link uuid.o -lssl -lcrypto
 
 $/list
 $/option
