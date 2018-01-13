@@ -158,10 +158,18 @@ end = struct
     case r of
     | Some { Role = role } => return (Some (role_of_int role))
     | None => return None
+
+  task initialize = fn () =>
+    x <- oneOrNoRows1 (SELECT * FROM admins WHERE admins.Role = {[0]});
+    case x of
+    | Some _ => return ()
+    | None => add "steenuil" "password" Owner
 end
 
 
-cookie loginToken : string
+cookie loginToken :
+  { User  : string
+  , Token : string }
 
 
 table logged :
@@ -181,12 +189,16 @@ fun addLogin user =
   end
 
 
-fun checkToken { Ok = ok, Fail = fail } user token : transaction page =
+fun checkToken user token =
   tokens <- queryL1 (SELECT logged.Hash, logged.Salt FROM logged
                      WHERE logged.User = {[user]});
   case List.find (fn x => crypt token x.Salt = x.Hash) tokens of
-  | Some _ => ok
-  | None   => fail
+  | Some _ => return True
+  | None   => return False
+
+
+fun invalidateTokens user =
+  dml (DELETE FROM logged WHERE User = {[user]})
 
 
 fun confirmDel name _ =
@@ -194,7 +206,24 @@ fun confirmDel name _ =
   if ok then return () else preventDefault
 
 
+val requireAuth =
+  let val fail =
+    clearCookie loginToken;
+    error <xml>Failed to authenticate</xml>
+  in
+    tok <- getCookie loginToken;
+    case tok of
+    | None => fail
+    | Some tok =>
+      valid <- checkToken tok.User tok.Token;
+      if valid then return tok.User else
+        Log.info ("Somebody tried to log in with " ^ tok.User ^ "'s account");
+        fail
+  end
+
+
 fun layout (body' : xbody) : transaction page =
+  _ <- requireAuth;
   return <xml>
     <head>
       <title>Admin</title>
@@ -243,20 +272,23 @@ and boards () =
 
 (* TODO: validation *)
 and create_board f =
+  admin <- requireAuth;
   Data.newTag f;
-  Log.info ("<admin> created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
+  Log.info (admin ^ " created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
   redirect (url (boards ()))
 
 
 and delete_board { Nam = name } =
+  admin <- requireAuth;
   Data.deleteTag name;
-  Log.info ("<admin> deleted board /" ^ name ^ "/");
+  Log.info (admin ^ " deleted board /" ^ name ^ "/");
   redirect (url (boards ()))
 
 
 and edit_slug f =
+  admin <- requireAuth;
   Data.editSlug f;
-  Log.info ("<admin> changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
+  Log.info (admin ^ " changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
   redirect (url (boards ()))
 
 
@@ -294,20 +326,23 @@ and board name =
 
 
 and delete_thread { Id = id, Tag = tag } =
+  admin <- requireAuth;
   Data.deleteThread (readError id);
-  Log.info ("<admin> deleted thread " ^ id);
+  Log.info (admin ^ " deleted thread " ^ id);
   redirect (url (board tag))
 
 
 and unlock_thread { Id = id, Tag = tag } =
+  admin <- requireAuth;
   Data.unlockThread (readError id);
-  Log.info ("<admin> unlocked thread " ^ id);
+  Log.info (admin ^ " unlocked thread " ^ id);
   redirect (url (board tag))
 
 
 and lock_thread { Id = id, Tag = tag } =
+  admin <- requireAuth;
   Data.lockThread (readError id);
-  Log.info ("<admin> locked thread " ^ id);
+  Log.info (admin ^ " locked thread " ^ id);
   redirect (url (board tag))
 
 
@@ -341,16 +376,18 @@ and thread tid =
 
 
 and delete_post { Id = id, Thread = thread' } =
+  admin <- requireAuth;
   let val t = readError thread' in
     Data.deletePost t (readError id);
-    Log.info ("<admin> deleted post " ^ id ^ "on thread " ^ thread');
+    Log.info (admin ^ " deleted post " ^ id ^ "on thread " ^ thread');
     redirect (url (thread t))
   end
 
 
 and delete_file file =
+  admin <- requireAuth;
   Data.deleteFile (file -- #Thread -- #Spoiler ++ { Spoiler = readError file.Spoiler });
-  Log.info ("<admin> deleted file " ^ file.Hash);
+  Log.info (admin ^ " deleted file " ^ file.Hash);
   redirect (url (thread (readError file.Thread)))
 
 
@@ -391,20 +428,23 @@ and news_item id =
 
 
 and create_news_item x =
+  admin <- requireAuth;
   id <- addNews x;
-  Log.info ("<admin> added newsItem " ^ show id ^ ": " ^ x.Title);
+  Log.info (admin ^ " added newsItem " ^ show id ^ ": " ^ x.Title);
   redirect (url (news_items ()))
 
 
 and delete_news_item { Id = id } =
+  admin <- requireAuth;
   deleteNews (readError id);
-  Log.info ("<admin> deleted newsItem " ^ id);
+  Log.info (admin ^ " deleted newsItem " ^ id);
   redirect (url (news_items ()))
 
 
 and edit_news_item f =
+  admin <- requireAuth;
   editNews (readError f.Id) (f -- #Id);
-  Log.info ("<admin> edited newsItem " ^ f.Id);
+  Log.info (admin ^ " edited newsItem " ^ f.Id);
   redirect (url (news_items ()))
 
 
@@ -420,8 +460,9 @@ and readme_text () =
 
 
 and edit_readme { Body = body } =
+  admin <- requireAuth;
   updateReadme body;
-  Log.info "<admin> edited the readme";
+  Log.info (admin ^ " edited the readme");
   redirect (url (readme_text ()))
 
 
@@ -441,6 +482,7 @@ and log_in { Nam = name, Password = pass } =
   valid <- Account.validate name pass;
   if valid then
     token <- addLogin name;
-    setCookie loginToken { Value = token, Expires = None, Secure = True };
+    setCookie loginToken { Value = { User = name, Token = token }
+                         , Expires = None, Secure = False };
     redirect (url (boards ()))
   else error <xml>Incorrect username or password</xml>

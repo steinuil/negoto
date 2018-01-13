@@ -27,7 +27,7 @@ in the post body.
 
 * Admin control panel
   * [X] implement admin accounts
-  * [ ] restrict admin privileges to admins
+  * [X] restrict admin privileges to admins
   * [X] interface for deleting boards, posts, threads and files
   * [X] interface for adding boards
   * [X] interface for editing the readme file
