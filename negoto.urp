@@ -10,7 +10,8 @@ rewrite url * [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 allow mime text/plain
-file /style.css style.css
+file /yotsuba.css yotsuba.css
+file /yotsuba-b.css yotsuba-b.css
 allow url /style.css
 library file
 link file.o

@@ -18,7 +18,7 @@ negoto: negoto.exe $(db_file)
 
 
 # File rules
-negoto.exe schema.sql: $(negoto_files) style.css $(file_lib) file.o $(post_lib) postFfi.o $(uuid_lib) uuid.o
+negoto.exe schema.sql: $(negoto_files) yotsuba.css yotsuba-b.css $(file_lib) file.o $(post_lib) postFfi.o $(uuid_lib) uuid.o
 	$(urweb) negoto -dbms sqlite -db $(db_file)
 
 uuid.o: uuid/uuid.c uuid/uuid.h
@@ -30,7 +30,10 @@ file.o: file/file.c file/file.h
 postFfi.o: post/postFfi.c post/postFfi.h
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
-style.css: stylesheets/yotsuba-b.sass stylesheets/base.sass stylesheets/reset.sass
+yotsuba.css: stylesheets/yotsuba.sass stylesheets/base.sass stylesheets/reset.sass
+	$(sass) --sourcemap=none --style=expanded -C $< $@
+
+yotsuba-b.css: stylesheets/yotsuba-b.sass stylesheets/base.sass stylesheets/reset.sass
 	$(sass) --sourcemap=none --style=expanded -C $< $@
 
 $(db_file): schema.sql init.sql

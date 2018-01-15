@@ -8,7 +8,7 @@ body
   justify-content: center
 
   color: $text
-  background: linear-gradient($bg-dark, $bg 200px)
+  background: linear-gradient($bg-dark, $bg 200px) $bg
 
 
 li
@@ -26,9 +26,18 @@ a
   cursor: pointer
 
 
+.text-backlink
+  &:before
+    content: ">>"
+  text-decoration: underline
+  color: $post-backlink
+
+
 body>header
   nav
     color: $nav-text
+    a
+      color: $link2
   h1
     color: $page-title
 
@@ -76,12 +85,21 @@ main
 
   article>header
     background-color: $post-bg
-    color: $link
+    color: $post-subject
     padding: 2px 4px
     box-shadow: 2px 2px $shadow
 
   article>.news-body
     padding: 4px 2px 8px
+
+  ul
+    columns: 200px 2
+
+  li a
+    color: $link2
+
+  li a:hover
+    text-decoration: underline
 
 
 .catalog-page
@@ -90,8 +108,6 @@ main
 
 
 .thread-page
-  &>main>.container
-
   .post
     display: table
     background-color: $post-bg
@@ -99,6 +115,9 @@ main
 
     margin: 4px 0
     padding: 4px 6px
+
+    &:target
+      background-color: $post-target-bg
 
     .info
       margin-bottom: 4px
