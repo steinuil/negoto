@@ -88,6 +88,8 @@ end
 
 
 fun layout (title' : string) (class' : css_class) body' =
+  Layout.layout title' class' "" body'
+  (*
   return <xml>
     <head>
       <title>{[title']}</title>
@@ -95,6 +97,7 @@ fun layout (title' : string) (class' : css_class) body' =
     </head>
     <body class={class'}>{body'}</body>
   </xml>
+  *)
 
 
 and newsItem item : xbody =
@@ -195,11 +198,14 @@ and thread id =
           <h1>{[title']}</h1>
         </header>
         <main>
-          {back} {[t.Subject]}
-          {posts}
+          <header>{back} {[t.Subject]}</header>
+          <div class="container">{posts}</div>
           {tForm}
           {pForm}
         </main>
+        <footer>
+          ayy lmao
+        </footer>
       </xml>
     end
 
@@ -262,7 +268,7 @@ and otherLinks () =
 
 
 and navigation tags =
-  <xml>{tagLinks tags} {otherLinks ()}</xml>
+  <xml><nav>{tagLinks tags} {otherLinks ()}</nav></xml>
 
 
 and catalogForm (boardId : string) : transaction xbody =
@@ -349,7 +355,7 @@ end
 and create_post' f =
   let val post = f -- #Spoiler ++ { Files = [] } in
     _ <- Data.newPost post;
-    return {}
+    return ()
   end
 
 

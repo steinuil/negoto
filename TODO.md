@@ -53,7 +53,10 @@ in the post body.
   * [X] show some news on the front page
 
 * Other
-  * [X] Deleting the OP should delete the rest of the thread
+  * [X] deleting the OP should delete the rest of the thread
+  * [ ] improve CSS, add different themes
+  * [ ] add cookie to switch themes
+  * [ ] validate all forms
 
 
 ## Advanced frontend

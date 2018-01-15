@@ -377,5 +377,5 @@ fun deletePostByUid uid =
  * and delete them from the database/filesystem *)
 task periodic (30 * 60) = fn () =>
   files <- orphanedFiles;
-  List.app (fn f => deleteFile (f -- #Post))  files;
+  List.app (fn f => deleteFile (f -- #Post)) files;
   Log.info "checking for orphaned files"

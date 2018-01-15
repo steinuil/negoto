@@ -222,20 +222,18 @@ val requireAuth =
   end
 
 
+style admin_page
+
+
 fun layout (body' : xbody) : transaction page =
   _ <- requireAuth;
-  return <xml>
-    <head>
-      <title>Admin</title>
-    </head>
-    <body>
-      <nav><ul>
-        <a href={url (boards ())}>boards</a>
-        <a href={url (news_items ())}>news</a>
-        <a href={url (readme_text ())}>readme</a>
-      </ul></nav>
-      <main>{body'}</main>
-    </body>
+  Layout.layout "Admin" admin_page "Admin page" <xml>
+    <header><nav><ul>
+      <a href={url (boards ())}>boards</a>
+      <a href={url (news_items ())}>news</a>
+      <a href={url (readme_text ())}>readme</a>
+    </ul></nav></header>
+    <main>{body'}</main>
   </xml>
 
 
@@ -467,15 +465,11 @@ and edit_readme { Body = body } =
 
 
 and login () : transaction page =
-  return <xml>
-    <body>
-      <form>
-        <textbox{#Nam} placeholder="Name" required/><br/>
-        <password{#Password} placeholder="password" required/><br/>
-        <submit value="Log in" action={log_in}/>
-      </form>
-    </body>
-  </xml>
+  Layout.layout "Login" admin_page "Login page" <xml><main><form>
+    <textbox{#Nam} placeholder="Name" required/><br/>
+    <password{#Password} placeholder="password" required/><br/>
+    <submit value="Log in" action={log_in}/>
+  </form></main></xml>
 
 
 and log_in { Nam = name, Password = pass } =

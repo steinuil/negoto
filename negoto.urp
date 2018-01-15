@@ -1,5 +1,6 @@
 database dbname=negoto
 sql schema.sql
+allow meta *
 allow url https://github.com/steinuil/negoto
 allow env NEGOTO_LOGLEVEL
 allow responseHeader Status
@@ -17,6 +18,7 @@ library post
 link postFfi.o -lm
 library uuid
 link uuid.o -lssl -lcrypto
+ffi tags
 
 $/list
 $/option
@@ -25,6 +27,7 @@ $/string
 $/json
 util
 logger
+layout
 data
 admin
 api
