@@ -30,7 +30,7 @@ file.o: file/file.c file/file.h
 postFfi.o: post/postFfi.c post/postFfi.h
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
-style.css: style.sass
+style.css: stylesheets/yotsuba-b.sass stylesheets/base.sass stylesheets/reset.sass
 	$(sass) --sourcemap=none --style=expanded -C $< $@
 
 $(db_file): schema.sql init.sql

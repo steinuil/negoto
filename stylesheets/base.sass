@@ -1,0 +1,185 @@
+body
+  font-family: sans-serif
+  font-size: 14px
+
+  min-height: 100vh
+  display: flex
+  flex-flow: column nowrap
+  justify-content: center
+
+  color: $text
+  background: linear-gradient($bg-dark, $bg 200px)
+
+
+li
+  list-style: none
+
+
+a
+  text-decoration: none
+  color: $link
+
+  &:hover
+    color: $link-hover
+
+.clickable
+  cursor: pointer
+
+
+body>header
+  nav
+    color: $nav-text
+  h1
+    color: $page-title
+
+body>header>nav,
+body>footer
+  font-size: .85em
+
+
+body>header, body>footer, main
+  margin: 6px
+
+body>header, body>footer
+  text-align: center
+
+main
+  flex-grow: 1
+
+
+.front-page
+  &>main
+    margin: auto
+
+  &>main>.container
+    background-color: $bg-light
+    width: 600px
+    max-width: calc(100vw - 36px)
+    box-shadow: 2px 2px $shadow
+    padding: 8px 10px
+
+  section:not(:last-child)
+    margin-bottom: 16px
+
+  section>header
+    font-size: 1.5em
+    font-weight: bold
+    border-bottom: 1px solid $shadow
+    margin-bottom: 4px
+    padding-bottom: 2px
+
+  section>footer
+    color: $shadow
+    font-size: .85em
+    font-style: italic
+    margin-top: 4px
+
+  article>header
+    background-color: $post-bg
+    color: $link
+    padding: 2px 4px
+    box-shadow: 2px 2px $shadow
+
+  article>.news-body
+    padding: 4px 2px 8px
+
+
+.catalog-page
+  main
+    text-align: center
+
+
+.thread-page
+  &>main>.container
+
+  .post
+    display: table
+    background-color: $post-bg
+    box-shadow: 2px 2px $shadow
+
+    margin: 4px 0
+    padding: 4px 6px
+
+    .info
+      margin-bottom: 4px
+
+    .name
+      color: $post-name
+      font-weight: bold
+
+
+.post-form
+  display: inline-block
+  min-width: 256px
+  padding: 4px
+  font-size: .9em
+
+  background-color: $form-bg
+  box-shadow: 2px 2px $shadow
+
+  // All visible inputs (except file)
+  .button, input[type="text"], textarea
+    display: inline-block
+    padding: 4px 6px
+    font-family: inherit
+    font-size:   inherit
+
+  .button, input[type="text"]
+    background-color: $bg
+    color: $shadow
+
+  input[type="text"], textarea
+    &::placeholder
+      color: $shadow
+    &::-webkit-input-placeholder
+      color: $shadow
+    &::-moz-placeholder
+      color: $shadow
+      opacity: 1
+    &:-ms-input-placeholder
+      color: $shadow
+
+  .hidden-field
+    display: none
+
+  // Containers
+  div
+    display: flex
+    width: 100%
+
+  .button
+    margin-left: 4px
+    user-select: none
+    -moz-user-select: none
+    -ms-user-select: none
+    -webkit-user-select: none
+
+  .subject-field
+    margin-bottom: 4px
+
+  input[type="text"]
+    &:hover, &:focus
+      color: $text
+      background-color: $form-text-light-bg
+
+  textarea
+    margin: 4px 0
+    min-width:  256px - (4px * 2)
+    min-height: 6.3em
+    background-color: $form-text-light-bg
+
+  input[type="text"], input[type="file"]
+    flex-grow: 1
+    width: 128px
+
+  input[type="file"]
+    margin-right: auto
+    height: 1.9em
+
+  input[type="checkbox"]:checked + .button
+    background-color: black
+    color: lightgrey
+
+  .button:active
+    background-color: darkgrey
+    color: lightgrey

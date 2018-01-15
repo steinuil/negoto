@@ -12,6 +12,9 @@ style hidden_field
 style subject_field
 style post_form
 style container
+style section_body
+style news_item
+style news_body
 
 style base_page
 style front_page
@@ -26,6 +29,11 @@ val sourceUrl = bless 'https://github.com/steinuil/negoto'
 
 val errorPage =
   <xml>Error</xml>
+
+
+val affiliateLinks =
+  (sourceUrl, "Source", "source")
+  :: []
 
 
 val menu els : xbody = let
@@ -89,62 +97,45 @@ end
 
 fun layout (title' : string) (class' : css_class) body' =
   Layout.layout title' class' "" body'
-  (*
-  return <xml>
-    <head>
-      <title>{[title']}</title>
-      <link type="text/css" rel="stylesheet" href="/style.css" />
-    </head>
-    <body class={class'}>{body'}</body>
-  </xml>
-  *)
 
 
 and newsItem item : xbody =
-  <xml><article>
+  <xml><article class="news-item">
     <header><strong>{[item.Title]}</strong> by {[item.Author]} at {[item.Time]}</header>
-    <div>{Post.toHtml' item.Body}</div>
+    <div class="news_body">{Post.toHtml' item.Body}</div>
   </article></xml>
 
 
 and front () =
   tags <- Data.allTags;
   news <- Admin.news;
-  layout "Time-Telling Fortress" front_page <xml>
-    <header>
-      <div>Good Day, Brother.</div>
-      <div>Welcome To The</div>
-      <div>Time-Telling Fortress.</div>
-    </header>
-    <main>
-      <ul>
-        {List.mapX (fn t => <xml><li>
-          <a href={url (catalog t.Nam)}>{[t]}</a>
-        </li></xml>) tags}
-      </ul>
-      <section>
-        <header>News</header>
-        <div>{List.mapX newsItem news}</div>
-      </section>
-    </main>
-    <footer>
-      Powered by <a href={sourceUrl}>Negoto</a>
-    </footer>
-  </xml>
-
-
-and readme () =
-  tags <- Data.allTags;
   readme <- Admin.readme;
-  layout "Readme" readme_page <xml>
+  layout "Front Page - Negoto" front_page <xml>
     <header>
-      {navigation tags}
-      <h1>Readme</h1>
+      <h1>Negoto</h1>
     </header>
     <main>
-      <article>{Post.toHtml' readme.Body}</article>
-      <footer>Last updated at {[readme.Updated]}</footer>
+      <div class="container">
+        <section>
+          <header>Boards</header>
+          <ul class="section-body">
+            {List.mapX (fn t => <xml><li>
+              <a href={url (catalog t.Nam)}>{[t]}</a>
+            </li></xml>) tags}
+          </ul>
+        </section>
+        <section>
+          <header>News</header>
+          <div class="section-body">{List.mapX newsItem news}</div>
+        </section>
+        <section>
+          <header>Readme</header>
+          <div class="section-body">{Post.toHtml' readme.Body}</div>
+          <footer>last updated at {[readme.Updated]}</footer>
+        </section>
+      </div>
     </main>
+    <footer>Powered by <a href={sourceUrl}>Negoto</a></footer>
   </xml>
 
 
@@ -262,9 +253,7 @@ and tagLinks tags =
 
 
 and otherLinks () =
-  menu <| (url (readme ()), "Readme", "readme")
-       :: (sourceUrl,       "Source", "source")
-       :: []
+  menu affiliateLinks
 
 
 and navigation tags =
