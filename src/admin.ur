@@ -1,7 +1,8 @@
 structure Log = Logger.Make(struct val section = "admin" end)
 
 
-(* Readme *)
+(* The readme table should only have one entry,
+ * which is updated as needed. *)
 table readmeT :
   { Body    : string
   , Updated : time }
@@ -14,6 +15,16 @@ val readme =
 fun updateReadme body =
   dml (UPDATE readmeT SET Body = {[body]}, Updated = CURRENT_TIMESTAMP
        WHERE TRUE)
+
+
+(* Set the readme to a placeholder *)
+task initialize = fn () =>
+  r <- oneOrNoRows1 (SELECT * FROM readmeT);
+  case r of
+  | Some _ => return ()
+  | None =>
+    dml (INSERT INTO readmeT (Body, Updated)
+         VALUES ( "replace me", CURRENT_TIMESTAMP ))
 
 
 (* News *)
@@ -59,146 +70,6 @@ fun editNews id { Title = title, Body = body } =
 
 
 (* Admin stuff *)
-structure Account : sig
-  datatype role = Owner | Admin | Moderator
-
-  val add : string -> string -> role -> transaction unit
-
-  val changePassword : string -> string -> transaction unit
-
-  val delete : string -> transaction unit
-
-  val validate : string -> string -> transaction bool
-
-  val roleOf : string -> transaction (option role)
-end = struct
-  table admins :
-    { Nam  : string
-    , Role : int
-    , Hash : string
-    , Salt : string }
-    PRIMARY KEY Nam
-
-  datatype role = Owner | Admin | Moderator
-
-
-  fun int_of_role role =
-    case role of
-    | Owner => 0
-    | Admin => 1
-    | Moderator => 2
-
-  fun role_of_int role =
-    case role of
-    | 0 => Owner
-    | 1 => Admin
-    | 2 => Moderator
-    | _ => error <xml>Invalid role</xml>
-
-  (* Some typeclass implementations for roles *)
-  val ord_role =
-    mkOrd { Lt = (fn x y => lt (int_of_role x) (int_of_role y))
-          , Le = (fn x y => le (int_of_role x) (int_of_role y)) }
-
-  val read_role = let
-      fun read' x =
-        case x of
-        | "owner"     => Some Owner
-        | "admin"     => Some Admin
-        | "moderator" => Some Moderator
-        | _ => None
-    in
-      mkRead
-        (fn x => case read' x of
-          | None => error <xml>Invalid role: {[x]}</xml>
-          | Some x => x)
-        read'
-    end
-
-  val show_role =
-    mkShow (fn x =>
-      case x of
-      | Owner     => "owner"
-      | Admin     => "admin"
-      | Moderator => "moderator")
-
-
-  (* Manage accounts *)
-  fun hashPassword pass =
-    salt <- rand;
-    let val salt = show salt
-        val hash = crypt pass salt in
-      return (hash, salt)
-    end
-
-  fun add name pass role =
-    (hash, salt) <- hashPassword pass;
-    dml (INSERT INTO admins (Nam, Role, Hash, Salt)
-         VALUES ( {[name]}, {[int_of_role role]}, {[hash]}, {[salt]} ))
-
-  fun changePassword name pass =
-    (hash, salt) <- hashPassword pass;
-    dml (UPDATE admins SET Hash = {[hash]}, Salt = {[salt]}
-         WHERE Nam = {[name]})
-
-  fun delete name =
-    dml (DELETE FROM admins WHERE Nam = {[name]})
-
-  fun validate name pass =
-    x <- oneOrNoRows1 (SELECT admins.Salt, admins.Hash FROM admins
-                       WHERE admins.Nam = {[name]});
-    case x of
-    | Some { Salt = salt, Hash = hash } =>
-      return ((crypt pass salt) = hash)
-    | None =>
-      return False
-
-  fun roleOf name =
-    r <- oneOrNoRows1 (SELECT admins.Role FROM admins WHERE admins.Nam = {[name]});
-    case r of
-    | Some { Role = role } => return (Some (role_of_int role))
-    | None => return None
-
-  task initialize = fn () =>
-    x <- oneOrNoRows1 (SELECT * FROM admins WHERE admins.Role = {[0]});
-    case x of
-    | Some _ => return ()
-    | None => add "steenuil" "password" Owner
-end
-
-
-cookie loginToken :
-  { User  : string
-  , Token : string }
-
-
-table logged :
-  { User : string
-  , Hash : string
-  , Salt : string }
-
-
-fun addLogin user =
-  salt <- rand;
-  uuid <- Uuid.random;
-  let val salt = show salt
-      val hash = crypt uuid salt in
-    dml (INSERT INTO logged (User, Hash, Salt)
-         VALUES ( {[user]}, {[hash]}, {[salt]} ));
-    return uuid
-  end
-
-
-fun checkToken user token =
-  tokens <- queryL1 (SELECT logged.Hash, logged.Salt FROM logged
-                     WHERE logged.User = {[user]});
-  case List.find (fn x => crypt token x.Salt = x.Hash) tokens of
-  | Some _ => return True
-  | None   => return False
-
-
-fun invalidateTokens user =
-  dml (DELETE FROM logged WHERE User = {[user]})
 
 
 fun confirmDel name _ =
@@ -206,32 +77,17 @@ fun confirmDel name _ =
   if ok then return () else preventDefault
 
 
-val requireAuth =
-  let val fail =
-    clearCookie loginToken;
-    error <xml>Failed to authenticate</xml>
-  in
-    tok <- getCookie loginToken;
-    case tok of
-    | None => fail
-    | Some tok =>
-      valid <- checkToken tok.User tok.Token;
-      if valid then return tok.User else
-        Log.info ("Somebody tried to log in with " ^ tok.User ^ "'s account");
-        fail
-  end
-
-
 style admin_page
 
 
 fun layout (body' : xbody) : transaction page =
-  _ <- requireAuth;
+  _ <- Account.authenticate;
   Layout.layout "Admin" admin_page "Admin page" <xml>
     <header><nav><ul>
       <a href={url (boards ())}>boards</a>
       <a href={url (news_items ())}>news</a>
       <a href={url (readme_text ())}>readme</a>
+      <form><submit action={log_out} value="logout"/></form>
     </ul></nav></header>
     <main>{body'}</main>
   </xml>
@@ -270,21 +126,21 @@ and boards () =
 
 (* TODO: validation *)
 and create_board f =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.newTag f;
   Log.info (admin ^ " created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
   redirect (url (boards ()))
 
 
 and delete_board { Nam = name } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.deleteTag name;
   Log.info (admin ^ " deleted board /" ^ name ^ "/");
   redirect (url (boards ()))
 
 
 and edit_slug f =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.editSlug f;
   Log.info (admin ^ " changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
   redirect (url (boards ()))
@@ -324,21 +180,21 @@ and board name =
 
 
 and delete_thread { Id = id, Tag = tag } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.deleteThread (readError id);
   Log.info (admin ^ " deleted thread " ^ id);
   redirect (url (board tag))
 
 
 and unlock_thread { Id = id, Tag = tag } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.unlockThread (readError id);
   Log.info (admin ^ " unlocked thread " ^ id);
   redirect (url (board tag))
 
 
 and lock_thread { Id = id, Tag = tag } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.lockThread (readError id);
   Log.info (admin ^ " locked thread " ^ id);
   redirect (url (board tag))
@@ -374,7 +230,7 @@ and thread tid =
 
 
 and delete_post { Id = id, Thread = thread' } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   let val t = readError thread' in
     Data.deletePost t (readError id);
     Log.info (admin ^ " deleted post " ^ id ^ "on thread " ^ thread');
@@ -383,7 +239,7 @@ and delete_post { Id = id, Thread = thread' } =
 
 
 and delete_file file =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   Data.deleteFile (file -- #Thread -- #Spoiler ++ { Spoiler = readError file.Spoiler });
   Log.info (admin ^ " deleted file " ^ file.Hash);
   redirect (url (thread (readError file.Thread)))
@@ -426,21 +282,21 @@ and news_item id =
 
 
 and create_news_item x =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   id <- addNews x;
   Log.info (admin ^ " added newsItem " ^ show id ^ ": " ^ x.Title);
   redirect (url (news_items ()))
 
 
 and delete_news_item { Id = id } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   deleteNews (readError id);
   Log.info (admin ^ " deleted newsItem " ^ id);
   redirect (url (news_items ()))
 
 
 and edit_news_item f =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   editNews (readError f.Id) (f -- #Id);
   Log.info (admin ^ " edited newsItem " ^ f.Id);
   redirect (url (news_items ()))
@@ -458,7 +314,7 @@ and readme_text () =
 
 
 and edit_readme { Body = body } =
-  admin <- requireAuth;
+  admin <- Account.authenticate;
   updateReadme body;
   Log.info (admin ^ " edited the readme");
   redirect (url (readme_text ()))
@@ -473,10 +329,10 @@ and login () : transaction page =
 
 
 and log_in { Nam = name, Password = pass } =
-  valid <- Account.validate name pass;
-  if valid then
-    token <- addLogin name;
-    setCookie loginToken { Value = { User = name, Token = token }
-                         , Expires = None, Secure = False };
-    redirect (url (boards ()))
-  else error <xml>Incorrect username or password</xml>
+  Account.logIn name pass;
+  redirect (url (boards ()))
+
+
+and log_out () =
+  Account.logOutCurrent;
+  redirect (url (login ()))
