@@ -1,6 +1,3 @@
 *.exe
-*.sql
-!init.sql
 *.db
-*.css
-*.o
+build

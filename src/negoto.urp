@@ -1,5 +1,4 @@
 database dbname=negoto
-sql schema.sql
 allow meta *
 allow url https://github.com/steinuil/negoto
 allow env NEGOTO_LOGLEVEL
@@ -10,15 +9,9 @@ rewrite url * [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 allow mime text/plain
-file /yotsuba.css yotsuba.css
-file /yotsuba-b.css yotsuba-b.css
-allow url /style.css
 library file
-link file.o
 library post
-link postFfi.o -lm
 library uuid
-link uuid.o -lssl -lcrypto
 ffi tags
 
 $/list
