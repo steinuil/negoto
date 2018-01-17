@@ -11,12 +11,12 @@ ur_include = -I$(shell urweb -print-cinclude)
 s = src
 b = build
 
-file_lib = $s/file/lib.urp $s/file/file.urs $s/file/file.h
+file_lib = $s/file/lib.urp $s/file/file.urs $s/file/file.ur $s/file/fileFfi.urs $s/file/fileFfi.h
 post_lib = $s/post/lib.urp $s/post/post.urs $s/post/post.ur $s/post/postFfi.urs $s/post/postFfi.h
 uuid_lib = $s/uuid/lib.urp $s/uuid/uuid.urs $s/uuid/uuid.h
 src_files = $s/negoto.urp $s/account.ur $s/account.urs $s/admin.ur $s/admin.urs $s/api.ur $s/api.urs $s/data.ur $s/data.urs $s/layout.ur $s/layout.urs $s/logger.ur $s/logger.urs $s/main.ur $s/negoto.ur $s/negoto.urs $s/tags.urs $s/util.ur $(file_lib) $(post_lib) $(uuid_lib)
 
-sass_base = stylesheets/base.sass stylesheets/reset.sass
+sass_base = themes/base.sass themes/reset.sass
 css_files = $b/yotsuba.css $b/yotsuba-b.css
 
 # Outputs
@@ -28,7 +28,7 @@ negoto: $(exe) $(db)
 
 # Because make is stupid and will run urweb twice with -j >1
 $b/schema.sql: $(exe) ;
-$(exe): $(src_files) $b/file.o $b/postFfi.o $b/uuid.o $b/yotsuba.css $b/yotsuba-b.css
+$(exe): $(src_files) $b/fileFfi.o $b/postFfi.o $b/uuid.o $b/yotsuba.css $b/yotsuba-b.css
 	$(urweb) project -dbms sqlite -db $(db) -output negoto.exe
 
 $(db): $b/schema.sql init.sql
@@ -36,13 +36,13 @@ $(db): $b/schema.sql init.sql
 	$(sqlite) $@ < $b/schema.sql
 	$(sqlite) $@ < init.sql
 
-$b/yotsuba.css:   stylesheets/yotsuba.sass   $(sass_base) | $b
+$b/yotsuba.css: themes/yotsuba.sass $(sass_base) | $b
 	$(sass) --sourcemap=none --style=expanded -C $< $@
 
-$b/yotsuba-b.css: stylesheets/yotsuba-b.sass $(sass_base) | $b
+$b/yotsuba-b.css: themes/yotsuba-b.sass $(sass_base) | $b
 	$(sass) --sourcemap=none --style=expanded -C $< $@
 
-$b/file.o: $s/file/file.c $s/file/file.h | $b
+$b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 $b/postFfi.o: $s/post/postFfi.c $s/post/postFfi.h | $b

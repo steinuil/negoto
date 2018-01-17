@@ -1,2 +1,4 @@
-ffi file
-include file.h
+ffi fileFfi
+include fileFfi.h
+
+file

@@ -24,7 +24,7 @@ val json_Tag : json Data.tag =
   json_record { Nam = "name", Slug = "slug" }
 
 val json_PostFile : json Data.postFile =
-  json_record { Hash = "hash", Nam = "name", Ext = "extension", Spoiler = "spoiler" }
+  json_record { Hash = "hash", Nam = "name", Mime = "mimetype", Spoiler = "spoiler" }
 
 val json_Thread : json Data.thread =
   json_record

@@ -1,18 +1,92 @@
-datatype themes = Yotsuba | YotsubaB
+(* TODO: manage themes with a table instead
+table themes :
+  { Nam      : string
+  , Filename : string
+  , TabColor : string }
+*)
+
+
+type themeInfo =
+  { Nam      : string
+  , Filename : string
+  , TabColor : string }
+
+
+(* To add new themes, add its name to the themes datatype
+ * and its info in InfoOfTheme.
+ * The TabColor of a theme should be the same as $bg-dark in the SASS file. *)
+datatype themes =
+  | Yotsuba
+  | YotsubaB
+
+
+fun infoOfTheme theme = case theme of
+  | Yotsuba =>
+    { Nam = "Yotsuba"
+    , Filename = "yotsuba"
+    , TabColor = "#FFD6AE" }
+
+  | YotsubaB =>
+    { Nam = "Yotsuba B"
+    , Filename = "yotsuba-b"
+    , TabColor = "#D0D5E7" }
+
+
+(* Change the default theme here. *)
+val defaultTheme = Yotsuba
 
 
 cookie theme : themes
 
 
+val show_theme =
+  mkShow (fn x => let val info = infoOfTheme x in info.Nam end)
+
+
+val read_theme =
+  let fun reader theme = case theme of
+    | "Yotsuba" => Some Yotsuba
+    | "Yotsuba B" => Some YotsubaB
+    | _ => None
+  in
+    mkRead
+      (fn x => case reader x of Some x => x | None =>
+        error <xml>Invalid theme: {[x]}</xml>)
+      reader
+  end
+
+
+val allThemes = Yotsuba :: YotsubaB :: []
+
+
 val getTheme =
   theme' <- getCookie theme;
-  case theme' of
-  | Some Yotsuba =>
-    return (bless "/yotsuba.css", "#FFD6AE")
-  | Some YotsubaB =>
-    return (bless "/yotsuba-b.css", "#D0D5E7")
-  | _ =>
-    return (bless "/yotsuba.css", "#FFD6AE")
+  let val { Filename = css, TabColor = color, ... } =
+    infoOfTheme <|
+      case theme' of
+      | Some t => t
+      | None => defaultTheme
+  in
+    return (bless ("/" ^ css ^ ".css"), color)
+  end
+
+
+  (*
+fun themePicker url' =
+  theme' <- getCookie theme;
+  return <xml><form>
+    <select{#Theme}>
+      {List.mapX (fn t =>
+        <xml><option value={show theme'} selected={t = theme'}/></xml>)
+      allThemes}
+    </select>
+    <submit value="Set theme" action={url'}/>
+  </form></xml>
+
+
+fun setTheme { Theme = t } =
+  setCookie theme (readError t)
+  *)
 
 
 open Tags

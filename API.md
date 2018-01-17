@@ -10,7 +10,7 @@ The returned items will be described as Typescript type signatures.
 // An ID is an integer > 0.
 type id = number;
 
-// The ?? checksum of a file.
+// The hex md5 checksum of a file.
 type checksum = string;
 
 // The time in seconds since January 1st, 1970 at 00:00.
@@ -24,7 +24,7 @@ interface Board {
 interface File {
   hash: checksum;
   name: string;
-  extension: string;
+  mimetype: string;
   spoiler: boolean;
 }
 

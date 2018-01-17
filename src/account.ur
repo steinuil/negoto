@@ -140,18 +140,22 @@ val getAuth =
       return (Some (name, hash)))
 
 
+fun genLogin name =
+  salt <- rand;
+  token <- Uuid.random;
+  let val salt = show salt
+      val hash = crypt token salt in
+    dml (INSERT INTO logged (User, Hash, Salt)
+         VALUES ( {[name]}, {[hash]}, {[salt]} ));
+    setCookie loginToken { Value = { User = name, Token = token }
+                         , Expires = None, Secure = False }
+  end
+
+
 fun logIn name pass =
   valid <- validate name pass;
   if valid then
-    salt <- rand;
-    token <- Uuid.random;
-    let val salt = show salt
-        val hash = crypt token salt in
-      dml (INSERT INTO logged (User, Hash, Salt)
-           VALUES ( {[name]}, {[hash]}, {[salt]} ));
-      setCookie loginToken { Value = { User = name, Token = token }
-                           , Expires = None, Secure = False }
-    end
+    genLogin name
   else
     error <xml>Incorrect username or password</xml>
 
@@ -186,3 +190,9 @@ val authenticate =
   | None =>
     clearCookie loginToken;
     error <xml>Failed to authenticate</xml>
+
+
+val invalidateAndRehash =
+  name <- authenticate;
+  logOutAll name;
+  genLogin name

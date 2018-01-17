@@ -15,7 +15,7 @@ type thread =
 type postFile =
   { Hash    : string
   , Nam     : string
-  , Ext     : string
+  , Mime    : string
   , Spoiler : bool }
   (** A file included in a post. *)
 

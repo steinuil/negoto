@@ -4,10 +4,11 @@ associated with one tag, posts can only hold one file and with limited markup
 in the post body.
 
 * File handling library
-  * [X] save and delete files
+  * [ ] save and delete files
   * [ ] generate a filename with an appropriate extension
   * [ ] configure the position of the saved files
-  * [ ] return a checksum and image dimensions
+    * how??
+  * [X] return a checksum and image dimensions
   * [ ] process thumbnails for images (and PDFs?) with libvips
     * figure out how to statically link libvips and all its dependencies
   * [ ] process thumbnails for webms with ???
@@ -33,6 +34,9 @@ in the post body.
   * [X] interface for editing the readme file
   * [X] interface for adding/deleting news
   * [X] interface for editing news
+  * [ ] interface for editing accounts
+  * [ ] interface for managing themes
+  * [ ] improve the CSS
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box
@@ -54,7 +58,7 @@ in the post body.
 
 * Other
   * [X] deleting the OP should delete the rest of the thread
-  * [ ] improve CSS, add different themes
+  * [X] improve CSS, add different themes
   * [ ] add cookie to switch themes
   * [ ] validate all forms
 

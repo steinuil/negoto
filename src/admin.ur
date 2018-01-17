@@ -212,7 +212,7 @@ and thread tid =
             <xml><form>
               <hidden{#Hash} value={file.Hash}/>
               <hidden{#Nam} value={file.Nam}/>
-              <hidden{#Ext} value={file.Ext}/>
+              <hidden{#Mime} value={file.Mime}/>
               <hidden{#Spoiler} value={show file.Spoiler}/>
               <hidden{#Thread} value={show tid}/>
               <submit value={"Delete file " ^ file.Nam}

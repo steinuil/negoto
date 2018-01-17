@@ -19,7 +19,7 @@ type thread =
 type postFile =
   { Hash    : string
   , Nam     : string
-  , Ext     : string
+  , Mime    : string
   , Spoiler : bool }
 
 type post =
@@ -92,7 +92,7 @@ table posts :
 table files :
   { Hash    : string
   , Nam     : string
-  , Ext     : string
+  , Mime    : string
   , Spoiler : bool
   , Post    : option int }
   PRIMARY KEY (Hash),
@@ -117,7 +117,7 @@ view catalogView =
     , posts.Body      AS Body
     , files.Hash      AS Hash
     , files.Nam       AS Filename
-    , files.Ext       AS Ext
+    , files.Mime      AS Mime
     , files.Spoiler   AS Spoiler
   FROM threads
   JOIN thread_tags
@@ -148,7 +148,7 @@ view postView =
     , posts.Body    AS Body
     , files.Hash    AS Hash
     , files.Nam     AS Filename
-    , files.Ext     AS Ext
+    , files.Mime    AS Mime
     , files.Spoiler AS Spoiler
   FROM posts
   LEFT OUTER JOIN files
@@ -167,13 +167,13 @@ fun coalesceCatalogThread { CatalogView = c } acc = let
       then (hd.Tags, hd.Files, rst)
       else ([], [], acc)
 
-  val thread = c -- #Tag -- #Hash -- #Filename -- #Ext -- #Spoiler
+  val thread = c -- #Tag -- #Hash -- #Filename -- #Mime -- #Spoiler
 
-  val fileList = case (c.Hash, c.Filename, c.Ext, c.Spoiler) of
+  val fileList = case (c.Hash, c.Filename, c.Mime, c.Spoiler) of
     | (Some h, Some n, Some e, Some s) =>
       if List.exists (fn x => x.Hash = h) fileList
       then fileList
-      else { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+      else { Hash = h, Nam = n, Mime = e, Spoiler = s } :: fileList
     | _ => fileList
 
   val tagList =
@@ -206,12 +206,12 @@ fun coalescePost' { PostView = p } acc = let
       then (hd.Files, rst)
       else ([], acc)
 
-  val fileList = case (p.Hash, p.Filename, p.Ext, p.Spoiler) of
+  val fileList = case (p.Hash, p.Filename, p.Mime, p.Spoiler) of
     | (Some h, Some n, Some e, Some s) =>
-      { Hash = h, Nam = n, Ext = e, Spoiler = s } :: fileList
+      { Hash = h, Nam = n, Mime = e, Spoiler = s } :: fileList
     | _ => fileList
 
-  val post = p -- #Hash -- #Filename -- #Ext -- #Spoiler
+  val post = p -- #Hash -- #Filename -- #Mime -- #Spoiler
 in
   (post ++ { Files = fileList }) :: rest
 end
@@ -292,11 +292,10 @@ fun newTag { Nam = name, Slug = slug } =
        VALUES ( {[name]}, {[slug]} ))
 
 fun insertFile uid ({ Spoiler = spoiler, File = file } : {Spoiler:bool,File:file}) =
-  hash <- rand;
-  File.save (show hash) file;
-  dml (INSERT INTO files (Hash, Nam, Ext, Spoiler, Post)
-       VALUES ( {[show hash]}, "file", "jpg"
-              , {[spoiler]}, {[Some uid]} ))
+  hash <- File.saveImage file;
+  dml (INSERT INTO files (Hash, Nam, Mime, Spoiler, Post)
+       VALUES ( {[hash]}, {[Option.get "<unnamed>" (fileName file)]}
+              , {[fileMimeType file]} , {[spoiler]}, {[Some uid]} ))
 
 fun insertThreadTag thread tag =
   dml (INSERT INTO thread_tags (Thread, Tag)
@@ -355,8 +354,8 @@ fun unlockThread id =
 fun deleteTag name =
   dml (DELETE FROM tags WHERE Nam = {[name]})
 
-fun deleteFile { Hash = hash, Ext = ext, ... } =
-  File.delete hash;
+fun deleteFile { Hash = hash, Mime = mime, ... } =
+  File.deleteImage hash mime;
   dml (DELETE FROM files WHERE Hash = {[hash]})
 
 fun deleteThread id =

@@ -1,10 +1,11 @@
-val save : string -> file -> transaction unit
-  (* Save a file to disk *)
+val saveCss : string -> file -> transaction unit
 
-val delete : string -> transaction unit
-  (* Delete a file from disk *)
+val deleteCss : string -> transaction unit
 
-(*
-val link : string -> url
-  (* Return the url to a file *)
-*)
+val saveImage : file -> transaction string
+
+val deleteImage : string -> string -> transaction unit
+
+val linkImage : string -> string -> url
+
+val linkThumb : string -> url
