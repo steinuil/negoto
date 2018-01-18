@@ -24,7 +24,7 @@ db = test.db
 exe = negoto.exe
 
 
-negoto: $(exe) $(db)
+negoto: $(exe) $(db) public
 
 # Because make is stupid and will run urweb twice with -j >1
 $b/schema.sql: $(exe) ;
@@ -54,6 +54,9 @@ $b/uuid.o: $s/uuid/uuid.c $s/uuid/uuid.h | $b
 $b:
 	mkdir $b
 
+public:
+	mkdir -p public
+
 
 check:
 	$(urweb) -tc project
@@ -62,6 +65,6 @@ run: negoto
 	./$(exe)
 
 clean:
-	rm -rf $b $(exe) $(db)
+	rm -rf $b $(exe) $(db) public
 
 .PHONY: negoto check run clean

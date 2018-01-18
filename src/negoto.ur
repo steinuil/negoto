@@ -1,3 +1,5 @@
+open Tags
+
 style post
 style info
 style description
@@ -209,7 +211,9 @@ and catalogThread thread' =
         <a href={url (thread thread'.Id)}>
           {case thread'.Files of
           | [] => <xml>link</xml>
-          | file :: _ => <xml>{[file.Hash]}</xml>}
+          | file :: _ => <xml><figure>
+            <img src={File.linkThumb file.Hash}/>
+          </figure></xml>}
         </a>
       </figure>
       <div class="info">
@@ -227,23 +231,35 @@ and catalogThread thread' =
 
 
 and threadPost addToPostBody post' =
+  expanded <- source False;
   currUrl <- currentUrl;
-  return <xml>
-    <div class="post" id={Post.id post'.Id}>
-      {case post'.Files of
+  let
+    fun imgSrc file exp =
+      if exp then
+        File.linkImage file.Hash file.Mime
+      else
+        File.linkThumb file.Hash
+
+    val picture = case post'.Files of
       | [] => <xml/>
-      | file :: _ => <xml><figure>
-        {[file.Nam]}
-      </figure></xml>}
-      <div class="info">
-        <span class="name">{[post'.Nam]}</span>
-        <time>{[post'.Time]}</time>
-        <a class="clickable" href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="clickable"
-          onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
+      | file :: _ => <xml><figure onclick={fn _ => exp <- get expanded; set expanded (not exp)}>
+        <noscript><img src={File.linkThumb file.Hash}/></noscript>
+        <dyn signal={exp <- signal expanded; return <xml><img src={imgSrc file exp}/></xml>}/>
+      </figure></xml>
+  in
+    return <xml>
+      <div class="post" id={Post.id post'.Id}>
+        {picture}
+        <div class="info">
+          <span class="name">{[post'.Nam]}</span>
+          <time>{[post'.Time]}</time>
+          <a class="clickable" href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="clickable"
+            onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
+        </div>
+        <div class="post-body">{Post.toHtml currUrl post'.Body}</div>
       </div>
-      <div class="post-body">{Post.toHtml currUrl post'.Body}</div>
-    </div>
-  </xml>
+    </xml>
+  end
 
 
 and tagLinks tags =

@@ -4,8 +4,8 @@ associated with one tag, posts can only hold one file and with limited markup
 in the post body.
 
 * File handling library
-  * [ ] save and delete files
-  * [ ] generate a filename with an appropriate extension
+  * [X] save and delete files
+  * [X] generate a filename with an appropriate extension
   * [ ] configure the position of the saved files
     * how??
   * [X] return a checksum and image dimensions
@@ -41,7 +41,7 @@ in the post body.
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box
   * [X] links to single posts should focus that post in its thread
-  * [ ] clicking on an image should expand it inline
+  * [X] clicking on an image should expand it inline
 
 * JSON API
   * [X] boards endpoint

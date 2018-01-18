@@ -1,41 +1,47 @@
+val css_dir = "css"
+val image_dir = "image"
+val thumb_dir = "thumb"
+
+
+task initialize = fn () =>
+  FileFfi.mkdir css_dir;
+  FileFfi.mkdir image_dir;
+  FileFfi.mkdir thumb_dir
+
+
 fun saveCss name file =
   if fileMimeType file = "text/css" then
-    FileFfi.save "css" (name ^ ".css") file
+    FileFfi.save css_dir (name ^ ".css") file
   else
-    error <xml>Not a CSS file: {[name]}</xml>
+    error <xml>Not a CSS file: {txt name}</xml>
 
 
 fun deleteCss name =
-  FileFfi.delete "css" (name ^ ".css")
+  FileFfi.delete css_dir (name ^ ".css")
 
 
 fun extOfMime mime = case mime of
   | "image/png" => "png"
   | "image/jpeg" => "jpg"
   | "image/gif" => "gif"
-  | x => error <xml>Unsupported mime: {[x]}</xml>
+  | x => error <xml>Unsupported mime: {txt x}</xml>
 
 
 fun saveImage file =
-  str <- FileFfi.saveImage (extOfMime (fileMimeType file)) file;
-  let val hash = substring str 0 31
-      val width : int = readError (substring str 32 4)
-      val height : int = readError (substring str 36 4) in
-    debug ("hash: " ^ hash);
-    debug ("width: " ^ show width);
-    debug ("height: " ^ show height);
+  let val hash = FileFfi.md5Hash file in
+    FileFfi.save image_dir (hash ^ "." ^ extOfMime (fileMimeType file)) file;
     return hash
   end
 
 
 fun deleteImage hash mime =
-  FileFfi.delete "image" (hash ^ "." ^ extOfMime mime);
-  FileFfi.delete "thumb" (hash ^ ".jpg")
+  FileFfi.delete image_dir (hash ^ "." ^ extOfMime mime);
+  FileFfi.delete thumb_dir (hash ^ ".jpg")
 
 
 fun linkImage hash mime =
-  FileFfi.link "image" (hash ^ "." ^ extOfMime mime)
+  FileFfi.link image_dir (hash ^ "." ^ extOfMime mime)
 
 
 fun linkThumb hash =
-  FileFfi.link "thumb" (hash ^ ".jpg")
+  FileFfi.link thumb_dir (hash ^ ".jpg")

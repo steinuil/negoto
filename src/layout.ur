@@ -40,7 +40,7 @@ cookie theme : themes
 
 
 val show_theme =
-  mkShow (fn x => let val info = infoOfTheme x in info.Nam end)
+  mkShow (fn x => (infoOfTheme x).Nam)
 
 
 val read_theme =

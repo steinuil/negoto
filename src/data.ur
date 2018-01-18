@@ -291,7 +291,7 @@ fun newTag { Nam = name, Slug = slug } =
   dml (INSERT INTO tags (Nam, Slug)
        VALUES ( {[name]}, {[slug]} ))
 
-fun insertFile uid ({ Spoiler = spoiler, File = file } : {Spoiler:bool,File:file}) =
+fun insertFile uid { Spoiler = spoiler, File = file } =
   hash <- File.saveImage file;
   dml (INSERT INTO files (Hash, Nam, Mime, Spoiler, Post)
        VALUES ( {[hash]}, {[Option.get "<unnamed>" (fileName file)]}
