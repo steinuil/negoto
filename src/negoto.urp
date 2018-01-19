@@ -22,6 +22,7 @@ $/string
 $/json
 util
 logger
+keyVal
 layout
 data
 account

@@ -23,7 +23,6 @@ style front_page
 style catalog_page
 style thread_page
 style error_page
-style readme_page
 
 
 val sourceUrl = bless 'https://github.com/steinuil/negoto'
@@ -132,8 +131,7 @@ and front () =
         </section>
         <section>
           <header>Readme</header>
-          <div class="section-body">{Post.toHtml' readme.Body}</div>
-          <footer>last updated at {[readme.Updated]}</footer>
+          <div class="section-body">{Post.toHtml' readme}</div>
         </section>
       </div>
     </main>

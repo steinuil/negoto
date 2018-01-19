@@ -1,8 +1,4 @@
-type readme =
-  { Body    : string
-  , Updated : time }
-
-val readme : transaction readme
+val readme : transaction string
 
 type newsItem =
   { Title  : string

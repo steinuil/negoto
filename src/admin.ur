@@ -1,30 +1,21 @@
 structure Log = Logger.Make(struct val section = "admin" end)
 
 
-(* The readme table should only have one entry,
- * which is updated as needed. *)
-table readmeT :
-  { Body    : string
-  , Updated : time }
-
-
 val readme =
-  oneRow1 (SELECT * FROM readmeT)
+  KeyVal.get "readme"
 
 
 fun updateReadme body =
-  dml (UPDATE readmeT SET Body = {[body]}, Updated = CURRENT_TIMESTAMP
-       WHERE TRUE)
+  KeyVal.set "readme" body
 
 
 (* Set the readme to a placeholder *)
 task initialize = fn () =>
-  r <- oneOrNoRows1 (SELECT * FROM readmeT);
-  case r of
-  | Some _ => return ()
-  | None =>
-    dml (INSERT INTO readmeT (Body, Updated)
-         VALUES ( "replace me", CURRENT_TIMESTAMP ))
+  p <- KeyVal.exists "readme";
+  if p then
+    return ()
+  else
+    KeyVal.set "readme" "replace me"
 
 
 (* News *)
@@ -305,9 +296,9 @@ and edit_news_item f =
 and readme_text () =
   r <- readme;
   layout <xml>
-    <div>{Post.toHtml' r.Body}</div>
+    <div>{Post.toHtml' r}</div>
     <form>
-      <textarea{#Body} required placeholder="Readme">{[r.Body]}</textarea><br/>
+      <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
   </xml>
