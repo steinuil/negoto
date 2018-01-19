@@ -9,6 +9,13 @@ fun get key =
   return v
 
 
+fun safeGet key default =
+  p <- oneOrNoRows1 (SELECT store.Val FROM store WHERE store.Key = {[key]});
+  case p of
+  | Some { Val = v } => return v
+  | None             => return default
+
+
 fun exists key =
   hasRows (SELECT TRUE FROM store WHERE store.Key = {[key]})
 

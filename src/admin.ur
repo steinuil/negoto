@@ -2,20 +2,11 @@ structure Log = Logger.Make(struct val section = "admin" end)
 
 
 val readme =
-  KeyVal.get "readme"
+  KeyVal.safeGet "readme" "replace me"
 
 
 fun updateReadme body =
   KeyVal.set "readme" body
-
-
-(* Set the readme to a placeholder *)
-task initialize = fn () =>
-  p <- KeyVal.exists "readme";
-  if p then
-    return ()
-  else
-    KeyVal.set "readme" "replace me"
 
 
 (* News *)
