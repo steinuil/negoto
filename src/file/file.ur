@@ -45,3 +45,10 @@ fun linkImage hash mime =
 
 fun linkThumb hash =
   FileFfi.link thumb_dir (hash ^ ".jpg")
+
+
+fun linkCss name =
+  bless ("/" ^ name ^ ".css")
+  (*
+  FileFfi.link css_dir (name ^ ".css")
+  *)

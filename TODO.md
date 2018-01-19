@@ -59,7 +59,7 @@ in the post body.
 * Other
   * [X] deleting the OP should delete the rest of the thread
   * [X] improve CSS, add different themes
-  * [ ] add cookie to switch themes
+  * [X] add cookie to switch themes
   * [ ] validate all forms
 
 

@@ -9,11 +9,9 @@ fun get key =
   return v
 
 
-fun safeGet key default =
-  p <- oneOrNoRows1 (SELECT store.Val FROM store WHERE store.Key = {[key]});
-  case p of
-  | Some { Val = v } => return v
-  | None             => return default
+fun getOpt key =
+  v <- oneOrNoRows1 (SELECT store.Val FROM store WHERE store.Key = {[key]});
+  return (Option.mp (fn x => x.Val) v)
 
 
 fun exists key =

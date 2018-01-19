@@ -43,18 +43,28 @@ fun flip [a] [b] [c] (f : a -> b -> c) (x : b) (y : a) =
   f y x
 
 
-fun mapNoneM [m] (_ : monad m) [a]
-    (f2 : m (option a)) (f1 : m (option a)) : m (option a) =
+fun bindOptM [m] (_ : monad m) [a] [b]
+    (f2 : a -> m (option b)) (f1 : m (option a)) : m (option b) =
   r1 <- f1;
   case r1 of
-  | None => f2
-  | Some _ => return r1
+  | None   => return None
+  | Some x => f2 x
 
 
-fun mapOptX [m] (_ : monad m) [a] [b]
+(*
+fun mapOptM [m] (_ : monad m) [a] [b]
     (f : a -> m b) (x' : option a) : m (option b) =
   case x' of
   | None => return None
   | Some x =>
     res <- f x;
     return (Some res)
+
+
+fun mapNoneM [m] (_ : monad m) [a]
+    (f2 : m (option a)) (f1 : m (option a)) : m (option a) =
+  r1 <- f1;
+  case r1 of
+  | None => f2
+  | Some _ => return r1
+*)

@@ -1,99 +1,67 @@
-(* TODO: manage themes with a table instead
 table themes :
   { Nam      : string
   , Filename : string
   , TabColor : string }
-*)
+  PRIMARY KEY Filename
 
 
-type themeInfo =
-  { Nam      : string
-  , Filename : string
-  , TabColor : string }
+cookie selectedTheme : string
 
 
-(* To add new themes, add its name to the themes datatype
- * and its info in InfoOfTheme.
- * The TabColor of a theme should be the same as $bg-dark in the SASS file. *)
-datatype themes =
-  | Yotsuba
-  | YotsubaB
+fun themeOfId name =
+  oneOrNoRows1 (SELECT * FROM themes WHERE themes.Filename = {[name]})
 
 
-fun infoOfTheme theme = case theme of
-  | Yotsuba =>
-    { Nam = "Yotsuba"
-    , Filename = "yotsuba"
-    , TabColor = "#FFD6AE" }
-
-  | YotsubaB =>
-    { Nam = "Yotsuba B"
-    , Filename = "yotsuba-b"
-    , TabColor = "#D0D5E7" }
+val allThemes =
+  queryL1 (SELECT * FROM themes)
 
 
-(* Change the default theme here. *)
-val defaultTheme = Yotsuba
+val defaultTheme =
+  def <- KeyVal.get "defaultTheme";
+  t <- themeOfId def;
+  case t of
+  | None    => error <xml>Default theme not found!</xml>
+  | Some t' => return t'
 
 
-cookie theme : themes
-
-
-val show_theme =
-  mkShow (fn x => (infoOfTheme x).Nam)
-
-
-val read_theme =
-  let fun reader theme = case theme of
-    | "Yotsuba" => Some Yotsuba
-    | "Yotsuba B" => Some YotsubaB
-    | _ => None
-  in
-    mkRead
-      (fn x => case reader x of Some x => x | None =>
-        error <xml>Invalid theme: {[x]}</xml>)
-      reader
-  end
-
-
-val allThemes = Yotsuba :: YotsubaB :: []
+val currThemeId : transaction string =
+  theme <- getCookie selectedTheme;
+  case theme of
+  | None   => KeyVal.get "defaultTheme"
+  | Some t => return t
 
 
 val getTheme =
-  theme' <- getCookie theme;
-  let val { Filename = css, TabColor = color, ... } =
-    infoOfTheme <|
-      case theme' of
-      | Some t => t
-      | None => defaultTheme
+  theme <- Util.bindOptM themeOfId (getCookie selectedTheme);
+  let val curTheme =
+    case theme of
+    | None   => clearCookie selectedTheme; defaultTheme
+    | Some t => return t
   in
-    return (bless ("/" ^ css ^ ".css"), color)
+    { Filename = css, TabColor = color, ... } <- curTheme;
+    return (File.linkCss css, color)
   end
 
 
-  (*
-fun themePicker url' =
-  theme' <- getCookie theme;
-  return <xml><form>
+fun themeSwitcher themes' curr act : xbody =
+  <xml><form>
     <select{#Theme}>
-      {List.mapX (fn t =>
-        <xml><option value={show theme'} selected={t = theme'}/></xml>)
-      allThemes}
+      {List.mapX (fn { Filename = id, Nam = name, ... } =>
+        <xml><option value={id} selected={id = curr}>{[name]}</option></xml>)
+        themes'}
     </select>
-    <submit value="Set theme" action={url'}/>
+    <submit action={act} value="Switch theme"/>
   </form></xml>
 
 
-fun setTheme { Theme = t } =
-  setCookie theme (readError t)
-  *)
+fun setTheme t =
+  setCookie selectedTheme { Value = t, Expires = None, Secure = False }
 
 
 open Tags
 
-fun layout [a] (_ : show a) (title' : a) class' desc body' =
-  (theme, color) <- getTheme;
-  return <xml>
+fun layout' theme color (title' : string) (class' : css_class) desc (body' : xbody) =
+  <xml>
     <head>
       <meta charset="utf-8"/>
       <title>{[title']}</title>
@@ -107,3 +75,27 @@ fun layout [a] (_ : show a) (title' : a) class' desc body' =
     </head>
     <body class={class'}>{body'}</body>
   </xml>
+
+
+
+fun layout (title' : string) class' desc body' =
+  (theme, color) <- getTheme;
+  return (layout' theme color title' class' desc body')
+
+
+fun layoutWithSwitcher act title' class' desc f =
+  id <- currThemeId;
+  themes <- allThemes;
+  let
+    val color =
+      case List.find (fn { Filename = f, ... } => f = id) themes of
+      | Some { TabColor = c, ... } => return c
+      | None =>
+        clearCookie selectedTheme;
+        error <xml>Invalid current theme: {[id]}</xml>
+
+    val switcher = themeSwitcher themes id act
+  in
+    color <- color;
+    return (layout' (File.linkCss id) color title' class' desc (f switcher))
+  end

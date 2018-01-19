@@ -2,7 +2,8 @@ structure Log = Logger.Make(struct val section = "admin" end)
 
 
 val readme =
-  KeyVal.safeGet "readme" "replace me"
+  x <- KeyVal.getOpt "readme";
+  return (Option.get "replace me" x)
 
 
 fun updateReadme body =

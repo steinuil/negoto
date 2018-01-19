@@ -96,8 +96,21 @@ in
 end
 
 
-fun layout (title' : string) (class' : css_class) body' =
-  Layout.layout title' class' "" body'
+fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
+  Layout.layoutWithSwitcher switch_theme title' class' ""
+    (fn switcher => <xml>
+      <header>
+        <nav>{navigation tags}</nav>
+        <h1>{[title']}</h1>
+      </header>
+      <main>{body'}</main>
+      <footer>{switcher}</footer>
+    </xml>)
+
+
+and switch_theme { Theme = t } =
+  Layout.setTheme t;
+  redirect (url (front ()))
 
 
 and newsItem item : xbody =
@@ -111,7 +124,7 @@ and front () =
   tags <- Data.allTags;
   news <- Admin.news;
   readme <- Admin.readme;
-  layout "Front Page - Negoto" front_page <xml>
+  Layout.layout "Front Page - Negoto" front_page "" <xml>
     <header>
       <h1>Negoto</h1>
     </header>
@@ -143,18 +156,12 @@ and catalog name =
   tags <- Data.allTags;
   case List.find (fn t => t.Nam = name) tags of
   | None => error errorPage
-  | Some tag' =>
-    threads <- (Data.catalogByTag tag'.Nam `bind` List.mapXM catalogThread);
-    postForm <- catalogForm tag'.Nam;
-    layout (show tag') catalog_page <xml>
-      <header>
-        {navigation tags}
-        <h1>{[tag']}</h1>
-      </header>
-      <main>
-        {postForm}
-        <div class="container">{threads}</div>
-      </main>
+  | Some tag =>
+    threads <- (Data.catalogByTag tag.Nam `bind` List.mapXM catalogThread);
+    postForm <- catalogForm tag.Nam;
+    layout tags (show tag) catalog_page <xml>
+      {postForm}
+      <div class="container">{threads}</div>
     </xml>
 
 
@@ -183,20 +190,11 @@ and thread id =
     in
       posts <- List.mapXM (threadPost addTxt) posts;
       pForm <- postForm postBody id;
-      layout title' thread_page <xml>
-        <header>
-          {navigation tags}
-          <h1>{[title']}</h1>
-        </header>
-        <main>
-          <header>{back} {[t.Subject]}</header>
-          <div class="container">{posts}</div>
-          {tForm}
-          {pForm}
-        </main>
-        <footer>
-          ayy lmao
-        </footer>
+      layout tags title' thread_page <xml>
+        <header>{back} {[t.Subject]}</header>
+        <div class="container">{posts}</div>
+        {tForm}
+        {pForm}
       </xml>
     end
 
@@ -271,7 +269,7 @@ and otherLinks () =
 
 
 and navigation tags =
-  <xml><nav>{tagLinks tags} {otherLinks ()}</nav></xml>
+  <xml>{tagLinks tags} {otherLinks ()}</xml>
 
 
 and catalogForm (boardId : string) : transaction xbody =
