@@ -2,7 +2,7 @@ structure Log = Logger.Make(struct val section = "admin" end)
 
 
 val readme =
-  x <- KeyVal.getOpt "readme";
+  x <- KeyVal.get "readme";
   return (Option.get "replace me" x)
 
 

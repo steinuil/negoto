@@ -33,7 +33,7 @@ val json_Thread : json Data.thread =
     , Subject = "subject"
     , Count   = "count"
     , Locked  = "locked"
-    , Tags    = "boards" }
+    , Tag     = "board" }
 
 val json_Post : json Data.post =
   json_record
@@ -55,7 +55,7 @@ val json_CatalogThread : json Data.catalogThread =
     , Subject = "subject"
     , Count   = "count"
     , Locked  = "locked"
-    , Tags    = "boards"
+    , Tag     = "board"
     , Nam     = "name"
     , Time    = "time"
     , Body    = "body"

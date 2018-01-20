@@ -4,12 +4,12 @@ table store :
   PRIMARY KEY Key
 
 
-fun get key =
+fun unsafeGet key =
   { Val = v } <- oneRow1 (SELECT store.Val FROM store WHERE store.Key = {[key]});
   return v
 
 
-fun getOpt key =
+fun get key =
   v <- oneOrNoRows1 (SELECT store.Val FROM store WHERE store.Key = {[key]});
   return (Option.mp (fn x => x.Val) v)
 

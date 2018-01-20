@@ -1,6 +1,6 @@
-val get : string -> transaction string
+val unsafeGet : string -> transaction string
 
-val getOpt : string -> transaction (option string)
+val get : string -> transaction (option string)
 
 val exists : string -> transaction bool
 

@@ -174,15 +174,10 @@ and thread id =
     tForm <- threadForm t.Id;
     postBody <- source "";
     let
-      val title' = case t.Tags of
-        | [] => ""
-        | tg' :: _ => (case List.find (fn t => t.Nam = tg') tags of
-          | None => ""
-          | Some tag' => show tag')
-
-      val back = case t.Tags of
-        | [] => <xml/>
-        | t :: _ => <xml>[ <a href={url (catalog t)}>back</a> ]</xml>
+      val title' =
+        List.find (fn tag => tag.Nam = t.Tag) tags
+        |> Option.mp show
+        |> Option.get ""
 
       fun addTxt str =
         t <- get postBody;
@@ -191,7 +186,7 @@ and thread id =
       posts <- List.mapXM (threadPost addTxt) posts;
       pForm <- postForm postBody id;
       layout tags title' thread_page <xml>
-        <header>{back} {[t.Subject]}</header>
+        <header>[ <a href={url (catalog t.Tag)}>back</a> ] {[t.Subject]}</header>
         <div class="container">{posts}</div>
         {tForm}
         {pForm}
@@ -216,6 +211,7 @@ and catalogThread thread' =
         <time>{updated}</time>
         <span class="separator">/</span>
         {[thread'.Count]} post{if thread'.Count > 1 then <xml>s</xml> else <xml/>}
+        {if thread'.Locked then <xml><span class="separator">/</span> Locked</xml> else <xml/>}
       </div>
       <div class="description">
         <span class="subject">{[thread'.Subject]}</span>
@@ -289,9 +285,7 @@ and catalogForm (boardId : string) : transaction xbody =
       <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
       <label for={spoilerButton} class="button">Spoiler</label>
     </div>
-    <subforms{#Tags}>
-      <entry><hidden{#Id} value={show boardId} /></entry>
-    </subforms>
+    <hidden{#Tag} value={show boardId}/>
     <submit action={create_thread} class="hidden-field" id={submitButton} />
   </form></xml>
 
@@ -324,14 +318,11 @@ and create_thread f = let
       { File = f.File, Spoiler = f.Spoiler } :: []
     else []
 
-  val thread' = f -- #Tags -- #File -- #Spoiler ++
-    { Tags = List.mp (fn x => x.Id) f.Tags, Files = files }
+  val thread' = f -- #File -- #Spoiler ++
+    { Files = files }
 in
-  if Post.isValid f.Body then
-    id <- Data.newThread thread';
-    redirect (url (thread id))
-  else
-    error errorPage
+  id <- Data.newThread thread';
+  redirect (url (thread id))
 end
 
 

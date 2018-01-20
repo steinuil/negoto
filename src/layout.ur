@@ -17,7 +17,7 @@ val allThemes =
 
 
 val defaultTheme =
-  def <- KeyVal.get "defaultTheme";
+  def <- KeyVal.unsafeGet "defaultTheme";
   t <- themeOfId def;
   case t of
   | None    => error <xml>Default theme not found!</xml>
@@ -27,7 +27,7 @@ val defaultTheme =
 val currThemeId : transaction string =
   theme <- getCookie selectedTheme;
   case theme of
-  | None   => KeyVal.get "defaultTheme"
+  | None   => KeyVal.unsafeGet "defaultTheme"
   | Some t => return t
 
 
@@ -90,9 +90,8 @@ fun layoutWithSwitcher act title' class' desc f =
     val color =
       case List.find (fn { Filename = f, ... } => f = id) themes of
       | Some { TabColor = c, ... } => return c
-      | None =>
-        clearCookie selectedTheme;
-        error <xml>Invalid current theme: {[id]}</xml>
+      | None => clearCookie selectedTheme;
+                error <xml>Invalid current theme: {[id]}</xml>
 
     val switcher = themeSwitcher themes id act
   in

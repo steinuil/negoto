@@ -9,7 +9,7 @@ type thread =
   , Subject : string
   , Count   : int
   , Locked  : bool
-  , Tags    : list string }
+  , Tag     : string }
   (** A thread which may belong to one or more tags. *)
 
 type postFile =
@@ -34,7 +34,7 @@ type catalogThread =
   , Subject : string
   , Count   : int
   , Locked  : bool
-  , Tags    : list string
+  , Tag     : string
   , Nam     : string
   , Time    : time
   , Body    : string
@@ -82,7 +82,7 @@ val newThread :
   , Files : list
     { File : file
     , Spoiler : bool }
-  , Tags : list string } -> transaction int
+  , Tag : string } -> transaction int
 
 val newPost :
   { Nam : string

@@ -23,7 +23,7 @@ in the post body.
   * [ ] use [ajaxUpload](https://github.com/urweb/ajaxUpload) library for files
 
 * Limits on number of threads and posts
-  * [ ] bump old threads off the board
+  * [X] bump old threads off the board
   * [X] lock threads when they're over their post limit
 
 * Admin control panel
@@ -61,6 +61,7 @@ in the post body.
   * [X] improve CSS, add different themes
   * [X] add cookie to switch themes
   * [ ] validate all forms
+  * [ ] multiple files in single post
 
 
 ## Advanced frontend
@@ -73,7 +74,3 @@ in the post body.
   * [ ] user-defined functions
   * [ ] JS version for in-browser live preview
     * maybe write it in OCaml and use C callbacks + `js_of_ocaml`?
-
-* A frontend that supports new features
-  * [ ] multiple file forms
-  * [ ] filter threads by tags

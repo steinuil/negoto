@@ -34,7 +34,7 @@ interface Thread {
   subject: string;
   count: int;
   locked: boolean;
-  boards: Array<string>;
+  board: string;
 }
 
 interface ThreadOp {
@@ -43,7 +43,7 @@ interface ThreadOp {
   subject: string;
   count: int;
   locked: boolean;
-  boards: Array<string>;
+  board: string;
   name: string;
   time: unix_time;
   body: string;

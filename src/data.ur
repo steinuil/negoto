@@ -14,7 +14,7 @@ type thread =
   , Subject : string
   , Count   : int
   , Locked  : bool
-  , Tags    : list string }
+  , Tag     : string }
 
 type postFile =
   { Hash    : string
@@ -36,7 +36,7 @@ type catalogThread =
   , Subject : string
   , Count   : int
   , Locked  : bool
-  , Tags    : list string
+  , Tag     : string
   , Nam     : string
   , Time    : time
   , Body    : string
@@ -59,15 +59,9 @@ table threads :
   , Updated : time
   , Subject : string
   , Count   : int
-  , Locked  : bool }
-  PRIMARY KEY (Id)
-
-table thread_tags :
-  { Thread : int
-  , Tag    : string }
-  CONSTRAINT Thread FOREIGN KEY Thread
-    REFERENCES threads(Id)
-    ON DELETE CASCADE,
+  , Locked  : bool
+  , Tag     : string }
+  PRIMARY KEY (Id),
   CONSTRAINT Tag FOREIGN KEY Tag
     REFERENCES tags(Nam)
     ON DELETE CASCADE
@@ -100,7 +94,6 @@ table files :
     REFERENCES posts(Uid)
     ON DELETE SET NULL
 
-(* TODO: users for bans *)
 
 
 
@@ -111,7 +104,7 @@ view catalogView =
     , threads.Subject AS Subject
     , threads.Locked  AS Locked
     , threads.Count   AS Count
-    , thread_tags.Tag AS Tag
+    , threads.Tag     AS Tag
     , posts.Nam       AS Nam
     , posts.Time      AS Time
     , posts.Body      AS Body
@@ -120,25 +113,12 @@ view catalogView =
     , files.Mime      AS Mime
     , files.Spoiler   AS Spoiler
   FROM threads
-  JOIN thread_tags
-    ON thread_tags.Thread = threads.Id
   JOIN posts
     ON posts.Thread = threads.Id
   LEFT OUTER JOIN files
     ON files.Post = {sql_nullable (SQL posts.Uid)}
   WHERE posts.Id = 1
   ORDER BY threads.Updated, threads.Id DESC
-
-view threadView =
-  SELECT threads.Id   AS Id
-    , threads.Updated AS Updated
-    , threads.Subject AS Subject
-    , threads.Count   AS Count
-    , threads.Locked  AS Locked
-    , thread_tags.Tag AS Tag
-  FROM threads
-  JOIN thread_tags
-    ON thread_tags.Thread = threads.Id
 
 view postView =
   SELECT posts.Id   AS Id
@@ -160,14 +140,14 @@ view postView =
 (* * Coalesce functions *)
 (* TODO: generic coalesce function that takes field names *)
 fun coalesceCatalogThread { CatalogView = c } acc = let
-  val (tagList, fileList, rest) = case acc of
-    | [] => ([], [], [])
+  val (fileList, rest) = case acc of
+    | [] => ([], [])
     | hd :: rst =>
       if c.Id = hd.Id
-      then (hd.Tags, hd.Files, rst)
-      else ([], [], acc)
+      then (hd.Files, rst)
+      else ([], acc)
 
-  val thread = c -- #Tag -- #Hash -- #Filename -- #Mime -- #Spoiler
+  val thread = c -- #Hash -- #Filename -- #Mime -- #Spoiler
 
   val fileList = case (c.Hash, c.Filename, c.Mime, c.Spoiler) of
     | (Some h, Some n, Some e, Some s) =>
@@ -175,26 +155,8 @@ fun coalesceCatalogThread { CatalogView = c } acc = let
       then fileList
       else { Hash = h, Nam = n, Mime = e, Spoiler = s } :: fileList
     | _ => fileList
-
-  val tagList =
-    if List.exists (fn x => x = c.Tag) tagList
-    then tagList
-    else c.Tag :: tagList
 in
-  (thread ++ { Tags = tagList } ++ { Files = fileList }) :: rest
-end
-
-fun coalesceThread' { ThreadView = t } acc = let
-  val thread = t -- #Tag
-
-  val (tagList, rest) = case acc of
-    | [] => ([], [])
-    | hd :: rst =>
-      if t.Id = hd.Id
-      then (hd.Tags, rst)
-      else ([], acc)
-in
-  (thread ++ { Tags = t.Tag :: tagList }) :: rest
+  (thread ++ { Files = fileList }) :: rest
 end
 
 
@@ -251,10 +213,7 @@ fun catalogByTag' tag =
     return (Some x)
 
 fun threadInfoById id =
-  thread <- query (SELECT * FROM threadView WHERE threadView.Id = {[id]})
-    (return `compose2` coalesceThread')
-    [];
-  return (case thread of t :: _ => Some t | [] => None)
+  oneOrNoRows1 (SELECT * FROM threads WHERE threads.Id = {[id]})
 
 
 (* * Post *)
@@ -285,6 +244,17 @@ val orphanedFiles =
      WHERE files.Post IS NULL)
 
 
+(* Max threads per tag *)
+val maxThreads : transaction int =
+  max <- KeyVal.get "maxThreads";
+  Option.bind read max
+  |> Option.get 2
+  |> return
+
+
+val setMaxThreads (i : int) =
+  KeyVal.set "maxThreads" (show i)
+
 
 (* * INSERT *)
 fun newTag { Nam = name, Slug = slug } =
@@ -296,10 +266,6 @@ fun insertFile uid { Spoiler = spoiler, File = file } =
   dml (INSERT INTO files (Hash, Nam, Mime, Spoiler, Post)
        VALUES ( {[hash]}, {[Option.get "<unnamed>" (fileName file)]}
               , {[fileMimeType file]} , {[spoiler]}, {[Some uid]} ))
-
-fun insertThreadTag thread tag =
-  dml (INSERT INTO thread_tags (Thread, Tag)
-       VALUES ( {[thread]}, {[tag]} ))
 
 fun bumpThread id shouldBump =
   if shouldBump then
@@ -325,13 +291,30 @@ fun newPost { Nam = name, Body = body, Bump = shouldBump
   List.app (insertFile uid) files';
   return uid
 
+fun deleteOldThreads tag =
+  max <- maxThreads;
+  { Count = cnt } <- oneRow (SELECT COUNT( * ) AS Count FROM threads
+                             WHERE threads.Tag = {[tag]});
+  if cnt >= max then
+    overflow <- query (SELECT threads.Id AS Id FROM threads
+                       ORDER BY threads.Updated ASC LIMIT {max - cnt + 1})
+                  (fn { Id = id } acc => return (id :: acc)) [];
+    let fun many (ls : list int) = case ls of
+      | []       => (WHERE FALSE)
+      | x :: []  => (WHERE t.Id = {[x]})
+      | x :: rst => (WHERE t.Id = {[x]} OR {many rst})
+    in
+      dml (DELETE FROM threads WHERE {many overflow})
+    end
+  else
+    return ()
 
 fun newThread { Nam = name, Subject = subj, Body = body
-              , Files = files', Tags = tags } =
+              , Files = files', Tag = tag } =
+  deleteOldThreads tag;
   id <- nextval thread_id;
-  dml (INSERT INTO threads (Id, Updated, Subject, Count, Locked)
-       VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, 0, {[False]} ));
-  List.app (insertThreadTag id) tags;
+  dml (INSERT INTO threads (Id, Updated, Subject, Count, Locked, Tag)
+       VALUES ( {[id]}, CURRENT_TIMESTAMP, {[subj]}, 0, {[False]}, {[tag]} ));
   _ <- newPost { Nam = name, Body = body, Bump = True, Files = files', Thread = id };
   return id
 
