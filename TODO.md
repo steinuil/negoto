@@ -9,14 +9,14 @@ in the post body.
   * [ ] configure the position of the saved files
     * how??
   * [X] return a checksum and image dimensions
-  * [ ] process thumbnails for images (and PDFs?) with libvips
+  * [ ] process thumbnails for images with libvips
     * figure out how to statically link libvips and all its dependencies
-  * [ ] process thumbnails for webms with ???
 
 * Post handling library
   * [ ] validate all the post fields
   * [X] parse newlines, quote arrows, backlinks, spoilers
   * [ ] parse inter-thread backlinks
+  * [ ] URLs
 
 * Ajax post forms
   * [X] convert fields to their ajax counterparts
@@ -61,10 +61,9 @@ in the post body.
   * [X] improve CSS, add different themes
   * [X] add cookie to switch themes
   * [ ] validate all forms
-  * [ ] multiple files in single post
 
 
-## Advanced frontend
+## Advanced features
 * [SexpCode](https://web.archive.org/web/20160321174220/http://cairnarvon.rotahall.org/misc/sexpcode.html)
   * [ ] desugaring of post reference and quote into SexpCode
   * [ ] base tags
@@ -74,3 +73,9 @@ in the post body.
   * [ ] user-defined functions
   * [ ] JS version for in-browser live preview
     * maybe write it in OCaml and use C callbacks + `js_of_ocaml`?
+
+* [ ] Multiple files in single post
+
+* WebM support
+  * [ ] player
+  * [ ] thumbnails

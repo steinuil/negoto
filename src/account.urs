@@ -24,5 +24,8 @@ val logOutCurrent : transaction unit
 val authenticate : transaction string
   (* Check the authentication cookie and return the user's name *)
 
+val authenticateOpt : transaction (option string)
+  (* Like [authenticate], but returns None on failure *)
+
 val invalidateAndRehash : transaction unit
   (* Invalidate all other sessions and rehash the current *)

@@ -15,14 +15,14 @@ li
   list-style: none
 
 
-a
+a, .link
   text-decoration: none
   color: $link
 
   &:hover
     color: $link-hover
 
-.clickable
+.clickable, .link
   cursor: pointer
 
 
@@ -38,6 +38,8 @@ body>header
     color: $nav-text
     a
       color: $link2
+    form
+      display: inline-block
   h1
     color: $page-title
 
@@ -56,7 +58,8 @@ main
   flex-grow: 1
 
 
-.front-page
+.Negoto-front-page,
+.Admin-page
   &>main
     margin: auto
 
@@ -67,6 +70,7 @@ main
     box-shadow: 2px 2px $shadow
     padding: 8px 10px
 
+.Negoto-front-page
   section:not(:last-child)
     margin-bottom: 16px
 
@@ -102,12 +106,12 @@ main
     text-decoration: underline
 
 
-.catalog-page
+.Negoto-catalog-page
   main
     text-align: center
 
 
-.thread-page
+.Negoto-thread-page
   .post
     display: table
     background-color: $post-bg
@@ -127,6 +131,16 @@ main
       font-weight: bold
 
 
+.button, input[type="text"], textarea
+  display: inline-block
+  padding: 4px 6px
+  font-family: inherit
+  font-size:   inherit
+
+
+.hidden-field
+  display: none
+
 .post-form
   display: inline-block
   min-width: 256px
@@ -135,13 +149,6 @@ main
 
   background-color: $form-bg
   box-shadow: 2px 2px $shadow
-
-  // All visible inputs (except file)
-  .button, input[type="text"], textarea
-    display: inline-block
-    padding: 4px 6px
-    font-family: inherit
-    font-size:   inherit
 
   .button, input[type="text"]
     background-color: $bg
@@ -158,8 +165,6 @@ main
     &:-ms-input-placeholder
       color: $shadow
 
-  .hidden-field
-    display: none
 
   // Containers
   div

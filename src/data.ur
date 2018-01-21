@@ -248,7 +248,7 @@ val orphanedFiles =
 val maxThreads : transaction int =
   max <- KeyVal.get "maxThreads";
   Option.bind read max
-  |> Option.get 2
+  |> Option.get 30
   |> return
 
 

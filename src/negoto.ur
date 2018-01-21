@@ -1,22 +1,5 @@
 open Tags
-
-style post
-style info
-style description
-style name
-style subject
-style post_body
-style catalog_thread
-style separator
-style clickable
-style button
-style hidden_field
-style subject_field
-style post_form
-style container
-style section_body
-style news_item
-style news_body
+open Styles
 
 style base_page
 style front_page
@@ -188,8 +171,8 @@ and thread id =
       layout tags title' thread_page <xml>
         <header>[ <a href={url (catalog t.Tag)}>back</a> ] {[t.Subject]}</header>
         <div class="container">{posts}</div>
-        {tForm}
-        {pForm}
+        {if t.Locked then <xml/> else
+        <xml>{tForm}{pForm}</xml>}
       </xml>
     end
 

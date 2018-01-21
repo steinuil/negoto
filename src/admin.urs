@@ -9,4 +9,4 @@ type newsItem =
 val news : transaction (list newsItem)
 
 (* Admin actions *)
-val login : unit -> transaction page
+val front : unit -> transaction page

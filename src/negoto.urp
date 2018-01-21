@@ -4,8 +4,11 @@ allow url https://github.com/steinuil/negoto
 allow url /static/*
 allow env NEGOTO_LOGLEVEL
 allow responseHeader Status
-rewrite style Negoto/* [-]
-rewrite style Post/* text_ [-]
+rewrite style Styles/* [-]
+rewrite style Negoto/* Negoto_ [-]
+rewrite style Admin/*  Admin_ [-]
+rewrite style Post/*   text_ [-]
+rewrite style * [-]
 rewrite url * [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
@@ -23,6 +26,7 @@ $/json
 util
 logger
 keyVal
+styles
 layout
 data
 account

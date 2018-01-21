@@ -183,6 +183,12 @@ val logOutCurrent =
     dml (DELETE FROM logged WHERE User = {[name]} AND Hash = {[hash]})
 
 
+val authenticateOpt =
+  auth <- getAuth;
+  Option.mp (fn (name, _) => name) auth
+  |> return
+
+
 val authenticate =
   auth <- getAuth;
   case auth of

@@ -22,6 +22,13 @@ table newsItems :
   PRIMARY KEY (Id)
 
 
+type newsItem =
+  { Title  : string
+  , Author : string
+  , Time   : time
+  , Body   : string }
+
+
 val news =
   query (SELECT * FROM newsItems)
     (fn { NewsItems = x } acc => return ((x -- #Id) :: acc)) []
@@ -55,24 +62,30 @@ fun editNews id { Title = title, Body = body } =
 (* Admin stuff *)
 
 
+open Styles
+style page
+
+
 fun confirmDel name _ =
   ok <- confirm ("Do you really want to delete " ^ name ^ "?");
   if ok then return () else preventDefault
 
 
-style admin_page
-
-
 fun layout (body' : xbody) : transaction page =
-  _ <- Account.authenticate;
-  Layout.layout "Admin" admin_page "Admin page" <xml>
-    <header><nav><ul>
-      <a href={url (boards ())}>boards</a>
-      <a href={url (news_items ())}>news</a>
+  user <- Account.authenticate;
+  logout <- fresh;
+  Layout.layout "Admin" page "Admin page" <xml>
+    <header><nav>[
+      <a href={url (front ())}>front</a> /
+      <a href={url (boards ())}>boards</a> /
+      <a href={url (news_items ())}>news</a> /
       <a href={url (readme_text ())}>readme</a>
-      <form><submit action={log_out} value="logout"/></form>
-    </ul></nav></header>
-    <main>{body'}</main>
+    ] [
+      {[user]} /
+      <a href={url (settings ())}>settings</a> /
+      <form><label class="link" for={logout}>logout</label><submit id={logout} action={log_out} class="hidden-field"/></form>
+    ]</nav></header>
+    <main><div class="container">{body'}</div></main>
   </xml>
 
 
@@ -230,6 +243,7 @@ and delete_file file =
 
 and news_items () =
   n <- allNews;
+  user <- Account.authenticate;
   layout <xml><table>
     <tr><th>ID</th><th>Title</th><th>Author</th><th>Body</th></tr>
     {List.mapX (fn n => <xml>
@@ -246,7 +260,7 @@ and news_items () =
         </tr>
       </xml>) n}
   </table><form>
-    <hidden{#Author} value="steenuil"/>
+    <hidden{#Author} value={user}/>
     <textbox{#Title} placeholder="Title" required/><br/>
     <textarea{#Body} placeholder="Body" required/><br/>
     <submit action={create_news_item} value="Post news"/>
@@ -303,19 +317,31 @@ and edit_readme { Body = body } =
   redirect (url (readme_text ()))
 
 
-and login () : transaction page =
-  Layout.layout "Login" admin_page "Login page" <xml><main><form>
-    <textbox{#Nam} placeholder="Name" required/><br/>
-    <password{#Password} placeholder="password" required/><br/>
-    <submit value="Log in" action={log_in}/>
-  </form></main></xml>
+and settings () : transaction page =
+  layout <xml>
+  </xml>
+
+
+and front () : transaction page =
+  admin <- Account.authenticateOpt;
+  case admin of
+  | Some name =>
+    layout <xml>
+      Welcome to the admin page, {[name]}
+    </xml>
+  | None =>
+    Layout.layout "Login" page "Login page" <xml><main><div class="container"><form>
+      <textbox{#Nam} placeholder="Name" required/><br/>
+      <password{#Password} placeholder="password" required/><br/>
+      <submit value="Log in" action={log_in}/>
+    </form></div></main></xml>
 
 
 and log_in { Nam = name, Password = pass } =
   Account.logIn name pass;
-  redirect (url (boards ()))
+  redirect (url (front ()))
 
 
 and log_out () =
   Account.logOutCurrent;
-  redirect (url (login ()))
+  redirect (url (front ()))
