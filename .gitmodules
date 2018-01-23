@@ -1,0 +1,6 @@
+[submodule "src/urweb-bcrypt"]
+	path = src/urweb-bcrypt
+	url = https://github.com/steinuil/urweb-bcrypt
+[submodule "src/bcrypt"]
+	path = src/bcrypt
+	url = https://github.com/steinuil/urweb-bcrypt

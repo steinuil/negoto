@@ -133,9 +133,39 @@ main
 
 .button, input[type="text"], textarea
   display: inline-block
-  padding: 4px 6px
   font-family: inherit
   font-size:   inherit
+
+
+table
+  border-collapse: collapse
+  table-layout: fixed
+  width: 100%
+
+  th
+    text-align: left
+
+  td
+    border: solid 2px $shadow
+
+  input[type="text"]
+    width: 100%
+
+
+  .id-column
+    width: 30px
+    text-align: right
+
+  .title-column
+    width: 50%
+    white-space: nowrap
+    text-overflow: ellipsis
+
+  .name-column
+    width: 15%
+
+  .time-column
+    width: 25%
 
 
 .hidden-field
@@ -149,6 +179,9 @@ main
 
   background-color: $form-bg
   box-shadow: 2px 2px $shadow
+
+  .button, input[type="text"], textarea
+    padding: 4px 6px
 
   .button, input[type="text"]
     background-color: $bg

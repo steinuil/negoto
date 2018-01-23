@@ -70,8 +70,8 @@ in
       }>+</span>
       <span onclick={fn _ =>
         f <- get files; case f of
-        | f' :: [] => return ()
-        | ls :: rs => set files rs
+        | _ :: [] => return ()
+        | _ :: rs => set files rs
         | [] => return ()
       }>-</span>
     </div>

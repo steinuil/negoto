@@ -17,6 +17,7 @@ library file
 library post
 library uuid
 ffi tags
+library bcrypt
 
 $/list
 $/option

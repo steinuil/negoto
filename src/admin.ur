@@ -244,19 +244,41 @@ and delete_file file =
 and news_items () =
   n <- allNews;
   user <- Account.authenticate;
-  layout <xml><table>
-    <tr><th>ID</th><th>Title</th><th>Author</th><th>Body</th></tr>
+  selectedNews <- source None;
+  layout <xml><dyn signal={
+    sel <- signal selectedNews;
+    case sel of
+    | None => return <xml/>
+    | Some news =>
+      return <xml><form>
+        <hidden{#Id} value={show news.Id}/>
+        <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
+        <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+        <submit value="Edit news item" action={edit_news_item}/>
+      </form>
+      <form>
+        <hidden{#Id} value={show news.Id}/>
+        <submit value="Delete item"
+          onclick={confirmDel news.Title}
+          action={delete_news_item}/>
+      </form>
+      </xml>
+  }/><table>
+    <tr><th class="title-column">Title</th><th class="name-column">Author</th><th class="time-column">Time</th></tr>
     {List.mapX (fn n => <xml>
-        <tr>
-          <td>{[n.Id]}</td><td>{[n.Title]}</td>
-          <td>{[n.Author]}</td><td>{[n.Body]}</td>
-          <td><a href={url (news_item n.Id)}>edit</a></td>
-          <form>
-            <hidden{#Id} value={show n.Id}/>
-            <td><submit value="Delete item"
-              onclick={confirmDel n.Title}
-              action={delete_news_item}/></td>
-          </form>
+        <tr onclick={fn _ =>
+          news <- get selectedNews;
+          case news of
+          | None => set selectedNews (Some n)
+          | Some { Id = id, ... } =>
+            if id = n.Id then
+              set selectedNews None
+            else
+              return ()
+        }>
+          <td>{[n.Title]}</td>
+          <td>{[n.Author]}</td>
+          <td>{[n.Time]}</td>
         </tr>
       </xml>) n}
   </table><form>

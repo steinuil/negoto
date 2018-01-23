@@ -19,8 +19,7 @@ in the post body.
   * [ ] URLs
 
 * Ajax post forms
-  * [X] convert fields to their ajax counterparts
-  * [ ] use [ajaxUpload](https://github.com/urweb/ajaxUpload) library for files
+  * [ ] write AJAX form javascript library
 
 * Limits on number of threads and posts
   * [X] bump old threads off the board

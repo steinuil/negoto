@@ -47,22 +47,14 @@ val show_role =
 table admins :
   { Nam  : string
   , Role : int
-  , Hash : string
-  , Salt : string }
+  , Hash : string }
   PRIMARY KEY (Nam),
 
 
-fun hashPassword pass =
-  salt <- rand;
-  let val salt = show salt
-      val hash = crypt pass salt in
-    return (hash, salt)
-  end
-
 fun create name pass role =
-  (hash, salt) <- hashPassword pass;
-  dml (INSERT INTO admins (Nam, Role, Hash, Salt)
-       VALUES ( {[name]}, {[int_of_role role]}, {[hash]}, {[salt]} ))
+  hash <- Bcrypt.hash pass;
+  dml (INSERT INTO admins (Nam, Role, Hash)
+       VALUES ( {[name]}, {[int_of_role role]}, {[hash]} ))
 
 
 fun changeName oldName newName =
@@ -70,8 +62,8 @@ fun changeName oldName newName =
 
 
 fun changePassword name newPass =
-  (hash, salt) <- hashPassword newPass;
-  dml (UPDATE admins SET Hash = {[hash]}, Salt = {[salt]}
+  hash <- Bcrypt.hash newPass;
+  dml (UPDATE admins SET Hash = {[hash]}
        WHERE Nam = {[name]})
 
 
@@ -80,11 +72,11 @@ fun delete name =
 
 
 fun validate name pass =
-  x <- oneOrNoRows1 (SELECT admins.Salt, admins.Hash FROM admins
+  x <- oneOrNoRows1 (SELECT admins.Hash FROM admins
                      WHERE admins.Nam = {[name]});
   case x of
-  | Some { Salt = salt, Hash = hash } =>
-    return ((crypt pass salt) = hash)
+  | Some { Hash = hash } =>
+    return (Bcrypt.check pass hash)
   | None =>
     return False
 
@@ -112,8 +104,7 @@ cookie loginToken :
 
 table logged :
   { User : string
-  , Hash : string
-  , Salt : string }
+  , Hash : string }
   CONSTRAINT User FOREIGN KEY User
     REFERENCES admins(Nam)
     ON UPDATE CASCADE
@@ -121,9 +112,9 @@ table logged :
 
 
 fun getHash name token =
-  tokens <- queryL1 (SELECT logged.Hash, logged.Salt FROM logged
+  tokens <- queryL1 (SELECT logged.Hash FROM logged
                      WHERE logged.User = {[name]});
-  case List.find (fn x => crypt token x.Salt = x.Hash) tokens of
+  case List.find (fn x => Bcrypt.check token x.Hash) tokens of
   | Some { Hash = hash, ... } => return (Some hash)
   | None => return None
 
@@ -141,15 +132,12 @@ val getAuth =
 
 
 fun genLogin name =
-  salt <- rand;
   token <- Uuid.random;
-  let val salt = show salt
-      val hash = crypt token salt in
-    dml (INSERT INTO logged (User, Hash, Salt)
-         VALUES ( {[name]}, {[hash]}, {[salt]} ));
-    setCookie loginToken { Value = { User = name, Token = token }
-                         , Expires = None, Secure = False }
-  end
+  hash <- Bcrypt.hash token;
+  dml (INSERT INTO logged (User, Hash)
+       VALUES ( {[name]}, {[hash]} ));
+  setCookie loginToken { Value = { User = name, Token = token }
+                       , Expires = None, Secure = False }
 
 
 fun logIn name pass =

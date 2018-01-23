@@ -14,7 +14,8 @@ b = build
 file_lib = $s/file/lib.urp $s/file/file.urs $s/file/file.ur $s/file/fileFfi.urs $s/file/fileFfi.h
 post_lib = $s/post/lib.urp $s/post/post.urs $s/post/post.ur $s/post/postFfi.urs $s/post/postFfi.h
 uuid_lib = $s/uuid/lib.urp $s/uuid/uuid.urs $s/uuid/uuid.h
-src_files = $s/negoto.urp $s/account.ur $s/account.urs $s/admin.ur $s/admin.urs $s/api.ur $s/api.urs $s/data.ur $s/data.urs $s/keyVal.ur $s/keyVal.urs $s/layout.ur $s/layout.urs $s/logger.ur $s/logger.urs $s/main.ur $s/negoto.ur $s/negoto.urs $s/styles.ur $s/tags.urs $s/util.ur $(file_lib) $(post_lib) $(uuid_lib)
+bcrypt_lib = $s/bcrypt/lib.urp $s/bcrypt/bcrypt.urs $s/bcrypt/bcrypt.h $s/bcrypt/bcrypt.c
+src_files = $s/negoto.urp $s/account.ur $s/account.urs $s/admin.ur $s/admin.urs $s/api.ur $s/api.urs $s/data.ur $s/data.urs $s/keyVal.ur $s/keyVal.urs $s/layout.ur $s/layout.urs $s/logger.ur $s/logger.urs $s/main.ur $s/negoto.ur $s/negoto.urs $s/styles.ur $s/tags.urs $s/util.ur $(file_lib) $(post_lib) $(uuid_lib) $(bcrypt_lib)
 
 sass_base = themes/base.sass themes/reset.sass
 css_files = $b/yotsuba.css $b/yotsuba-b.css
@@ -28,7 +29,7 @@ negoto: $(exe) $(db) public
 
 # Because make is stupid and will run urweb twice with -j >1
 $b/schema.sql: $(exe) ;
-$(exe): $(src_files) $b/fileFfi.o $b/postFfi.o $b/uuid.o $b/yotsuba.css $b/yotsuba-b.css
+$(exe): $(src_files) $b/fileFfi.o $b/postFfi.o $b/uuid.o $b/yotsuba.css $b/yotsuba-b.css | $s/bcrypt/bcrypt.a
 	$(urweb) project -dbms sqlite -db $(db) -output negoto.exe
 
 $(db): $b/schema.sql init.sql
@@ -57,6 +58,11 @@ $b:
 public:
 	mkdir -p public
 
+.PHONY: $s/bcrypt/bcrypt.a
+$s/bcrypt/bcrypt.a: $(bcrypt_lib)
+	@$(MAKE) -C $s/bcrypt
+
+
 
 check:
 	$(urweb) -tc project
@@ -66,5 +72,6 @@ run: negoto
 
 clean:
 	rm -rf $b $(exe) $(db) public
+	@$(MAKE) -C $s/bcrypt clean
 
 .PHONY: negoto check run clean

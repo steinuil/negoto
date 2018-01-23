@@ -16,3 +16,8 @@ style container
 style section_body
 style news_item
 style news_body
+
+style id_column
+style name_column
+style title_column
+style time_column
