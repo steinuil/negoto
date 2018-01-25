@@ -114,3 +114,8 @@ val deletePost : int -> int -> transaction unit
 
 val deletePostByUid : int -> transaction unit
   (** Delete a post given its unique ID. *)
+
+
+val maxThreads : transaction int
+
+val setMaxThreads : int -> transaction unit

@@ -74,4 +74,7 @@ clean:
 	rm -rf $b $(exe) $(db) public
 	@$(MAKE) -C $s/bcrypt clean
 
-.PHONY: negoto check run clean
+pull-submodules:
+	git submodule update --recursive --remote
+
+.PHONY: negoto check run clean pull-submodules

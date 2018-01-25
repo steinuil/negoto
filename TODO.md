@@ -17,6 +17,8 @@ in the post body.
   * [X] parse newlines, quote arrows, backlinks, spoilers
   * [ ] parse inter-thread backlinks
   * [ ] URLs
+  * [ ] buffer library similar to OCaml's
+    * or at least fix the post length issue
 
 * Ajax post forms
   * [ ] write AJAX form javascript library
@@ -63,6 +65,10 @@ in the post body.
 
 
 ## Advanced features
+* Buffer library
+  * [ ] C version if I haven't already done it before
+  * [ ] javascript version
+
 * [SexpCode](https://web.archive.org/web/20160321174220/http://cairnarvon.rotahall.org/misc/sexpcode.html)
   * [ ] desugaring of post reference and quote into SexpCode
   * [ ] base tags
@@ -70,8 +76,6 @@ in the post body.
   * [ ] function composition
   * [ ] higher arity functions
   * [ ] user-defined functions
-  * [ ] JS version for in-browser live preview
-    * maybe write it in OCaml and use C callbacks + `js_of_ocaml`?
 
 * [ ] Multiple files in single post
 

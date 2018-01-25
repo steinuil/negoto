@@ -4,15 +4,15 @@ datatype role = Owner | Admin | Moderator
 
 fun int_of_role role =
   case role of
-  | Owner => 0
+  | Owner => 2
   | Admin => 1
-  | Moderator => 2
+  | Moderator => 0
 
 fun role_of_int role =
   case role of
-  | 0 => Owner
+  | 2 => Owner
   | 1 => Admin
-  | 2 => Moderator
+  | 0 => Moderator
   | _ => error <xml>Invalid role</xml>
 
 (* Some typeclass implementations for roles *)
@@ -190,3 +190,16 @@ val invalidateAndRehash =
   name <- authenticate;
   logOutAll name;
   genLogin name
+
+
+fun requireLevel lvl =
+  name <- authenticate;
+  role <- roleOf name;
+  case role of
+  | Some role =>
+    if role >= lvl then
+      return name
+    else
+      error <xml>You don't have permission to see this page.</xml>
+  | None =>
+    error <xml>UNEXPECTED: authenticated user doesn't exist in the users database.</xml>

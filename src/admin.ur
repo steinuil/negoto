@@ -79,11 +79,14 @@ fun layout (body' : xbody) : transaction page =
       <a href={url (front ())}>front</a> /
       <a href={url (boards ())}>boards</a> /
       <a href={url (news_items ())}>news</a> /
-      <a href={url (readme_text ())}>readme</a>
+      <a href={url (site_settings ())}>site settings</a>
     ] [
       {[user]} /
       <a href={url (settings ())}>settings</a> /
-      <form><label class="link" for={logout}>logout</label><submit id={logout} action={log_out} class="hidden-field"/></form>
+      <form>
+        <label class="link" for={logout}>log out</label>
+        <submit id={logout} action={log_out} class="hidden-field"/>
+      </form>
     ]</nav></header>
     <main><div class="container">{body'}</div></main>
   </xml>
@@ -91,33 +94,71 @@ fun layout (body' : xbody) : transaction page =
 
 and boards () =
   tags <- Data.allTags;
-  layout <xml>
-    <table>
-      <tr>
-        <th>Name</th>
-        <th>Slug</th>
-      </tr>
-      {List.mapX (fn { Nam = name, Slug = slug } =>
-        <xml><tr><td><a href={url (board name)}>{[name]}</a></td>
-          <form><hidden{#Nam} value={name}/>
-            <td><textbox{#Slug} required placeholder="Slug" value={slug}/></td>
-            <td><submit value="Edit slug" action={edit_slug}/></td>
+  selectedBoard <- source None;
+  let
+    val slugEditor =
+      sel <- signal selectedBoard;
+      case sel of
+      | None => return <xml/>
+      | Some board =>
+        return <xml><section>
+          <header>Edit slug</header>
+          <form>
+            <hidden{#Nam} value={board.Nam}/>
+            <textbox{#Slug} required placeholder="Slug" value={board.Slug}/>
+            <submit value="Edit slug" action={edit_slug}/>
           </form>
-          <td><form><hidden{#Nam} value={name}/>
-            <submit value="Delete board" action={delete_board}
-              onclick={confirmDel ("/" ^ name ^ "/")}/>
-          </form></td>
-        </tr></xml>)
-        tags}
-      <form>
-        <tr>
-          <td><textbox{#Nam} required placeholder="Name"/></td>
-          <td><textbox{#Slug} required placeholder="Slug"/></td>
-          <td><submit value="Create board" action={create_board}/></td>
-        </tr>
-      </form>
-    </table>
-  </xml>
+        </section></xml>
+
+    fun boardRow b =
+      delButton <- fresh;
+      return <xml><tr>
+        <td><a href={url (board b.Nam)}>{[b.Nam]}</a></td>
+        <td>{[b.Slug]}</td>
+        <td>
+          <span class="link" onclick={fn _ =>
+            board <- get selectedBoard;
+            case board of
+            | None => set selectedBoard (Some b)
+            | Some { Nam = n, ... } =>
+              if n = b.Nam then
+                return ()
+              else
+                set selectedBoard (Some b)
+            }>[edit]</span>
+          <form>
+            <hidden{#Nam} value={b.Nam}/>
+            <label class="link" for={delButton}>[delete]</label>
+            <submit class="hidden-field" action={delete_board}
+              id={delButton} onclick={confirmDel ("/" ^ b.Nam ^ "/")}/>
+          </form>
+        </td>
+      </tr></xml>
+  in
+    rows <- List.mapXM boardRow tags;
+    layout <xml>
+      <section>
+        <header>Add a board</header>
+        <form>
+          <textbox{#Nam} required placeholder="Name"/>
+          <textbox{#Slug} required placeholder="Slug"/>
+          <submit value="Create board" action={create_board}/>
+        </form>
+      </section>
+      <section>
+        <header>Boards</header>
+        <table>
+          <tr>
+            <th>Name</th>
+            <th>Slug</th>
+            <th/>
+          </tr>
+          {rows}
+        </table>
+      </section>
+      <dyn signal={slugEditor}/>
+    </xml>
+  end
 
 
 (* TODO: validation *)
@@ -204,8 +245,7 @@ and thread tid =
     {List.mapX (fn { Id = id, Files = files, ... } =>
       <xml><tr>
         <td>{[id]}</td>
-        <td>{List.mapX (fn file =>
-            <xml><form>
+        <td>{List.mapX (fn file => <xml><form>
               <hidden{#Hash} value={file.Hash}/>
               <hidden{#Nam} value={file.Nam}/>
               <hidden{#Mime} value={file.Mime}/>
@@ -245,59 +285,69 @@ and news_items () =
   n <- allNews;
   user <- Account.authenticate;
   selectedNews <- source None;
-  layout <xml><dyn signal={
+  rows <- List.mapXM (fn n =>
+    delNews <- fresh;
+    return <xml>
+      <tr>
+        <td>{[n.Title]}</td>
+        <td>{[n.Author]}</td>
+        <td>{[n.Time]}</td>
+        <td>
+          <span class="link" onclick={fn _ =>
+            news <- get selectedNews;
+            case news of
+            | None => set selectedNews (Some n)
+            | Some { Id = id, ... } =>
+              if id = n.Id then
+                return ()
+              else
+                set selectedNews (Some n)
+          }>[edit]</span>
+          <form>
+            <hidden{#Id} value={show n.Id}/>
+            <label for={delNews} class="link">[delete]</label>
+            <submit id={delNews} class="hidden-field"
+              onclick={confirmDel n.Title}
+              action={delete_news_item}/>
+          </form>
+        </td>
+      </tr>
+    </xml>) n;
+  layout <xml><section>
+    <header>Add news</header>
+    <form>
+      <hidden{#Author} value={user}/>
+      <textbox{#Title} placeholder="Title" required/><br/>
+      <textarea{#Body} placeholder="Body" required/><br/>
+      <submit action={create_news_item} value="Post news"/>
+    </form>
+  </section><section>
+    <header>News</header>
+    <table>
+      <tr>
+        <th>Title</th>
+        <th>Author</th>
+        <th>Time</th>
+        <th/>
+      </tr>
+      {rows}
+    </table>
+  </section>
+  <dyn signal={
     sel <- signal selectedNews;
     case sel of
     | None => return <xml/>
     | Some news =>
-      return <xml><form>
-        <hidden{#Id} value={show news.Id}/>
-        <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
-        <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
-        <submit value="Edit news item" action={edit_news_item}/>
-      </form>
-      <form>
-        <hidden{#Id} value={show news.Id}/>
-        <submit value="Delete item"
-          onclick={confirmDel news.Title}
-          action={delete_news_item}/>
-      </form>
-      </xml>
-  }/><table>
-    <tr><th class="title-column">Title</th><th class="name-column">Author</th><th class="time-column">Time</th></tr>
-    {List.mapX (fn n => <xml>
-        <tr onclick={fn _ =>
-          news <- get selectedNews;
-          case news of
-          | None => set selectedNews (Some n)
-          | Some { Id = id, ... } =>
-            if id = n.Id then
-              set selectedNews None
-            else
-              return ()
-        }>
-          <td>{[n.Title]}</td>
-          <td>{[n.Author]}</td>
-          <td>{[n.Time]}</td>
-        </tr>
-      </xml>) n}
-  </table><form>
-    <hidden{#Author} value={user}/>
-    <textbox{#Title} placeholder="Title" required/><br/>
-    <textarea{#Body} placeholder="Body" required/><br/>
-    <submit action={create_news_item} value="Post news"/>
-  </form></xml>
-
-
-and news_item id =
-  n <- getNews id;
-  case n of None => error <xml>No such news item</xml> | Some news =>
-  layout <xml><form>
-    <hidden{#Id} value={show id}/>
-    <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
-    <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
-    <submit value="Edit news item" action={edit_news_item}/>
-  </form></xml>
+      return <xml><section>
+        <header>Edit news</header>
+        <form>
+          <hidden{#Id} value={show news.Id}/>
+          <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
+          <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+          <submit value="Edit news item" action={edit_news_item}/>
+        </form>
+      </section></xml>
+  }/></xml>
 
 
 and create_news_item x =
@@ -321,22 +371,38 @@ and edit_news_item f =
   redirect (url (news_items ()))
 
 
-and readme_text () =
+and site_settings () =
+  admin <- Account.requireLevel Account.Admin;
   r <- readme;
-  layout <xml>
+  maxThreads <- Data.maxThreads;
+  layout <xml><section>
+    <header>Max threads</header>
+    <form>
+      <number{#Max} value={float maxThreads} min={5.0} max={200.0} step={1.0}/>
+      <submit value="Set max threads" action={set_max_threads}/>
+    </form>
+  </section><section>
+    <header>Edit readme</header>
     <div>{Post.toHtml' r}</div>
     <form>
       <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
-  </xml>
+  </section></xml>
+
+
+and set_max_threads { Max = max } =
+  admin <- Account.requireLevel Account.Admin;
+  Data.setMaxThreads (ceil max);
+  Log.info (admin ^ " set the max threads to " ^ show (ceil max));
+  redirect (url (site_settings ()))
 
 
 and edit_readme { Body = body } =
-  admin <- Account.authenticate;
+  admin <- Account.requireLevel Account.Admin;
   updateReadme body;
   Log.info (admin ^ " edited the readme");
-  redirect (url (readme_text ()))
+  redirect (url (site_settings ()))
 
 
 and settings () : transaction page =

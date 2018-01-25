@@ -24,6 +24,10 @@ val logOutCurrent : transaction unit
 val authenticate : transaction string
   (* Check the authentication cookie and return the user's name *)
 
+val requireLevel : role -> transaction string
+  (* Like [authenticate], but also checks that the authenticated user's role
+   * has permissions equal or superior to the given role. *)
+
 val authenticateOpt : transaction (option string)
   (* Like [authenticate], but returns None on failure *)
 

@@ -70,10 +70,23 @@ main
     box-shadow: 2px 2px $shadow
     padding: 8px 10px
 
-.Negoto-front-page
+  section>header
+    font-size: 1.5em
+    font-weight: bold
+    border-bottom: 1px solid $shadow
+    margin-bottom: 4px
+    padding-bottom: 2px
+
   section:not(:last-child)
     margin-bottom: 16px
 
+
+.Admin-page
+  table form
+    display: inline-block
+
+
+.Negoto-front-page
   section>header
     font-size: 1.5em
     font-weight: bold
@@ -139,33 +152,13 @@ main
 
 table
   border-collapse: collapse
-  table-layout: fixed
   width: 100%
 
   th
     text-align: left
 
   td
-    border: solid 2px $shadow
-
-  input[type="text"]
-    width: 100%
-
-
-  .id-column
-    width: 30px
-    text-align: right
-
-  .title-column
-    width: 50%
-    white-space: nowrap
-    text-overflow: ellipsis
-
-  .name-column
-    width: 15%
-
-  .time-column
-    width: 25%
+    border: solid 1px $shadow
 
 
 .hidden-field
