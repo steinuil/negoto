@@ -376,6 +376,15 @@ and site_settings () =
   r <- readme;
   maxThreads <- Data.maxThreads;
   layout <xml><section>
+    <header>Add a theme</header>
+    <form>
+      <textbox{#Nam} placeholder="Name"/>
+      <textbox{#TabColor} placeholder="Tab color (on mobile Chrome)"/>
+      <textbox{#Filename} placeholder="Desired filename (without .css)"/>
+      <upload{#Css}/>
+      <submit value="Upload theme" action={add_theme}/>
+    </form>
+  </section><section>
     <header>Max threads</header>
     <form>
       <number{#Max} value={float maxThreads} min={5.0} max={200.0} step={1.0}/>
@@ -389,6 +398,14 @@ and site_settings () =
       <submit value="Edit readme" action={edit_readme}/>
     </form>
   </section></xml>
+
+
+and add_theme { Nam = name, TabColor = color, Css = file, Filename = fname } =
+  admin <- Account.requireLevel Account.Admin;
+  File.saveCss fname file;
+  Layout.addTheme name fname color;
+  Log.info (admin ^ " uploaded theme " ^ fname);
+  redirect (url (site_settings ()))
 
 
 and set_max_threads { Max = max } =

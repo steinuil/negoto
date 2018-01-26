@@ -1,3 +1,5 @@
+val addTheme : string -> string -> string -> transaction unit
+
 val layout : string -> css_class -> string -> xbody -> transaction page
 
 val setTheme : string -> transaction unit

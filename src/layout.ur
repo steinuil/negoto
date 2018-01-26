@@ -8,6 +8,11 @@ table themes :
 cookie selectedTheme : string
 
 
+fun addTheme name filename tabColor =
+  dml (INSERT INTO themes (Nam, Filename, TabColor)
+       VALUES ({[name]}, {[filename]}, {[tabColor]}))
+
+
 fun themeOfId name =
   oneOrNoRows1 (SELECT * FROM themes WHERE themes.Filename = {[name]})
 

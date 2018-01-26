@@ -22,6 +22,7 @@ in the post body.
 
 * Ajax post forms
   * [ ] write AJAX form javascript library
+    * is this even possible?
 
 * Limits on number of threads and posts
   * [X] bump old threads off the board

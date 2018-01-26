@@ -1,6 +1,6 @@
 ffi fileFfi
 include fileFfi.h
 jsFile fileFfi.js
-jsFunc FileFfi.link=UrWeb.FileFfi.link
+jsFunc FileFfi.link=FileFfi.link
 
 file
