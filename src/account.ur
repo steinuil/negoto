@@ -90,7 +90,7 @@ fun roleOf name =
 
 (* Add an owner account if there is none *)
 task initialize = fn () =>
-  x <- oneOrNoRows1 (SELECT * FROM admins WHERE admins.Role = {[0]});
+  x <- oneOrNoRows1 (SELECT * FROM admins WHERE admins.Role = {[int_of_role Owner]});
   case x of
   | Some _ => return ()
   | None => create "owner" "password" Owner
