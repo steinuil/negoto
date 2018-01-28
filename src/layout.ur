@@ -3,14 +3,37 @@ table themes :
   , Filename : string
   , TabColor : string }
   PRIMARY KEY Filename
+  CONSTRAINT UniqueName UNIQUE Nam
+
+
+type theme = { Nam : string, Filename : string, TabColor : string }
 
 
 cookie selectedTheme : string
 
 
-fun addTheme name filename tabColor =
+fun addTheme { Nam = name, TabColor = tabColor, Filename = fname } file =
+  File.saveCss fname file;
   dml (INSERT INTO themes (Nam, Filename, TabColor)
-       VALUES ({[name]}, {[filename]}, {[tabColor]}))
+       VALUES ({[name]}, {[fname]}, {[tabColor]}))
+
+
+fun deleteTheme filename =
+  def <- KeyVal.unsafeGet "defaultTheme";
+  if filename <> def then
+    File.deleteCss filename;
+    dml (DELETE FROM themes WHERE Filename = {[filename]})
+  else
+    error <xml>You can't delete the default theme!</xml>
+
+
+fun setDefaultTheme filename =
+  exists <- hasRows (SELECT TRUE FROM themes
+                     WHERE themes.Filename = {[filename]});
+  if exists then
+    KeyVal.set "defaultTheme" filename
+  else
+    error <xml>The theme "{[filename]}" doesn't exist in the database!</xml>
 
 
 fun themeOfId name =

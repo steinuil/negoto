@@ -375,6 +375,7 @@ and site_settings () =
   admin <- Account.requireLevel Account.Admin;
   r <- readme;
   maxThreads <- Data.maxThreads;
+  themes <- Layout.allThemes;
   layout <xml><section>
     <header>Add a theme</header>
     <form>
@@ -383,6 +384,15 @@ and site_settings () =
       <textbox{#Filename} placeholder="Desired filename (without .css)"/>
       <upload{#Css}/>
       <submit value="Upload theme" action={add_theme}/>
+    </form>
+  </section><section>
+    <header>Set default theme</header>
+    <form>
+      <select{#Theme}>
+        {List.mapX (fn { Nam = name, Filename = fname, ... } =>
+          <xml><option value={fname}>{[name]}</option></xml>) themes}
+      </select>
+      <submit value="Set default theme" action={set_default_theme}/>
     </form>
   </section><section>
     <header>Max threads</header>
@@ -400,11 +410,17 @@ and site_settings () =
   </section></xml>
 
 
-and add_theme { Nam = name, TabColor = color, Css = file, Filename = fname } =
+and add_theme f =
   admin <- Account.requireLevel Account.Admin;
-  File.saveCss fname file;
-  Layout.addTheme name fname color;
-  Log.info (admin ^ " uploaded theme " ^ fname);
+  Layout.addTheme (f -- #Css) f.Css;
+  Log.info (admin ^ " uploaded theme " ^ f.Filename);
+  redirect (url (site_settings ()))
+
+
+and set_default_theme { Theme = theme } =
+  admin <- Account.requireLevel Account.Admin;
+  Layout.setDefaultTheme theme;
+  Log.info (admin ^ " set the default theme to " ^ theme);
   redirect (url (site_settings ()))
 
 

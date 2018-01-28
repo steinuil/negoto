@@ -47,6 +47,9 @@ fun linkThumb hash =
   FileFfi.link thumb_dir (hash ^ ".jpg")
 
 
+(* @Hack so that the default files load without needing an external server.
+ * This makes requests crash when selecting a non-default theme. I better get a
+ * test server running soon. *)
 fun linkCss name =
   bless ("/" ^ name ^ ".css")
   (*
