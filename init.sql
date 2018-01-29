@@ -9,3 +9,7 @@ INSERT INTO uw_KeyVal_store VALUES
 
 INSERT INTO uw_Data_tags VALUES
 ("test", "Test board");
+
+
+INSERT INTO uw_Admin_affLinks VALUES
+("https://github.com/steinuil/negoto", "source")

@@ -1,5 +1,7 @@
 val siteName : transaction string
 
+val links : transaction (list { Link : url, Nam : string })
+
 val readme : transaction string
 
 type newsItem =

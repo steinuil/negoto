@@ -9,6 +9,24 @@ fun setSiteName name =
   KeyVal.set "siteName" name
 
 
+table affLinks :
+  { Link : url
+  , Nam  : string }
+  PRIMARY KEY Link
+
+val links =
+  queryL1 (SELECT * FROM affLinks)
+
+
+fun addLink { Link = link, Nam = name } =
+  dml (INSERT INTO affLinks (Link, Nam)
+       VALUES ( {[bless link]}, {[name]} ))
+
+
+fun deleteLink link =
+  dml (DELETE FROM affLinks WHERE Link = {[link]})
+
+
 val readme =
   Util.getM "replace me" (KeyVal.get "readme")
 
@@ -391,6 +409,13 @@ and site_settings () =
       <submit value="Set site name" action={set_site_name}/>
     </form>
   </section><section>
+    <header>Affiliate links</header>
+    <form>
+      <textbox{#Nam} placeholder="Name"/>
+      <url{#Link} placeholder="URL"/>
+      <submit value="Add link" action={add_affiliate_link}/>
+    </form>
+  </section><section>
     <header>Add a theme</header>
     <form>
       <textbox{#Nam} placeholder="Name"/>
@@ -428,6 +453,13 @@ and set_site_name { Nam = name } =
   admin <- Account.requireLevel Account.Admin;
   setSiteName name;
   Log.info (admin ^ " set the site name to " ^ name);
+  redirect (url (site_settings ()))
+
+
+and add_affiliate_link f =
+  admin <- Account.requireLevel Account.Admin;
+  addLink f;
+  Log.info (admin ^ " added link " ^ f.Link);
   redirect (url (site_settings ()))
 
 

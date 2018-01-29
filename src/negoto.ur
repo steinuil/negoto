@@ -15,24 +15,6 @@ val errorPage =
   <xml>Error</xml>
 
 
-val affiliateLinks =
-  (sourceUrl, "Source", "source")
-  :: []
-
-
-val menu els : xbody = let
-  fun toLink (url', title', name') =
-    <xml><a href={url'} title={title'}>{[name']}</a></xml>
-
-  val links =
-    List.mp toLink els
-    |> Util.interpose <xml> / </xml>
-    |> List.mapX (fn x => x)
-in
-  <xml>[ {links} ]</xml>
-end
-
-
 val show_tag =
   mkShow (fn { Nam = name, Slug = slug } =>
     "/" ^ name ^ "/ - " ^ slug)
@@ -81,10 +63,11 @@ end
 
 fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
   siteName <- Admin.siteName;
+  nav' <- navigation tags;
   Layout.layoutWithSwitcher switch_theme (title' ^ " - " ^ siteName) class' ""
     (fn switcher => <xml>
       <header>
-        <nav>{navigation tags}</nav>
+        <nav>{nav'}</nav>
         <h1>{[title']}</h1>
       </header>
       <main>{body'}</main>
@@ -239,18 +222,26 @@ and threadPost addToPostBody post' =
   end
 
 
-and tagLinks tags =
-  menu <| (url (front ()), "Home", "Home")
-       :: List.mp (fn { Nam = name, Slug = slug } =>
-         (url (catalog name), slug, name)) tags
-
-
-and otherLinks () =
-  menu affiliateLinks
-
-
 and navigation tags =
-  <xml>{tagLinks tags} {otherLinks ()}</xml>
+  affiliateLinks <- Admin.links;
+  let
+    fun mkMenu acc items = case items of
+      | [] => <xml/>
+      | (link, name) :: [] =>
+        <xml>{acc}<a href={link}>{[name]}</a> ]</xml>
+      | (link, name) :: rst =>
+        mkMenu <xml>{acc}<a href={link}>{[name]}</a> / </xml> rst
+
+    val menu = mkMenu <xml>[ </xml>
+
+    val boards =
+      (url (front ()), "Home")
+      :: List.mp (fn { Nam = name, ... } => (url (catalog name), name)) tags
+
+    val aff = List.mp (fn i => (i.Link, i.Nam)) affiliateLinks
+  in
+    return <xml>{menu boards} {menu aff}</xml>
+  end
 
 
 and catalogForm (boardId : string) : transaction xbody =

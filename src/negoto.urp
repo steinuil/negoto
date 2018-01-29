@@ -1,7 +1,6 @@
 database dbname=negoto
 allow meta *
-allow url https://github.com/steinuil/negoto
-allow url /static/*
+#allow url /static/*
 allow env NEGOTO_LOGLEVEL
 allow responseHeader Status
 rewrite style Styles/* [-]
