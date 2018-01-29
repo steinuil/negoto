@@ -80,7 +80,8 @@ end
 
 
 fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
-  Layout.layoutWithSwitcher switch_theme title' class' ""
+  siteName <- Admin.siteName;
+  Layout.layoutWithSwitcher switch_theme (title' ^ " - " ^ siteName) class' ""
     (fn switcher => <xml>
       <header>
         <nav>{navigation tags}</nav>
@@ -107,9 +108,10 @@ and front () =
   tags <- Data.allTags;
   news <- Admin.news;
   readme <- Admin.readme;
-  Layout.layout "Front Page - Negoto" front_page "" <xml>
+  siteName <- Admin.siteName;
+  Layout.layout ("Front Page - " ^ siteName) front_page "" <xml>
     <header>
-      <h1>Negoto</h1>
+      <h1>{[siteName]}</h1>
     </header>
     <main>
       <div class="container">

@@ -1,3 +1,5 @@
+val siteName : transaction string
+
 val readme : transaction string
 
 type newsItem =

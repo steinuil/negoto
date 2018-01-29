@@ -1,9 +1,16 @@
 structure Log = Logger.Make(struct val section = "admin" end)
 
 
+val siteName =
+  Util.getM "Negoto" (KeyVal.get "siteName")
+
+
+fun setSiteName name =
+  KeyVal.set "siteName" name
+
+
 val readme =
-  x <- KeyVal.get "readme";
-  return (Option.get "replace me" x)
+  Util.getM "replace me" (KeyVal.get "readme")
 
 
 fun updateReadme body =
@@ -376,7 +383,14 @@ and site_settings () =
   r <- readme;
   maxThreads <- Data.maxThreads;
   themes <- Layout.allThemes;
+  siteName <- siteName;
   layout <xml><section>
+    <header>Site name</header>
+    <form>
+      <textbox{#Nam} value={siteName}/>
+      <submit value="Set site name" action={set_site_name}/>
+    </form>
+  </section><section>
     <header>Add a theme</header>
     <form>
       <textbox{#Nam} placeholder="Name"/>
@@ -386,7 +400,7 @@ and site_settings () =
       <submit value="Upload theme" action={add_theme}/>
     </form>
   </section><section>
-    <header>Set default theme</header>
+    <header>Default theme</header>
     <form>
       <select{#Theme}>
         {List.mapX (fn { Nam = name, Filename = fname, ... } =>
@@ -395,19 +409,26 @@ and site_settings () =
       <submit value="Set default theme" action={set_default_theme}/>
     </form>
   </section><section>
-    <header>Max threads</header>
+    <header>Threads per board</header>
     <form>
       <number{#Max} value={float maxThreads} min={5.0} max={200.0} step={1.0}/>
       <submit value="Set max threads" action={set_max_threads}/>
     </form>
   </section><section>
-    <header>Edit readme</header>
+    <header>Readme</header>
     <div>{Post.toHtml' r}</div>
     <form>
       <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
   </section></xml>
+
+
+and set_site_name { Nam = name } =
+  admin <- Account.requireLevel Account.Admin;
+  setSiteName name;
+  Log.info (admin ^ " set the site name to " ^ name);
+  redirect (url (site_settings ()))
 
 
 and add_theme f =

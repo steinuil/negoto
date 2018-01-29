@@ -68,3 +68,7 @@ fun mapNoneM [m] (_ : monad m) [a]
   | None => f2
   | Some _ => return r1
 *)
+
+fun getM [m] (_ : monad m) [a] (default : a) (f : m (option a)) =
+  x <- f;
+  return (Option.get default x)
