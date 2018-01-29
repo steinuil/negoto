@@ -5,10 +5,13 @@ more popular PHP-based imageboard), and [ostensibly bug-free](https://github.com
 
 [![Build Status](https://travis-ci.org/steinuil/negoto.svg?branch=master)](https://travis-ci.org/steinuil/negoto)
 
+## Does this work?
+Not yet. Negoto is still in development, but it'll soon be ready to be deployed.
+See [TODO.md](TODO.md) for details on what's not done yet.
 
-## Status
-Negoto is in development and not ready to be deployed yet.
-
+## Dependencies
+Negoto depends on OpenSSL, and it assumes that `/dev/urandom` exists and is
+readable.
 
 ## Compiling
 The very least Negoto requires to build is:
@@ -22,12 +25,12 @@ The normal installation also requires:
 * [sass](http://sass-lang.com/)
 * SQLite3
 
-To compile, simply invoke:
+To compile, simply clone the repository and invoke make:
 
 ```
-make
+git clone --recursive https://github.com/steinuil/negoto
+cd negoto && make
 ```
-
 
 ## JSON API
 Negoto comes with a read-only JSON API. The endpoints are described in [API.md](API.md).

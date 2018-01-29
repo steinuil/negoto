@@ -70,7 +70,6 @@ val json_newsItem : json Admin.newsItem =
 
 
 (* The actual endpoints *)
-(* TODO: return 404 with an error on error? *)
 val boards =
   jsonPageM Data.allTags
 

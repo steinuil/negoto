@@ -3,6 +3,6 @@ file /yotsuba.css build/yotsuba.css
 file /yotsuba-b.css build/yotsuba-b.css
 link build/fileFfi.o -lssl -lcrypto
 link build/postFfi.o -lm
-link build/uuid.o -lssl -lcrypto
+link build/uuid.o
 library src/negoto
 allow url *

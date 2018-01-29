@@ -62,10 +62,39 @@ in the post body.
   * [X] deleting the OP should delete the rest of the thread
   * [X] improve CSS, add different themes
   * [X] add cookie to switch themes
-  * [ ] validate all forms
+  * [ ] a nicer error page in its own module
+
+* Feature completeness overview
+  * [X] Account
+  * [ ] Admin
+    * add admin interfaces for everything
+    * validate forms
+  * [X] Api
+  * [X] Data
+    * kinda needs a cleanup
+  * [X] KeyVal
+  * [ ] Layout
+    * manage the favicon
+  * [ ] Logger
+    * needs some way to select the log level at startup time
+  * [ ] Negoto
+    * ajax forms
+    * images
+    * form validation
+  * [X] Bcrypt
+    * add some tests maybe? how does testing even work in Ur/Web?
+  * [ ] File
+    * managing the favicon
+    * generate thumbnails
+  * [ ] Post
+    * fix crash when a post is longer than the allocated buffer
+  * [X] Uuid
 
 
 ## Advanced features
+Wishlist of stuff to maybe work on after the imageboard is stable and usable on
+real servers.
+
 * Buffer library
   * [ ] C version if I haven't already done it before
   * [ ] javascript version
@@ -83,3 +112,8 @@ in the post body.
 * WebM support
   * [ ] player
   * [ ] thumbnails
+
+* Admin JSON API
+  * [ ] OAuth-based authentication
+  * [ ] endpoints for all functions on the frontend
+  * [ ] some command line tools to interact with the API

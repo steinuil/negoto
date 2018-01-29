@@ -246,14 +246,11 @@ val orphanedFiles =
 
 (* Max threads per tag *)
 val maxThreads : transaction int =
-  max <- KeyVal.get "maxThreads";
-  Option.bind read max
-  |> Option.get 30
-  |> return
+  Util.getM 30 (KeyVal.get "maxThreads")
 
 
 val setMaxThreads (i : int) =
-  KeyVal.set "maxThreads" (show i)
+  KeyVal.set "maxThreads" i
 
 
 (* * INSERT *)

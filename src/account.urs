@@ -1,3 +1,5 @@
+(** Managing accounts *)
+
 datatype role = Owner | Admin | Moderator
   (* The permission levels of an account *)
 
@@ -8,12 +10,15 @@ val changeName : string -> string -> transaction unit
   (* [changeName oldName newName] updates an admin's name *)
 
 val changePassword : string -> string -> transaction unit
+  (* [changePassword name newPass] changes a user's password to [newPass] *)
 
 val delete : string -> transaction unit
 
 val roleOf : string -> transaction (option role)
   (* Returns the role of an admin *)
 
+
+(** Managing logins *)
 
 val logIn : string -> string -> transaction unit
   (* Log in with the name and password *)

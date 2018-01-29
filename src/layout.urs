@@ -1,3 +1,4 @@
+(** Managing themes *)
 type theme =
   { Nam      : string
   , Filename : string
@@ -11,11 +12,15 @@ val deleteTheme : string -> transaction unit
 
 val setDefaultTheme : string -> transaction unit
 
-val layout : string -> css_class -> string -> xbody -> transaction page
 
 val setTheme : string -> transaction unit
+  (* Sets the theme for the current session with a cookie. *)
+
+
+(* The base layout that every page should use to display content. *)
+val layout : string -> css_class -> string -> xbody -> transaction page
 
 val layoutWithSwitcher : ({ Theme : string } -> transaction page)
   -> string -> css_class -> string -> (xbody -> xbody) -> transaction page
-  (* Like [layout], but takes a theme switch handler page and a function
+  (* Like [layout], but also takes a theme switch handler page and a function
    * that takes the theme switcher and returns the body. *)

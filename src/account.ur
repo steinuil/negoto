@@ -1,4 +1,3 @@
-(* Account role datatype *)
 datatype role = Owner | Admin | Moderator
 
 
@@ -97,6 +96,7 @@ task initialize = fn () =>
 
 
 
+(* Manage logins *)
 cookie loginToken :
   { User  : string
   , Token : string }
@@ -138,6 +138,7 @@ fun genLogin name =
        VALUES ( {[name]}, {[hash]} ));
   setCookie loginToken { Value = { User = name, Token = token }
                        , Expires = None, Secure = False }
+  (* @Hack this cookie should be secure in version 1.0 *)
 
 
 fun logIn name pass =
