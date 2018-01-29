@@ -1,3 +1,5 @@
 ffi uuid
 benignEffectful Uuid.random
 include uuid.h
+jsFile uuid.js
+jsFunc Uuid.random=Uuid.random
