@@ -3,6 +3,8 @@
 datatype role = Owner | Admin | Moderator
   (* The permission levels of an account *)
 
+val ord_role : ord role
+
 val create : string -> string -> role -> transaction unit
   (* [create name password role] create an admin account *)
 

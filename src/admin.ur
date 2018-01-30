@@ -92,7 +92,7 @@ style page
 
 
 fun confirmDel name _ =
-  ok <- confirm ("Do you really want to delete " ^ name ^ "?");
+  ok <- confirm ("Are you sure you want to delete " ^ name ^ "?");
   if ok then return () else preventDefault
 
 
@@ -165,35 +165,29 @@ and boards () =
       return <xml><tr>
         <td><a link={board b.Nam}>{[b.Nam]}</a></td>
         <td>{[b.Slug]}</td>
-        <td>
-          {editButton [#Nam] selectedBoard b}
-          {del}
-        </td>
+        <td>{editButton [#Nam] selectedBoard b} {del}</td>
       </tr></xml>
   in
     rows <- List.mapXM boardRow tags;
-    layout <xml>
-      <section>
-        <header>Add a board</header>
-        <form>
-          <textbox{#Nam} required placeholder="Name"/>
-          <textbox{#Slug} required placeholder="Slug"/>
-          <submit value="Create board" action={create_board}/>
-        </form>
-      </section>
-      <section>
-        <header>Boards</header>
-        <table>
-          <tr>
-            <th>Name</th>
-            <th>Slug</th>
-            <th/>
-          </tr>
-          {rows}
-        </table>
-        <dyn signal={slugEditor}/>
-      </section>
-    </xml>
+    layout <xml><section>
+      <header>Add a board</header>
+      <form>
+        <textbox{#Nam} required placeholder="Name"/>
+        <textbox{#Slug} required placeholder="Slug"/>
+        <submit value="Create board" action={create_board}/>
+      </form>
+    </section><section>
+      <header>Boards</header>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Slug</th>
+          <th/>
+        </tr>
+        {rows}
+      </table>
+      <dyn signal={slugEditor}/>
+    </section></xml>
   end
 
 
@@ -222,34 +216,37 @@ and edit_slug f =
 and board name =
   t <- Data.catalogByTag' name;
   case t of None => error <xml>Board not found</xml> | Some threads =>
-  layout <xml><table>
-    <tr><th>ID</th><th>Subject</th></tr>
-    {List.mapX (fn { Id = id, Subject = subject, Locked = locked, ... } =>
-      <xml><tr>
-        <td><a link={thread id}>{[id]}</a></td><td>{[subject]}</td>
-        <td><form>
-          <hidden{#Id} value={show id}/>
-          <hidden{#Tag} value={name}/>
-          <submit value="Delete thread" onclick={confirmDel subject}
-            action={delete_thread}/>
-        </form></td>
-        <td>
-          {if locked then
-            <xml><form>
+    rows <- List.mapXM
+      (fn { Id = id, Subject = subject, Locked = locked, ... } =>
+        let
+          val lockAction = if locked then unlock_thread else lock_thread
+
+          fun button labl act confirm =
+            button' <- fresh;
+            return <xml><form>
               <hidden{#Id} value={show id}/>
-              <hidden{#Tag} value={name}/>
-              <submit value="Unlock thread" action={unlock_thread}/>
+              <hidden{#Tag} value={name}/> <!-- to redirect you back here -->
+              [<label for={button'} class="link">{[labl]}</label>]
+              <submit id={button'} onclick={confirm} class="hidden-field" action={act}/>
             </form></xml>
-          else
-            <xml><form>
-              <hidden{#Id} value={show id}/>
-              <hidden{#Tag} value={name}/>
-              <submit value="Lock thread" action={lock_thread}/>
-            </form></xml>}
-        </td>
-      </tr></xml>)
-      threads}
-  </table></xml>
+        in
+          delButton <- button "delete" delete_thread (confirmDel subject);
+          lockButton <- button ((if locked then "un" else "") ^ "lock thread")
+                               lockAction (fn _ => return ());
+          return <xml><tr>
+            <td><a link={thread id}>{[id]}</a></td>
+            <td>{[subject]}</td>
+            <td>{lockButton} {delButton}</td>
+          </tr></xml>
+        end)
+        threads;
+    layout <xml><section>
+      <header>Manage threads</header>
+      <table>
+        <tr><th>ID</th><th>Subject</th><th/></tr>
+        {rows}
+      </table>
+    </section></xml>
 
 
 and delete_thread { Id = id, Tag = tag } =

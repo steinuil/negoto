@@ -109,6 +109,8 @@ val deleteTag : string -> transaction unit
 
 val deleteFile : postFile -> transaction unit
 
+val deleteFileByHash : string -> transaction unit
+
 val deleteThread : int -> transaction unit
 
 val deletePost : int -> int -> transaction unit

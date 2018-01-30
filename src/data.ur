@@ -330,11 +330,17 @@ fun unlockThread id =
 
 
 
-(* * DELETE *)
+(* DELETE *)
 fun deleteTag name =
   dml (DELETE FROM tags WHERE Nam = {[name]})
 
 fun deleteFile { Hash = hash, Mime = mime, ... } =
+  File.deleteImage hash mime;
+  dml (DELETE FROM files WHERE Hash = {[hash]})
+
+fun deleteFileByHash hash =
+  { Mime = mime } <- oneRow1 (SELECT files.Mime FROM files
+                              WHERE files.Hash = {[hash]});
   File.deleteImage hash mime;
   dml (DELETE FROM files WHERE Hash = {[hash]})
 
@@ -351,7 +357,7 @@ fun deletePostByUid uid =
   dml (DELETE FROM posts WHERE Uid = {[uid]})
 
 
-(* * Tasks *)
+(* Tasks *)
 (* Periodically check for orphaned files
  * and delete them from the database/filesystem *)
 task periodic (30 * 60) = fn () =>

@@ -38,6 +38,7 @@ in the post body.
   * [X] interface for editing news
   * [ ] interface for editing accounts
   * [X] interface for managing themes
+  * [ ] interface for managing your account
   * [ ] improve the CSS
 
 * Frontend niceties

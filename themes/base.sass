@@ -146,8 +146,21 @@ main
 
 .button, input[type="text"], textarea
   display: inline-block
+
+.button, input, textarea, select
   font-family: inherit
   font-size:   inherit
+
+
+input, textarea, select
+  background-color: $bg-light
+  border: 1px solid $shadow
+  color: $text
+  padding: 2px 4px
+
+input[type="submit"]
+  background-color: $shadow
+  border: 1px solid $shadow
 
 
 table
@@ -159,6 +172,9 @@ table
 
   td
     border: solid 1px $shadow
+
+  th, td
+    padding: 2px 4px
 
 
 .hidden-field
@@ -173,10 +189,13 @@ table
   background-color: $form-bg
   box-shadow: 2px 2px $shadow
 
+  input, textarea
+    border: none
+
   .button, input[type="text"], textarea
     padding: 4px 6px
 
-  .button, input[type="text"]
+  .button, input[type="text"], input[type="file"]
     background-color: $bg
     color: $shadow
 
@@ -224,7 +243,7 @@ table
 
   input[type="file"]
     margin-right: auto
-    height: calc(1em + 10px)
+    height: calc(1em + 5px)
 
   input[type="checkbox"]:checked + .button
     background-color: black
