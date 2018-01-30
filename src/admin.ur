@@ -96,6 +96,32 @@ fun confirmDel name _ =
   if ok then return () else preventDefault
 
 
+fun deleteForm value name (act : { Id : string } -> transaction page) =
+  delButton <- fresh;
+  return <xml><form>
+    <hidden{#Id} value={value}/>
+    [<label for={delButton} class="link">delete</label>]
+    <submit id={delButton} class="hidden-field"
+      onclick={confirmDel name}
+      action={act}/>
+  </form></xml>
+
+
+fun editButton [nm :: Name] [t ::: Type] [r ::: {Type}] [[nm] ~ r] (_ : eq t)
+  (selected : source (option $([nm = t] ++ r)))
+  (curr : $([nm = t] ++ r))
+  : xbody =
+  <xml>[<span class="link" onclick={fn _ =>
+    el <- get selected;
+    case el of
+    | None => set selected (Some curr)
+    | Some el =>
+      if el.nm = curr.nm then
+        return ()
+      else
+        set selected (Some curr)}>edit</span>]</xml>
+
+
 fun layout (body' : xbody) : transaction page =
   user <- Account.authenticate;
   logout <- fresh;
@@ -136,27 +162,14 @@ and boards () =
         </section></xml>
 
     fun boardRow b =
+      del <- deleteForm b.Nam ("/" ^ b.Nam ^ "/") delete_board;
       delButton <- fresh;
       return <xml><tr>
         <td><a href={url (board b.Nam)}>{[b.Nam]}</a></td>
         <td>{[b.Slug]}</td>
         <td>
-          <span class="link" onclick={fn _ =>
-            board <- get selectedBoard;
-            case board of
-            | None => set selectedBoard (Some b)
-            | Some { Nam = n, ... } =>
-              if n = b.Nam then
-                return ()
-              else
-                set selectedBoard (Some b)
-            }>[edit]</span>
-          <form>
-            <hidden{#Nam} value={b.Nam}/>
-            <label class="link" for={delButton}>[delete]</label>
-            <submit class="hidden-field" action={delete_board}
-              id={delButton} onclick={confirmDel ("/" ^ b.Nam ^ "/")}/>
-          </form>
+          {editButton [#Nam] selectedBoard b}
+          {del}
         </td>
       </tr></xml>
   in
@@ -194,7 +207,7 @@ and create_board f =
   redirect (url (boards ()))
 
 
-and delete_board { Nam = name } =
+and delete_board { Id = name } =
   admin <- Account.authenticate;
   Data.deleteTag name;
   Log.info (admin ^ " deleted board /" ^ name ^ "/");
@@ -311,31 +324,13 @@ and news_items () =
   user <- Account.authenticate;
   selectedNews <- source None;
   rows <- List.mapXM (fn n =>
-    delNews <- fresh;
+    del <- deleteForm (show n.Id) n.Title delete_news_item;
     return <xml>
       <tr>
         <td>{[n.Title]}</td>
         <td>{[n.Author]}</td>
         <td>{[n.Time]}</td>
-        <td>
-          <span class="link" onclick={fn _ =>
-            news <- get selectedNews;
-            case news of
-            | None => set selectedNews (Some n)
-            | Some { Id = id, ... } =>
-              if id = n.Id then
-                return ()
-              else
-                set selectedNews (Some n)
-          }>[edit]</span>
-          <form>
-            <hidden{#Id} value={show n.Id}/>
-            <label for={delNews} class="link">[delete]</label>
-            <submit id={delNews} class="hidden-field"
-              onclick={confirmDel n.Title}
-              action={delete_news_item}/>
-          </form>
-        </td>
+        <td>{editButton [#Id] selectedNews n} {del}</td>
       </tr>
     </xml>) n;
   layout <xml><section>
@@ -402,6 +397,14 @@ and site_settings () =
   maxThreads <- Data.maxThreads;
   themes <- Layout.allThemes;
   siteName <- siteName;
+  selectedTheme <- source None;
+  themeTable <- List.mapXM (fn t =>
+        del <- deleteForm t.Filename t.Nam delete_theme;
+        return <xml><tr>
+          <td>{[t.Nam]}</td>
+          <td>{[t.Filename]}</td>
+          <td>{editButton [#Filename] selectedTheme t} {del}</td>
+        </tr></xml>) themes;
   layout <xml><section>
     <header>Site name</header>
     <form>
@@ -415,6 +418,25 @@ and site_settings () =
       <url{#Link} placeholder="URL"/>
       <submit value="Add link" action={add_affiliate_link}/>
     </form>
+  </section><section>
+    <header>Themes</header>
+    <table>
+      <tr><th>Name</th><th>Filename</th><th/></tr>
+      {themeTable}
+    </table>
+    <dyn signal={
+      theme <- signal selectedTheme;
+      case theme of
+      | None => return <xml/>
+      | Some theme =>
+        return <xml>
+          <form>
+            <hidden{#Filename} value={theme.Filename}/>
+            <textbox{#Nam} placeholder="Name" value={theme.Nam}/><br/>
+            <textbox{#TabColor} placeholder="Tab color" value={theme.TabColor}/><br/>
+            <submit value="Edit theme" action={edit_theme}/>
+          </form>
+        </xml>}/>
   </section><section>
     <header>Add a theme</header>
     <form>
@@ -467,6 +489,20 @@ and add_theme f =
   admin <- Account.requireLevel Account.Admin;
   Layout.addTheme (f -- #Css) f.Css;
   Log.info (admin ^ " uploaded theme " ^ f.Filename);
+  redirect (url (site_settings ()))
+
+
+and edit_theme f =
+  admin <- Account.requireLevel Account.Admin;
+  Layout.editTheme f;
+  Log.info (admin ^ " edited theme " ^ f.Filename);
+  redirect (url (site_settings ()))
+
+
+and delete_theme { Id = fname } =
+  admin <- Account.requireLevel Account.Admin;
+  Layout.deleteTheme fname;
+  Log.info (admin ^ " edited theme " ^ fname);
   redirect (url (site_settings ()))
 
 

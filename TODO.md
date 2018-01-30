@@ -37,7 +37,7 @@ in the post body.
   * [X] interface for adding/deleting news
   * [X] interface for editing news
   * [ ] interface for editing accounts
-  * [ ] interface for managing themes
+  * [X] interface for managing themes
   * [ ] improve the CSS
 
 * Frontend niceties

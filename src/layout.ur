@@ -27,6 +27,11 @@ fun deleteTheme filename =
     error <xml>You can't delete the default theme!</xml>
 
 
+fun editTheme { Filename = fname, TabColor = tabColor, Nam = name } =
+  dml (UPDATE themes SET TabColor = {[tabColor]}, Nam = {[name]}
+       WHERE Filename = {[fname]})
+
+
 fun setDefaultTheme filename =
   exists <- hasRows (SELECT TRUE FROM themes
                      WHERE themes.Filename = {[filename]});

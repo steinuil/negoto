@@ -8,6 +8,8 @@ val allThemes : transaction (list theme)
 
 val addTheme : theme -> file -> transaction unit
 
+val editTheme : theme -> transaction unit
+
 val deleteTheme : string -> transaction unit
 
 val setDefaultTheme : string -> transaction unit
