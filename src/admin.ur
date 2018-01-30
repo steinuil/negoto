@@ -125,22 +125,23 @@ fun editButton [nm :: Name] [t ::: Type] [r ::: {Type}] [[nm] ~ r] (_ : eq t)
 fun layout (body' : xbody) : transaction page =
   user <- Account.authenticate;
   logout <- fresh;
-  Layout.layout "Admin" page "Admin page" <xml>
-    <header><nav>[
-      <a href={url (front ())}>front</a> /
-      <a href={url (boards ())}>boards</a> /
-      <a href={url (news_items ())}>news</a> /
-      <a href={url (site_settings ())}>site settings</a>
-    ] [
-      {[user]} /
-      <a href={url (settings ())}>settings</a> /
-      <form>
-        <label class="link" for={logout}>log out</label>
-        <submit id={logout} action={log_out} class="hidden-field"/>
-      </form>
-    ]</nav></header>
-    <main><div class="container">{body'}</div></main>
-  </xml>
+  let
+    val links = List.mp (fn (p, n) => <xml><a href={p}>{[n]}</a></xml>)
+      ((url (front ()), "front") :: (url (boards ()), "boards") ::
+       (url (news_items ()), "news") :: (url (site_settings ()), "site settings") :: [])
+
+    val settings = <xml><a link={settings ()}>{[user]}</a></xml>
+      :: <xml><form>
+           <label class="link" for={logout}>log out</label>
+           <submit id={logout} action={log_out} class="hidden-field"/>
+         </form></xml>
+      :: []
+  in
+    Layout.layout "Admin" page "Admin page" <xml>
+      <header><nav>{Layout.navMenu links} {Layout.navMenu settings}</nav></header>
+      <main><div class="container">{body'}</div></main>
+    </xml>
+  end
 
 
 and boards () =
@@ -152,20 +153,17 @@ and boards () =
       case sel of
       | None => return <xml/>
       | Some board =>
-        return <xml><section>
-          <header>Edit slug</header>
-          <form>
-            <hidden{#Nam} value={board.Nam}/>
-            <textbox{#Slug} required placeholder="Slug" value={board.Slug}/>
-            <submit value="Edit slug" action={edit_slug}/>
-          </form>
-        </section></xml>
+        return <xml><form>
+          <hidden{#Nam} value={board.Nam}/>
+          <textbox{#Slug} required placeholder="Slug" value={board.Slug}/>
+          <submit value="Edit slug" action={edit_slug}/>
+        </form></xml>
 
     fun boardRow b =
       del <- deleteForm b.Nam ("/" ^ b.Nam ^ "/") delete_board;
       delButton <- fresh;
       return <xml><tr>
-        <td><a href={url (board b.Nam)}>{[b.Nam]}</a></td>
+        <td><a link={board b.Nam}>{[b.Nam]}</a></td>
         <td>{[b.Slug]}</td>
         <td>
           {editButton [#Nam] selectedBoard b}
@@ -193,8 +191,8 @@ and boards () =
           </tr>
           {rows}
         </table>
+        <dyn signal={slugEditor}/>
       </section>
-      <dyn signal={slugEditor}/>
     </xml>
   end
 
@@ -228,7 +226,7 @@ and board name =
     <tr><th>ID</th><th>Subject</th></tr>
     {List.mapX (fn { Id = id, Subject = subject, Locked = locked, ... } =>
       <xml><tr>
-        <td><a href={url <| thread id}>{[id]}</a></td><td>{[subject]}</td>
+        <td><a link={thread id}>{[id]}</a></td><td>{[subject]}</td>
         <td><form>
           <hidden{#Id} value={show id}/>
           <hidden{#Tag} value={name}/>
@@ -351,23 +349,20 @@ and news_items () =
         <th/>
       </tr>
       {rows}
-    </table>
-  </section>
-  <dyn signal={
+   </table>
+   <dyn signal={
     sel <- signal selectedNews;
     case sel of
     | None => return <xml/>
     | Some news =>
-      return <xml><section>
-        <header>Edit news</header>
-        <form>
-          <hidden{#Id} value={show news.Id}/>
-          <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
-          <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
-          <submit value="Edit news item" action={edit_news_item}/>
-        </form>
-      </section></xml>
-  }/></xml>
+      return <xml><form>
+        <hidden{#Id} value={show news.Id}/>
+        <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
+        <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+        <submit value="Edit news item" action={edit_news_item}/>
+      </form></xml>}/>
+  </section>
+</xml>
 
 
 and create_news_item x =

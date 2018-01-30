@@ -8,9 +8,6 @@ style thread_page
 style error_page
 
 
-val sourceUrl = bless 'https://github.com/steinuil/negoto'
-
-
 val errorPage =
   <xml>Error</xml>
 
@@ -102,7 +99,7 @@ and front () =
           <header>Boards</header>
           <ul class="section-body">
             {List.mapX (fn t => <xml><li>
-              <a href={url (catalog t.Nam)}>{[t]}</a>
+              <a link={catalog t.Nam}>{[t]}</a>
             </li></xml>) tags}
           </ul>
         </section>
@@ -116,7 +113,7 @@ and front () =
         </section>
       </div>
     </main>
-    <footer>Powered by <a href={sourceUrl}>Negoto</a></footer>
+    <footer>Powered by <a href="https://github.com/steinuil/negoto">Negoto</a></footer>
   </xml>
 
 
@@ -154,7 +151,7 @@ and thread id =
       posts <- List.mapXM (threadPost addTxt) posts;
       pForm <- postForm postBody id;
       layout tags title' thread_page <xml>
-        <header>[ <a href={url (catalog t.Tag)}>back</a> ] {[t.Subject]}</header>
+        <header>[ <a link={catalog t.Tag}>back</a> ] {[t.Subject]}</header>
         <div class="container">{posts}</div>
         {if t.Locked then <xml/> else
         <xml>{tForm}{pForm}</xml>}
@@ -167,7 +164,7 @@ and catalogThread thread' =
   return <xml>
     <div class="catalog-thread">
       <figure>
-        <a href={url (thread thread'.Id)}>
+        <a link={thread thread'.Id}>
           {case thread'.Files of
           | [] => <xml>link</xml>
           | file :: _ => <xml><figure>
@@ -225,22 +222,18 @@ and threadPost addToPostBody post' =
 and navigation tags =
   affiliateLinks <- Admin.links;
   let
-    fun mkMenu acc items = case items of
-      | [] => <xml/>
-      | (link, name) :: [] =>
-        <xml>{acc}<a href={link}>{[name]}</a> ]</xml>
-      | (link, name) :: rst =>
-        mkMenu <xml>{acc}<a href={link}>{[name]}</a> / </xml> rst
-
-    val menu = mkMenu <xml>[ </xml>
-
     val boards =
-      (url (front ()), "Home")
-      :: List.mp (fn { Nam = name, ... } => (url (catalog name), name)) tags
+      <xml><a link={front ()}>Home</a></xml>
+      :: List.mp (fn { Nam = name, Slug = slug } =>
+        <xml><a link={catalog name} title={slug}>{[name]}</a></xml>)
+        tags
 
-    val aff = List.mp (fn i => (i.Link, i.Nam)) affiliateLinks
+    val aff =
+      List.mp (fn { Link = link, Nam = name } =>
+        <xml><a href={link}>{[name]}</a></xml>)
+        affiliateLinks
   in
-    return <xml>{menu boards} {menu aff}</xml>
+    return <xml>{Layout.navMenu boards} {Layout.navMenu aff}</xml>
   end
 
 

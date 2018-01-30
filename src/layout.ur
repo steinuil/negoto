@@ -131,3 +131,16 @@ fun layoutWithSwitcher act title' class' desc f =
     color <- color;
     return (layout' (File.linkCss id) color title' class' desc (f switcher))
   end
+
+
+val navMenu =
+  let
+    mkMenu <xml>[ </xml>
+  where
+    fun mkMenu acc items = case items of
+      | [] => <xml/>
+      | item :: [] =>
+        <xml>{acc}{item} ]</xml>
+      | item :: rest =>
+        mkMenu <xml>{acc}{item} / </xml> rest
+  end

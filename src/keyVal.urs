@@ -1,7 +1,7 @@
 (* [KeyVal] provides a key-value interface to a SQL table.
- * Due to type system limitations all types are serialized as strings,
- * but this module will work on any type that implements [read] and [show]
- * without explicitly converting the values to strings.
+ * Values are serialized as strings, but this module will work on any type that
+ * implements [read] and [show] without explicitly converting the values to
+ * strings.
 
  * Note that attempting to read a value with the incorrect type will
  * always raise an error. *)

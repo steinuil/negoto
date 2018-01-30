@@ -1,7 +1,9 @@
+(** Manage threads and boards and posts *)
+
 type tag =
   { Nam  : string
   , Slug : string }
-  (** A "board" imageboard terms. *)
+  (* A "board" imageboard terms. *)
 
 type thread =
   { Id      : int
@@ -10,14 +12,14 @@ type thread =
   , Count   : int
   , Locked  : bool
   , Tag     : string }
-  (** A thread which may belong to one or more tags. *)
+  (* A thread which may belong to one or more tags. *)
 
 type postFile =
   { Hash    : string
   , Nam     : string
   , Mime    : string
   , Spoiler : bool }
-  (** A file included in a post. *)
+  (* A file included in a post. *)
 
 type post =
   { Id     : int
@@ -26,7 +28,7 @@ type post =
   , Time   : time
   , Body   : string
   , Files  : list postFile }
-  (** A post belonging to a thread. *)
+  (* A post belonging to a thread. *)
 
 type catalogThread =
   { Id      : int
@@ -39,37 +41,37 @@ type catalogThread =
   , Time    : time
   , Body    : string
   , Files   : list postFile }
-  (** A thread preview, which includes the thread info and its opening post. *)
+  (* A thread preview, which includes the thread info and its opening post. *)
 
 
 val allTags : transaction (list tag)
-  (** Return all the tags in the board. *)
+  (* Return all the tags in the board. *)
 
 val tagByName : string -> transaction (option tag)
-  (** Search a tag by its name and return it. *)
+  (* Search a tag by its name and return it. *)
 
 val catalog : transaction (list catalogThread)
-  (** Return previews for all threads. *)
+  (* Return previews for all threads. *)
 
 val catalogByTag : string -> transaction (list catalogThread)
-  (** Return previews for all threads associated with a certain tag. *)
+  (* Return previews for all threads associated with a certain tag. *)
 
 val catalogByTag' : string -> transaction (option (list catalogThread))
   (* Like catalogByTag, but returns None if the tag doesn't exist while
    * catalogByTag just returns an empty list. *)
 
 val threadById : int -> transaction (option (thread * list post))
-  (** Convenience function to get both thread info and posts for a thread ID. *)
+  (* Convenience function to get both thread info and posts for a thread ID. *)
 
 val postsSince : int -> int -> transaction (list post)
   (* Get the new posts in a thread given the last seen ID. *)
 
 
 val threadInfoById : int -> transaction (option thread)
-  (** Return thread info for a single thread by its ID. *)
+  (* Return thread info for a single thread by its ID. *)
 
 val postsByThread : int -> transaction (list post)
-  (** Return all the posts of a thread by the thread ID. *)
+  (* Return all the posts of a thread by the thread ID. *)
 
 
 (* Insert *)
@@ -110,10 +112,10 @@ val deleteFile : postFile -> transaction unit
 val deleteThread : int -> transaction unit
 
 val deletePost : int -> int -> transaction unit
-  (** `deletePost thread id` deletes a post given its thread ID and non-unique ID *)
+  (* [deletePost thread id] deletes a post given its thread ID and non-unique ID *)
 
 val deletePostByUid : int -> transaction unit
-  (** Delete a post given its unique ID. *)
+  (* Delete a post given its unique ID. *)
 
 
 val maxThreads : transaction int

@@ -26,3 +26,5 @@ val layoutWithSwitcher : ({ Theme : string } -> transaction page)
   -> string -> css_class -> string -> (xbody -> xbody) -> transaction page
   (* Like [layout], but also takes a theme switch handler page and a function
    * that takes the theme switcher and returns the body. *)
+
+val navMenu : list xbody -> xbody
