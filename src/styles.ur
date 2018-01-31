@@ -14,5 +14,6 @@ style subject_field
 style post_form
 style container
 style section_body
+style edit_area
 style news_item
 style news_body

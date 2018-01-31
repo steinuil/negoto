@@ -36,7 +36,7 @@ in the post body.
   * [X] interface for editing the readme file
   * [X] interface for adding/deleting news
   * [X] interface for editing news
-  * [ ] interface for editing accounts
+  * [X] interface for editing accounts
   * [X] interface for managing themes
   * [ ] interface for managing your account
   * [ ] improve the CSS

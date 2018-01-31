@@ -3,7 +3,11 @@
 datatype role = Owner | Admin | Moderator
   (* The permission levels of an account *)
 
-val ord_role : ord role
+val ord_role  : ord role
+val read_role : read role
+val show_role : show role
+
+val all : transaction (list { Nam : string, Role : role })
 
 val create : string -> string -> role -> transaction unit
   (* [create name password role] create an admin account *)
@@ -34,7 +38,7 @@ val authenticate : transaction string
 val authenticateOpt : transaction (option string)
   (* Like [authenticate], but returns None on failure *)
 
-val requireLevel : role -> transaction string
+val requireLevel : role -> transaction (string * role)
   (* Like [authenticate], but also checks that the authenticated user's role
    * has permissions equal or superior to the given role. *)
 

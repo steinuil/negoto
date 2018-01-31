@@ -50,6 +50,13 @@ table admins :
   PRIMARY KEY (Nam),
 
 
+val all =
+  query (SELECT * FROM admins)
+    (fn { Admins = a } acc =>
+      return ((a -- #Hash -- #Role ++ { Role = role_of_int a.Role }) :: acc))
+    []
+
+
 fun create name pass role =
   hash <- Bcrypt.hash pass;
   dml (INSERT INTO admins (Nam, Role, Hash)
@@ -199,7 +206,7 @@ fun requireLevel lvl =
   case role of
   | Some role =>
     if role >= lvl then
-      return name
+      return (name, role)
     else
       error <xml>You don't have permission to see this page.</xml>
   | None =>

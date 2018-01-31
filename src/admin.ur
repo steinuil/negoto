@@ -153,7 +153,7 @@ and boards () =
       case sel of
       | None => return <xml/>
       | Some board =>
-        return <xml><form>
+        return <xml><form class="edit-area">
           <hidden{#Nam} value={board.Nam}/>
           <textbox{#Slug} required placeholder="Slug" value={board.Slug}/>
           <submit value="Edit slug" action={edit_slug}/>
@@ -223,7 +223,7 @@ and board name =
 
           fun button labl act confirm =
             button' <- fresh;
-            return <xml><form>
+            return <xml><form class="edit-area">
               <hidden{#Id} value={show id}/>
               <hidden{#Tag} value={name}/> <!-- to redirect you back here -->
               [<label for={button'} class="link">{[labl]}</label>]
@@ -352,10 +352,10 @@ and news_items () =
     case sel of
     | None => return <xml/>
     | Some news =>
-      return <xml><form>
+      return <xml><form class="edit-area" >
         <hidden{#Id} value={show news.Id}/>
-        <textbox{#Title} placeholder="Title" required value={news.Title}/><br/>
-        <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea><br/>
+        <textbox{#Title} placeholder="Title" required value={news.Title}/>
+        <textarea{#Body} required placeholder="Body">{[news.Body]}</textarea>
         <submit value="Edit news item" action={edit_news_item}/>
       </form></xml>}/>
   </section>
@@ -384,20 +384,33 @@ and edit_news_item f =
 
 
 and site_settings () =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, role) <- Account.requireLevel Account.Admin;
   r <- readme;
   maxThreads <- Data.maxThreads;
   themes <- Layout.allThemes;
   siteName <- siteName;
   selectedTheme <- source None;
-  themeTable <- List.mapXM (fn t =>
-        del <- deleteForm t.Filename t.Nam delete_theme;
-        return <xml><tr>
-          <td>{[t.Nam]}</td>
-          <td>{[t.Filename]}</td>
-          <td>{editButton [#Filename] selectedTheme t} {del}</td>
-        </tr></xml>) themes;
+  accounts <- Account.all;
+  accountTable <- List.mapXM
+    (fn a =>
+      del <- deleteForm a.Nam a.Nam delete_account;
+      return <xml><tr>
+        <td>{[a.Nam]}</td>
+        <td>{[a.Role]}</td>
+        <td>{del}</td>
+      </tr></xml>)
+    accounts;
+  themeTable <- List.mapXM
+    (fn t =>
+      del <- deleteForm t.Filename t.Nam delete_theme;
+      return <xml><tr>
+        <td>{[t.Nam]}</td>
+        <td>{[t.Filename]}</td>
+        <td>{editButton [#Filename] selectedTheme t} {del}</td>
+      </tr></xml>)
+    themes;
   layout <xml><section>
+  <!-- SITE NAME AND LINKS -->
     <header>Site name</header>
     <form>
       <textbox{#Nam} value={siteName}/>
@@ -409,43 +422,6 @@ and site_settings () =
       <textbox{#Nam} placeholder="Name"/>
       <url{#Link} placeholder="URL"/>
       <submit value="Add link" action={add_affiliate_link}/>
-    </form>
-  </section><section>
-    <header>Themes</header>
-    <table>
-      <tr><th>Name</th><th>Filename</th><th/></tr>
-      {themeTable}
-    </table>
-    <dyn signal={
-      theme <- signal selectedTheme;
-      case theme of
-      | None => return <xml/>
-      | Some theme =>
-        return <xml>
-          <form>
-            <hidden{#Filename} value={theme.Filename}/>
-            <textbox{#Nam} placeholder="Name" value={theme.Nam}/><br/>
-            <textbox{#TabColor} placeholder="Tab color" value={theme.TabColor}/><br/>
-            <submit value="Edit theme" action={edit_theme}/>
-          </form>
-        </xml>}/>
-  </section><section>
-    <header>Add a theme</header>
-    <form>
-      <textbox{#Nam} placeholder="Name"/>
-      <textbox{#TabColor} placeholder="Tab color (on mobile Chrome)"/>
-      <textbox{#Filename} placeholder="Desired filename (without .css)"/>
-      <upload{#Css}/>
-      <submit value="Upload theme" action={add_theme}/>
-    </form>
-  </section><section>
-    <header>Default theme</header>
-    <form>
-      <select{#Theme}>
-        {List.mapX (fn { Nam = name, Filename = fname, ... } =>
-          <xml><option value={fname}>{[name]}</option></xml>) themes}
-      </select>
-      <submit value="Set default theme" action={set_default_theme}/>
     </form>
   </section><section>
     <header>Threads per board</header>
@@ -460,60 +436,142 @@ and site_settings () =
       <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
+  </section><section>
+  <!-- ACCOUNTS -->
+    <header>Add an account</header>
+    <form>
+      <textbox{#Nam} placeholder="Name"/>
+      <password{#Pass} placeholder="Password"/>
+      <select{#Role}>
+        <option value={show Account.Moderator}>Moderator</option>
+        {if role < Account.Owner then <xml/> else
+          <xml><option value={show Account.Admin}>Administrator</option></xml>}
+      </select>
+      <submit value="Add" action={add_account}/>
+    </form>
+  </section><section>
+    <header>Manage accounts</header>
+    <table>
+      <tr><th>Name</th><th>Role</th><th/></tr>
+      {accountTable}
+    </table>
+  </section><section>
+  <!-- THEMES -->
+    <header>Add a theme</header>
+    <form>
+      <textbox{#Nam} placeholder="Name"/>
+      <textbox{#TabColor} placeholder="Tab color (on mobile Chrome)"/>
+      <textbox{#Filename} placeholder="Desired filename (without .css)"/>
+      <upload{#Css}/>
+      <submit value="Upload theme" action={add_theme}/>
+    </form>
+  </section><section>
+    <header>Themes</header>
+    <table>
+      <tr><th>Name</th><th>Filename</th><th/></tr>
+      {themeTable}
+    </table>
+    <dyn signal={
+      theme <- signal selectedTheme;
+      case theme of
+      | None => return <xml/>
+      | Some theme =>
+        return <xml><form class="edit-area">
+          <hidden{#Filename} value={theme.Filename}/>
+          <textbox{#Nam} placeholder="Name" value={theme.Nam}/><br/>
+          <textbox{#TabColor} placeholder="Tab color" value={theme.TabColor}/><br/>
+          <submit value="Edit theme" action={edit_theme}/>
+        </form></xml>}/>
+  </section><section>
+    <header>Default theme</header>
+    <form>
+      <select{#Theme}>
+        {List.mapX (fn { Nam = name, Filename = fname, ... } =>
+          <xml><option value={fname}>{[name]}</option></xml>) themes}
+      </select>
+      <submit value="Set default theme" action={set_default_theme}/>
+    </form>
   </section></xml>
 
 
 and set_site_name { Nam = name } =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   setSiteName name;
   Log.info (admin ^ " set the site name to " ^ name);
   redirect (url (site_settings ()))
 
 
 and add_affiliate_link f =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   addLink f;
   Log.info (admin ^ " added link " ^ f.Link);
   redirect (url (site_settings ()))
 
 
+and add_account { Nam = name, Pass = pass, Role = role } =
+  (admin, role') <- Account.requireLevel Account.Admin;
+  let val role : Account.role = readError role in
+  if role' > role then
+    Account.create name pass role;
+    Log.info (admin ^ " created account " ^ name);
+    redirect (url (site_settings ()))
+  else
+    error <xml>You don't have permission to perform this action.</xml>
+  end
+
+
+and delete_account { Id = name } =
+  (admin, role') <- Account.requireLevel Account.Admin;
+  role <- Account.roleOf name;
+  let val role = case role of
+    | None => error <xml>The queried account doesn't exist.</xml>
+    | Some role => role in
+  if role' > role then
+    Account.delete name;
+    Log.info (admin ^ " deleted account " ^ name);
+    redirect (url (site_settings ()))
+  else
+    error <xml>You don't have permission to perform this action.</xml>
+  end
+
+
 and add_theme f =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   Layout.addTheme (f -- #Css) f.Css;
   Log.info (admin ^ " uploaded theme " ^ f.Filename);
   redirect (url (site_settings ()))
 
 
 and edit_theme f =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   Layout.editTheme f;
   Log.info (admin ^ " edited theme " ^ f.Filename);
   redirect (url (site_settings ()))
 
 
 and delete_theme { Id = fname } =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   Layout.deleteTheme fname;
   Log.info (admin ^ " edited theme " ^ fname);
   redirect (url (site_settings ()))
 
 
 and set_default_theme { Theme = theme } =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   Layout.setDefaultTheme theme;
   Log.info (admin ^ " set the default theme to " ^ theme);
   redirect (url (site_settings ()))
 
 
 and set_max_threads { Max = max } =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   Data.setMaxThreads (ceil max);
   Log.info (admin ^ " set the max threads to " ^ show (ceil max));
   redirect (url (site_settings ()))
 
 
 and edit_readme { Body = body } =
-  admin <- Account.requireLevel Account.Admin;
+  (admin, _) <- Account.requireLevel Account.Admin;
   updateReadme body;
   Log.info (admin ^ " edited the readme");
   redirect (url (site_settings ()))
