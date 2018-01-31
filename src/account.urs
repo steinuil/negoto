@@ -15,8 +15,8 @@ val create : string -> string -> role -> transaction unit
 val changeName : string -> string -> transaction unit
   (* [changeName oldName newName] updates an admin's name *)
 
-val changePassword : string -> string -> transaction unit
-  (* [changePassword name newPass] changes a user's password to [newPass] *)
+val changePassword : string -> string -> string -> transaction unit
+  (* [changePassword name oldPass newPass] changes a user's password to [newPass] *)
 
 val delete : string -> transaction unit
 

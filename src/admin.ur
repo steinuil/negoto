@@ -130,7 +130,7 @@ fun layout (body' : xbody) : transaction page =
       ((url (front ()), "front") :: (url (boards ()), "boards") ::
        (url (news_items ()), "news") :: (url (site_settings ()), "site settings") :: [])
 
-    val settings = <xml><a link={settings ()}>{[user]}</a></xml>
+    val settings = <xml><a link={your_settings ()}>{[user]}</a></xml>
       :: <xml><form>
            <label class="link" for={logout}>log out</label>
            <submit id={logout} action={log_out} class="hidden-field"/>
@@ -161,7 +161,6 @@ and boards () =
 
     fun boardRow b =
       del <- deleteForm b.Nam ("/" ^ b.Nam ^ "/") delete_board;
-      delButton <- fresh;
       return <xml><tr>
         <td><a link={board b.Nam}>{[b.Nam]}</a></td>
         <td>{[b.Slug]}</td>
@@ -223,7 +222,7 @@ and board name =
 
           fun button labl act confirm =
             button' <- fresh;
-            return <xml><form class="edit-area">
+            return <xml><form>
               <hidden{#Id} value={show id}/>
               <hidden{#Tag} value={name}/> <!-- to redirect you back here -->
               [<label for={button'} class="link">{[labl]}</label>]
@@ -272,30 +271,48 @@ and lock_thread { Id = id, Tag = tag } =
 
 and thread tid =
   x <- Data.threadById tid;
-  case x of None => error <xml>Thread not found</xml> | Some (_, posts) =>
-  layout <xml><table>
-    <tr><th>ID</th><th>Files</th></tr>
-    {List.mapX (fn { Id = id, Files = files, ... } =>
-      <xml><tr>
-        <td>{[id]}</td>
-        <td>{List.mapX (fn file => <xml><form>
-              <hidden{#Hash} value={file.Hash}/>
-              <hidden{#Nam} value={file.Nam}/>
-              <hidden{#Mime} value={file.Mime}/>
-              <hidden{#Spoiler} value={show file.Spoiler}/>
-              <hidden{#Thread} value={show tid}/>
-              <submit value={"Delete file " ^ file.Nam}
-                onclick={confirmDel file.Nam} action={delete_file}/>
-            </form></xml>
-          ) files}</td>
-        <td><form>
-          <hidden{#Id} value={show id}/>
+  case x of None => error <xml>Thread not found</xml> | Some (thread', posts) =>
+  selectedPost <- source None;
+  postTable <- List.mapXM (fn p =>
+    delButton <- fresh;
+    return <xml><tr>
+      <td>{[p.Id]}</td>
+      <td>{[p.Nam]}</td>
+      <td>
+        {editButton [#Id] selectedPost p}
+        <form>
+          <hidden{#Id} value={show p.Id}/>
           <hidden{#Thread} value={show tid}/>
-          <submit value="Delete post" onclick={confirmDel (show id)}
-            action={delete_post}/>
-        </form></td>
-      </tr></xml>) posts}
-  </table></xml>
+          [<label for={delButton} class="link">delete</label>]
+          <submit id={delButton} onclick={confirmDel (show p.Id)}
+            class="hidden-field" action={delete_post}/>
+        </form>
+      </td>
+    </tr></xml>)
+    posts;
+  layout <xml><section>
+    [<a link={board thread'.Tag}>go back to the thread list</a>]
+  </section><section>
+    <header>Manage posts of thread {[tid]}</header>
+    <table>
+      <tr><th>ID</th><th>Name</th><th/></tr>
+      {postTable}
+    </table>
+    <dyn signal={
+      post <- signal selectedPost;
+      case post of None => return <xml/> | Some post =>
+      return <xml><form class="edit-area">
+        <select{#Id}>
+          {List.mapX (fn file =>
+            <xml><option value={file.Hash}>{[file.Nam]}
+            ({[file.Hash]})</option></xml>)
+            post.Files}
+        </select>
+        <hidden{#Thread} value={show tid}/>
+        <submit action={delete_file} value="Delete file"/>
+      </form></xml>
+    }/>
+  </section></xml>
 
 
 and delete_post { Id = id, Thread = thread' } =
@@ -307,11 +324,11 @@ and delete_post { Id = id, Thread = thread' } =
   end
 
 
-and delete_file file =
+and delete_file { Id = hash, Thread = thread' } : transaction page =
   admin <- Account.authenticate;
-  Data.deleteFile (file -- #Thread -- #Spoiler ++ { Spoiler = readError file.Spoiler });
-  Log.info (admin ^ " deleted file " ^ file.Hash);
-  redirect (url (thread (readError file.Thread)))
+  Data.deleteFileByHash hash;
+  Log.info (admin ^ " deleted file " ^ hash);
+  redirect (url (thread (readError thread')))
 
 
 and news_items () =
@@ -320,14 +337,12 @@ and news_items () =
   selectedNews <- source None;
   rows <- List.mapXM (fn n =>
     del <- deleteForm (show n.Id) n.Title delete_news_item;
-    return <xml>
-      <tr>
-        <td>{[n.Title]}</td>
-        <td>{[n.Author]}</td>
-        <td>{[n.Time]}</td>
-        <td>{editButton [#Id] selectedNews n} {del}</td>
-      </tr>
-    </xml>) n;
+    return <xml><tr>
+      <td>{[n.Title]}</td>
+      <td>{[n.Author]}</td>
+      <td>{[n.Time]}</td>
+      <td>{editButton [#Id] selectedNews n} {del}</td>
+    </tr></xml>) n;
   layout <xml><section>
     <header>Add news</header>
     <form>
@@ -577,9 +592,44 @@ and edit_readme { Body = body } =
   redirect (url (site_settings ()))
 
 
-and settings () : transaction page =
-  layout <xml>
-  </xml>
+and your_settings () : transaction page =
+  admin <- Account.authenticate;
+  logOutButton <- fresh;
+  layout <xml><section>
+    <header>Change your password</header>
+    <form>
+      <hidden{#Nam} value={admin}/>
+      <password{#OldPass} placeholder="Old password" required/>
+      <password{#Pass} placeholder="New password" required/>
+      <password{#Pass2} placeholder="New password again" required/>
+      <submit value="Change" action={change_password}/>
+    </form>
+  </section><section>
+    <header>Invalidate your access tokens</header>
+    If you you lost access to a device on which you're logged into this website,
+    or if you forgot to log out after using a public device,
+    <form class="inline-form">
+      [<label for={logOutButton} class="link">click this link</label>]
+      <submit action={log_out_others} class="hidden-field" id={logOutButton}/>
+    </form>
+    to invalidate all other sessions on your account and automatically login
+    again on this one.
+  </section></xml>
+
+
+and change_password { Nam = name, OldPass = oldPass, Pass = pass, Pass2 = pass2 } =
+  admin <- Account.authenticate;
+  if name <> admin then error <xml>You can't change someone else's password.</xml> else
+  if pass <> pass2 then error <xml>The new passwords don't match.</xml> else
+  Account.changePassword name oldPass pass;
+  Log.info (admin ^  " changed their password");
+  redirect (url (your_settings ()))
+
+
+and log_out_others () =
+  admin <- Account.authenticate;
+  Account.invalidateAndRehash;
+  redirect (url (your_settings ()))
 
 
 and front () : transaction page =

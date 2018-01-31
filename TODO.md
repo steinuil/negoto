@@ -38,7 +38,8 @@ in the post body.
   * [X] interface for editing news
   * [X] interface for editing accounts
   * [X] interface for managing themes
-  * [ ] interface for managing your account
+  * [X] redo thread page
+  * [X] interface for managing your account
   * [ ] improve the CSS
 
 * Frontend niceties

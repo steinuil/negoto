@@ -67,12 +67,6 @@ fun changeName oldName newName =
   dml (UPDATE admins SET Nam = {[newName]} WHERE Nam = {[oldName]})
 
 
-fun changePassword name newPass =
-  hash <- Bcrypt.hash newPass;
-  dml (UPDATE admins SET Hash = {[hash]}
-       WHERE Nam = {[name]})
-
-
 fun delete name =
   dml (DELETE FROM admins WHERE Nam = {[name]})
 
@@ -87,8 +81,19 @@ fun validate name pass =
     return False
 
 
+fun changePassword name oldPass newPass =
+  valid <- validate name oldPass;
+  if valid then
+    hash <- Bcrypt.hash newPass;
+    dml (UPDATE admins SET Hash = {[hash]}
+         WHERE Nam = {[name]})
+  else
+    error <xml>Invalid old password.</xml>
+
+
 fun roleOf name =
-  r <- oneOrNoRows1 (SELECT admins.Role FROM admins WHERE admins.Nam = {[name]});
+  r <- oneOrNoRows1 (SELECT admins.Role FROM admins
+                     WHERE admins.Nam = {[name]});
   case r of
   | Some { Role = role } => return (Some (role_of_int role))
   | None => return None
@@ -96,7 +101,8 @@ fun roleOf name =
 
 (* Add an owner account if there is none *)
 task initialize = fn () =>
-  x <- oneOrNoRows1 (SELECT * FROM admins WHERE admins.Role = {[int_of_role Owner]});
+  x <- oneOrNoRows1 (SELECT * FROM admins
+                     WHERE admins.Role = {[int_of_role Owner]});
   case x of
   | Some _ => return ()
   | None => create "owner" "password" Owner
