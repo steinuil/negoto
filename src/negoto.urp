@@ -27,6 +27,7 @@ util
 logger
 keyVal
 styles
+error
 layout
 data
 account

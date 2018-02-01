@@ -88,6 +88,7 @@ fun editNews id { Title = title, Body = body } =
 
 
 open Styles
+structure E = Error
 style page
 
 
@@ -192,6 +193,8 @@ and boards () =
 
 (* TODO: validation *)
 and create_board f =
+  if strlen f.Slug < 1 then E.length0 "Slug" else
+  if E.notBetween f.Nam 1 10 then E.between "Name" 1 10 else
   admin <- Account.authenticate;
   Data.newTag f;
   Log.info (admin ^ " created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
@@ -206,6 +209,7 @@ and delete_board { Id = name } =
 
 
 and edit_slug f =
+  if strlen f.Slug < 1 then E.length0 "Slug" else
   admin <- Account.authenticate;
   Data.editSlug f;
   Log.info (admin ^ " changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
@@ -346,7 +350,6 @@ and news_items () =
   layout <xml><section>
     <header>Add news</header>
     <form>
-      <hidden{#Author} value={user}/>
       <textbox{#Title} placeholder="Title" required/><br/>
       <textarea{#Body} placeholder="Body" required/><br/>
       <submit action={create_news_item} value="Post news"/>
@@ -378,8 +381,10 @@ and news_items () =
 
 
 and create_news_item x =
+  if strlen x.Title < 1 then E.length0 "Title" else
+  if strlen x.Body < 1 then E.length0 "Body" else
   admin <- Account.authenticate;
-  id <- addNews x;
+  id <- addNews (x ++ { Author = admin });
   Log.info (admin ^ " added newsItem " ^ show id ^ ": " ^ x.Title);
   redirect (url (news_items ()))
 
@@ -392,6 +397,8 @@ and delete_news_item { Id = id } =
 
 
 and edit_news_item f =
+  if strlen f.Title < 1 then E.length0 "Title" else
+  if strlen f.Body < 1 then E.length0 "Body" else
   admin <- Account.authenticate;
   editNews (readError f.Id) (f -- #Id);
   Log.info (admin ^ " edited newsItem " ^ f.Id);
@@ -510,6 +517,7 @@ and site_settings () =
 
 
 and set_site_name { Nam = name } =
+  if strlen name < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
   setSiteName name;
   Log.info (admin ^ " set the site name to " ^ name);
@@ -517,6 +525,8 @@ and set_site_name { Nam = name } =
 
 
 and add_affiliate_link f =
+  if strlen f.Nam < 1 then E.length0 "Name" else
+  if strlen (show f.Link) < 10 then E.length "Link" 10 else
   (admin, _) <- Account.requireLevel Account.Admin;
   addLink f;
   Log.info (admin ^ " added link " ^ f.Link);
@@ -524,6 +534,8 @@ and add_affiliate_link f =
 
 
 and add_account { Nam = name, Pass = pass, Role = role } =
+  if E.notBetween name 6 24 then E.between "Name" 6 24 else
+  if strlen pass < 8 then E.length "Password" 8 else
   (admin, role') <- Account.requireLevel Account.Admin;
   let val role : Account.role = readError role in
   if role' > role then
@@ -551,6 +563,9 @@ and delete_account { Id = name } =
 
 
 and add_theme f =
+  if strlen f.TabColor < 1 then E.length0 "Tab Color" else
+  if strlen f.Filename < 1 then E.length0 "Filename" else
+  if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
   Layout.addTheme (f -- #Css) f.Css;
   Log.info (admin ^ " uploaded theme " ^ f.Filename);
@@ -558,6 +573,9 @@ and add_theme f =
 
 
 and edit_theme f =
+  if strlen f.TabColor < 1 then E.length0 "Tab Color" else
+  if strlen f.Filename < 1 then E.length0 "Filename" else
+  if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
   Layout.editTheme f;
   Log.info (admin ^ " edited theme " ^ f.Filename);
@@ -579,13 +597,18 @@ and set_default_theme { Theme = theme } =
 
 
 and set_max_threads { Max = max } =
+  let val max = ceil max in
+  if max < 1 then E.msg "You can't set the maximum number of threads to 0" else
+  if max > 100 then E.msg "You can't set the maximum number of threads that high" else
   (admin, _) <- Account.requireLevel Account.Admin;
-  Data.setMaxThreads (ceil max);
-  Log.info (admin ^ " set the max threads to " ^ show (ceil max));
+  Data.setMaxThreads max;
+  Log.info (admin ^ " set the max threads to " ^ show max);
   redirect (url (site_settings ()))
+  end
 
 
 and edit_readme { Body = body } =
+  if strlen body < 1 then E.length0 "The readme" else
   (admin, _) <- Account.requireLevel Account.Admin;
   updateReadme body;
   Log.info (admin ^ " edited the readme");
@@ -619,8 +642,9 @@ and your_settings () : transaction page =
 
 and change_password { Nam = name, OldPass = oldPass, Pass = pass, Pass2 = pass2 } =
   admin <- Account.authenticate;
-  if name <> admin then error <xml>You can't change someone else's password.</xml> else
-  if pass <> pass2 then error <xml>The new passwords don't match.</xml> else
+  if name <> admin then E.msg "You can't change someone else's password" else
+  if pass <> pass2 then E.msg "The new passwords don't match" else
+  if strlen pass < 8 then E.length "Password" 8 else
   Account.changePassword name oldPass pass;
   Log.info (admin ^  " changed their password");
   redirect (url (your_settings ()))

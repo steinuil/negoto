@@ -65,12 +65,11 @@ in the post body.
   * [X] improve CSS, add different themes
   * [X] add cookie to switch themes
   * [ ] a nicer error page in its own module
+  * [ ] come up with a nice logo
 
 * Feature completeness overview
   * [X] Account
-  * [ ] Admin
-    * add admin interfaces for everything
-    * validate forms
+  * [X] Admin
   * [X] Api
   * [X] Data
     * kinda needs a cleanup
@@ -79,6 +78,7 @@ in the post body.
     * manage the favicon
   * [ ] Logger
     * needs some way to select the log level at startup time
+    * or not
   * [ ] Negoto
     * ajax forms
     * images
