@@ -1,4 +1,6 @@
 *.exe
 *.db
+*.o
+*.a
 build
 public

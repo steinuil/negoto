@@ -1,0 +1,4 @@
+ffi buffer
+benignEffectful Buffer.create
+benignEffectful Buffer.addString
+include buffer.h

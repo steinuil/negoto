@@ -40,7 +40,7 @@ in the post body.
   * [X] interface for managing themes
   * [X] redo thread page
   * [X] interface for managing your account
-  * [ ] improve the CSS
+  * [X] improve the CSS
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box
@@ -83,6 +83,7 @@ in the post body.
     * ajax forms
     * images
     * form validation
+    * css fixes
   * [X] Bcrypt
     * add some tests maybe? how does testing even work in Ur/Web?
   * [ ] File
