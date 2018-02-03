@@ -3,22 +3,10 @@ style quote
 style backlink
 
 
-fun isValid post =
-  strlen post <= 2000
-
-
 val id = PostFfi.mkId
 
 
 val link = PostFfi.mkIdUrl
-
-
-fun toHtml url = PostFfi.toHtml spoiler quote backlink (Some (show url))
-
-
-val toHtml' = PostFfi.toHtml spoiler quote backlink None
-
-
 
 
 datatype text =
@@ -66,7 +54,7 @@ where
 end
 
 
-fun toHtml'' str : transaction xbody =
+fun toHtml str : transaction xbody =
   post <- parsePost str;
   let
     loop post <xml/>

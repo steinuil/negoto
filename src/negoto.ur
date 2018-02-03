@@ -1,5 +1,6 @@
 open Tags
 open Styles
+structure E = Error
 
 style base_page
 style front_page
@@ -77,18 +78,20 @@ and switch_theme { Theme = t } =
   redirect (url (front ()))
 
 
-and newsItem item : xbody =
-  <xml><article class="news-item">
+and newsItem item : transaction xbody =
+  body' <- Post.toHtml item.Body;
+  return <xml><article class="news-item">
     <header><strong>{[item.Title]}</strong> by {[item.Author]} at {[item.Time]}</header>
-    <div class="news_body">{Post.toHtml' item.Body}</div>
+    <div class="news_body">{body'}</div>
   </article></xml>
 
 
 and front () =
   tags <- Data.allTags;
   news <- Admin.news;
+  news <- List.mapXM newsItem news;
   readme <- Admin.readme;
-  readme <- Post.toHtml'' readme;
+  readme <- Post.toHtml readme;
   siteName <- Admin.siteName;
   Layout.layout ("Front Page - " ^ siteName) front_page "" <xml>
     <header>
@@ -106,7 +109,7 @@ and front () =
         </section>
         <section>
           <header>News</header>
-          <div class="section-body">{List.mapX newsItem news}</div>
+          <div class="section-body">{news}</div>
         </section>
         <section>
           <header>Readme</header>
@@ -190,7 +193,7 @@ and catalogThread thread' =
 
 and threadPost addToPostBody post' =
   expanded <- source False;
-  currUrl <- currentUrl;
+  postBody <- Post.toHtml post'.Body;
   let
     fun imgSrc file exp =
       if exp then
@@ -214,7 +217,7 @@ and threadPost addToPostBody post' =
           <a class="clickable" href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="clickable"
             onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
         </div>
-        <div class="post-body">{Post.toHtml currUrl post'.Body}</div>
+        <div class="post-body">{postBody}</div>
       </div>
     </xml>
   end
@@ -296,22 +299,21 @@ in
 end
 
 
-and create_post f = let
-  val files =
-    if blobSize (fileData f.File) > 0 then
-      { File = f.File, Spoiler = f.Spoiler } :: []
-    else
-      []
+and create_post f =
+  if strlen f.Body > 2000 then E.tooLong "Body" 2000 else
+  let
+    val files =
+      if blobSize (fileData f.File) > 0 then
+        { File = f.File, Spoiler = f.Spoiler } :: []
+      else
+        []
 
-  val post = f -- #Thread -- #File -- #Spoiler ++
-    { Thread = readError f.Thread, Files = files }
-in
-  if Post.isValid f.Body then
-    _ <- Data.newPost post;
-    redirect (url (thread post.Thread))
-  else
-    error errorPage
-end
+    val post = f -- #Thread -- #File -- #Spoiler ++
+      { Thread = readError f.Thread, Files = files }
+  in
+  _ <- Data.newPost post;
+  redirect (url (thread post.Thread))
+  end
 
 
 and create_post' f =

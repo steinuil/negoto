@@ -65,6 +65,7 @@ uw_Basis_string uw_PostFfi_mkIdUrl(uw_context ctx, uw_Basis_string id) {
 }
 
 
+/*
 uw_Basis_xbody uw_PostFfi_toHtml(uw_context ctx, uw_Basis_css_class css_spoiler, uw_Basis_css_class css_quote, uw_Basis_css_class css_backlink, uw_Basis_string curr_url, uw_Basis_string post) {
   char *buf = (char *)uw_malloc(ctx, BUF_LEN);
   int buf_pos = 0;
@@ -202,3 +203,4 @@ ok:
   buf[buf_pos] = '\0';
   return buf;
 }
+*/

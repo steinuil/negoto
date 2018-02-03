@@ -9,6 +9,9 @@ fun msg [t] (str : string) : t =
 fun length [a] [t] (_ : show a) (itm : a) (len : int) : t =
   error <xml>{[itm]} must be longer than {[len]}</xml>
 
+fun tooLong [a] [t] (_ : show a) (item : a) (len : int) : t =
+  error <xml>{[item]} must be shorter than {[len]}</xml>
+
 fun between [a] [t] (_ : show a) (item : a) (min : int) (max : int) : t =
   error <xml>{[item]} must be between {[min]} and {[max]} characters long</xml>
 
