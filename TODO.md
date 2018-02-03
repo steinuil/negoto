@@ -13,8 +13,8 @@ in the post body.
     * figure out how to statically link libvips and all its dependencies
 
 * Post handling library
-  * [ ] validate all the post fields
-  * [X] parse newlines, quote arrows, backlinks, spoilers
+  * [X] parse newlines
+  * [ ] parse quote arrows, backlinks, spoilers
   * [ ] parse inter-thread backlinks
   * [ ] URLs
   * [X] buffer library similar to OCaml's
@@ -66,6 +66,7 @@ in the post body.
   * [X] add cookie to switch themes
   * [ ] a nicer error page in its own module
   * [ ] come up with a nice logo
+  * [ ] add banners
 
 * Feature completeness overview
   * [X] Account
@@ -90,7 +91,6 @@ in the post body.
     * managing the favicon
     * generate thumbnails
   * [ ] Post
-    * fix crash when a post is longer than the allocated buffer
   * [X] Uuid
 
 
@@ -99,7 +99,7 @@ Wishlist of stuff to maybe work on after the imageboard is stable and usable on
 real servers.
 
 * Buffer library
-  * [ ] C version if I haven't already done it before
+  * [X] C version if I haven't already done it before
   * [ ] javascript version
 
 * [SexpCode](https://web.archive.org/web/20160321174220/http://cairnarvon.rotahall.org/misc/sexpcode.html)

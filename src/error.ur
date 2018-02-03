@@ -20,3 +20,12 @@ fun exactly [a] [t] (_ : show a) (item : a) (amount : int) : t =
 
 fun length0 [a] [t] (_ : show a) (item : a) : t =
   error <xml>{[item]} can't be empty</xml>
+
+
+style page
+
+fun errorPage (msg : xbody) : transaction page =
+  Layout.layout "Error" page ("Error: " ^ show msg) <xml>
+    <header>An error has occurred</header>
+    <main>{msg}</main>
+  </xml>

@@ -6,6 +6,7 @@ allow responseHeader Status
 rewrite style Styles/* [-]
 rewrite style Negoto/* Negoto_ [-]
 rewrite style Admin/*  Admin_ [-]
+rewrite style Error/*  Error_ [-]
 rewrite style Post/*   text_ [-]
 rewrite style * [-]
 rewrite url * [-]
@@ -18,6 +19,7 @@ library post
 library uuid
 ffi tags
 library bcrypt
+onError Error.errorPage
 
 $/list
 $/option
@@ -28,8 +30,8 @@ util
 logger
 keyVal
 styles
-error
 layout
+error
 data
 account
 admin
