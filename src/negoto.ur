@@ -88,6 +88,7 @@ and front () =
   tags <- Data.allTags;
   news <- Admin.news;
   readme <- Admin.readme;
+  readme <- Post.toHtml'' readme;
   siteName <- Admin.siteName;
   Layout.layout ("Front Page - " ^ siteName) front_page "" <xml>
     <header>
@@ -109,7 +110,7 @@ and front () =
         </section>
         <section>
           <header>Readme</header>
-          <div class="section-body">{Post.toHtml' readme}</div>
+          <div class="section-body">{readme}</div>
         </section>
       </div>
     </main>

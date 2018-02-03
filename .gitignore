@@ -4,3 +4,4 @@
 *.a
 build
 public
+_*

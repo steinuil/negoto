@@ -75,7 +75,7 @@ uw_Basis_unit uw_Buffer_addChar(uw_context ctx, uw_Buffer_t buf, uw_Basis_char c
     curr = new_buf;
   }
 
-  curr->pos = c;
+  curr->buf[curr->pos] = c;
   curr->pos += 1;
 
   return 0;

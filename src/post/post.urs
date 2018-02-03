@@ -10,3 +10,5 @@ val toHtml : url -> string -> xbody
 
 val toHtml' : string -> xbody
   (** Like toHtml, but disables backlinks. *)
+
+val toHtml'' : string -> transaction xbody

@@ -2,9 +2,9 @@ type t
 
 val create : int -> transaction t
 
-val length : t -> int
+val length : t -> transaction int
 
-val contents : t -> string
+val contents : t -> transaction string
 
 val addChar : t -> char -> transaction unit
 

@@ -1,4 +1,7 @@
 ffi buffer
 benignEffectful Buffer.create
+benignEffectful Buffer.length
+benignEffectful Buffer.contents
 benignEffectful Buffer.addString
+benignEffectful Buffer.addChar
 include buffer.h
