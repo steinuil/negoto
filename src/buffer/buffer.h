@@ -5,7 +5,7 @@
 
 struct buffer {
   size_t size;
-  uint16_t pos;
+  uint16_t pos; // The first byte you can write into.
   char *buf;
   struct buffer *next;
 };

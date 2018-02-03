@@ -7,6 +7,9 @@
 #include "buffer.h"
 
 
+// A buffer implementation using a linked list of buffers.
+
+
 void free_buffer(void *buf, int will_retry) {
   if (buf) free(buf);
 }
@@ -21,8 +24,8 @@ uw_Buffer_t uw_Buffer_create(uw_context ctx, uw_Basis_int size) {
   }
 
   buffer->size = size;
-  buffer->pos = 0;
-  buffer->buf = malloc(size);
+  buffer->pos  = 0;
+  buffer->buf  = malloc(size);
   buffer->next = NULL; // just to be sure
 
   return buffer;
@@ -64,11 +67,14 @@ uw_Basis_string uw_Buffer_contents(uw_context ctx, uw_Buffer_t buf) {
 uw_Basis_unit uw_Buffer_addString(uw_context ctx, uw_Buffer_t buf, uw_Basis_string str) {
   uw_Buffer_t curr = buf;
 
+  while (curr->next != NULL) curr = curr->next;
+
   uint64_t written;
-  // @Bug there's probably something stupid happening here
   for (written = 0; str[written] != '\0'; written++) {
+    // If the position is equal or more than the size, the current buffer is
+    // full and we need a new one.
     if (curr->pos >= curr->size) {
-      curr->pos = curr->size - 1; // clamp position, just in case
+      curr->pos = curr->size; // just in case
       uw_Buffer_t new_buf = uw_Buffer_create(ctx, curr->size * 2);
       curr->next = new_buf;
       curr = new_buf;
