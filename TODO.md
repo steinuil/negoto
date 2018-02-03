@@ -17,7 +17,7 @@ in the post body.
   * [X] parse newlines, quote arrows, backlinks, spoilers
   * [ ] parse inter-thread backlinks
   * [ ] URLs
-  * [ ] buffer library similar to OCaml's
+  * [X] buffer library similar to OCaml's
     * or at least fix the post length issue
 
 * Ajax post forms

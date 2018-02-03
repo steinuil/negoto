@@ -64,6 +64,24 @@ uw_Basis_string uw_Buffer_contents(uw_context ctx, uw_Buffer_t buf) {
 }
 
 
+uw_Basis_unit uw_Buffer_addChar(uw_context ctx, uw_Buffer_t buf, uw_Basis_char c) {
+  uw_Buffer_t curr = buf;
+  while (curr->next != NULL) curr = curr->next;
+
+  if (curr->pos >= curr->size) {
+    curr->pos = curr->size; // just in case
+    uw_Buffer_t new_buf = uw_Buffer_create(ctx, curr->size);
+    curr->next = new_buf;
+    curr = new_buf;
+  }
+
+  curr->pos = c;
+  curr->pos += 1;
+
+  return 0;
+}
+
+
 uw_Basis_unit uw_Buffer_addString(uw_context ctx, uw_Buffer_t buf, uw_Basis_string str) {
   uw_Buffer_t curr = buf;
 
@@ -75,7 +93,7 @@ uw_Basis_unit uw_Buffer_addString(uw_context ctx, uw_Buffer_t buf, uw_Basis_stri
     // full and we need a new one.
     if (curr->pos >= curr->size) {
       curr->pos = curr->size; // just in case
-      uw_Buffer_t new_buf = uw_Buffer_create(ctx, curr->size * 2);
+      uw_Buffer_t new_buf = uw_Buffer_create(ctx, curr->size);
       curr->next = new_buf;
       curr = new_buf;
     }

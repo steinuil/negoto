@@ -13,6 +13,7 @@ timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 allow mime text/plain
 library file
+library buffer
 library post
 library uuid
 ffi tags
