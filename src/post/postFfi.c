@@ -1,65 +1,23 @@
 #include <stdio.h>
-#include <stdbool.h>
-#include <math.h>
-
 #include <urweb.h>
 
 #include "postFfi.h"
 
 
-#define BUF_LEN 3000
-#define MAX_QUOTE_LEVEL 8
-
-#define zero(x) ((x) > 0 ? (x) : 0)
-
-
-int parse_num(char *buf, int *d) {
-  int digits = 0;
-
-  for (;;) {
-    char cur_char = buf[digits];
-    if (cur_char >= '0' && cur_char <= '9') {
-      digits += 1;
-    } else if (cur_char == ' ' || cur_char == '\r' || cur_char == '\n' || cur_char == '\0') {
-      break;
-    } else {
-      return 0;
-    }
-  }
-
-  *d = digits;
-  int n = 0;
-
-  for (int i = 0; i < digits; i++) {
-    char x = buf[i] - 48;
-    n += x * pow(10, digits - 1 - i);
-  }
-
-  if (n > 0) {
-    return n;
-  } else {
-    return 0;
-  }
-}
-
-
-enum spoiler_state {
-  SPOILER_NONE,
-  SPOILER_INSIDE,
-  SPOILER_INSIDE_QUOTE,
-  SPOILER_IMPROPERLY_ENDED,
-};
+// Note: we assume that the max number of posts in a thread doesn't have more
+// than 5 digits, that ought to be enough.
+#define MAX_THREAD_DIGITS 5
 
 
 uw_Basis_string uw_PostFfi_mkId(uw_context ctx, uw_Basis_int num) {
-  char *buf = (char *)uw_malloc(ctx, 8);
+  char *buf = (char *)uw_malloc(ctx, 5 + MAX_THREAD_DIGITS);
   sprintf(buf, "post%lld", num);
   return buf;
 }
 
 
 uw_Basis_string uw_PostFfi_mkIdUrl(uw_context ctx, uw_Basis_string id) {
-  char *buf = (char *)uw_malloc(ctx, 9);
+  char *buf = (char *)uw_malloc(ctx, 6 + MAX_THREAD_DIGITS);
   sprintf(buf, "#%s", id);
   return buf;
 }

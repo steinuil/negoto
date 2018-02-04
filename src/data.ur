@@ -253,6 +253,14 @@ val setMaxThreads (i : int) =
   KeyVal.set "maxThreads" i
 
 
+val maxPosts : transaction int =
+  Util.getM 1000 (KeyVal.get "maxPosts")
+
+
+val setMaxPosts (i : int) =
+  KeyVal.set "maxPosts" i
+
+
 (* * INSERT *)
 fun newTag { Nam = name, Slug = slug } =
   dml (INSERT INTO tags (Nam, Slug)
@@ -276,7 +284,8 @@ fun newPost { Nam = name, Body = body, Bump = shouldBump
   { Count = lastCnt, Locked = locked } <-
     oneRow1 (SELECT threads.Count, threads.Locked FROM threads
              WHERE threads.Id = {[thread]});
-  if lastCnt >= 1000 then error <xml>Post limit exceeded</xml> else
+  postLim <- maxPosts;
+  if lastCnt >= postLim then error <xml>Post limit exceeded</xml> else
   if locked then error <xml>This thread is locked</xml> else
   uid <- nextval post_id;
   bumpThread thread shouldBump;

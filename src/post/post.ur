@@ -4,8 +4,6 @@ style backlink
 
 
 val id = PostFfi.mkId
-
-
 val link = PostFfi.mkIdUrl
 
 
@@ -17,7 +15,7 @@ datatype text =
   | Backlink of id
 
 
-(* Returns the list reversed *)
+(* Returns the parse tree reversed *)
 fun parsePost str : transaction (list text) = let
   parseInitial 0 []
 where
@@ -39,15 +37,27 @@ where
       None
 
   fun parseInitial pos acc = case at pos of
+    (* EOS *)
     | None => return acc
 
-    (* Handle line breaks *)
+    (* Line breaks *)
     | Some #"\n" => parseInitial (pos + 1) (Linebreak :: acc)
 
     | Some #"\r" => (case at (pos + 1) of
         | Some #"\n" => parseInitial (pos + 2) (Linebreak :: acc)
         | _          => parseInitial (pos + 1) (Linebreak :: acc))
 
+    (* Meme arrows *)
+    | Some #">" => (case at (pos + 1) of
+        | Some #">" =>
+          acc <- appText #"!" acc;
+          parseInitial (pos + 1) acc
+        | _ => (case acc of
+            | Linebreak :: _ => parseInitial (pos + 1) (Quote [] :: acc)
+            | _              => acc <- appText #">" acc;
+                                parseInitial (pos + 1) acc))
+
+    (* All other characters *)
     | Some chr =>
       acc <- appText chr acc;
       parseInitial (pos + 1) acc
@@ -66,5 +76,7 @@ fun toHtml str : transaction xbody =
       | (Text buf) :: rest =>
         str <- Buffer.contents buf;
         loop rest <xml>{[str]}{acc}</xml>
-      | _ => error <xml>NOT SUPPORTED YET</xml>
+      | (Quote _) :: rest =>
+        loop rest <xml>QUOTE{acc}</xml>
+      | _ => error <xml>NOT IMPLEMENTED</xml>
   end

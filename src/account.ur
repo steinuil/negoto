@@ -1,3 +1,6 @@
+structure Log = Logger.Make(struct val section = "account" end)
+
+
 datatype role = Owner | Admin | Moderator
 
 
@@ -216,4 +219,5 @@ fun requireLevel lvl =
     else
       error <xml>You don't have permission to see this page.</xml>
   | None =>
+    Log.error "Authenticated user doesn't exist in the users database";
     error <xml>UNEXPECTED: authenticated user doesn't exist in the users database.</xml>

@@ -410,6 +410,7 @@ and site_settings () =
   r <- readme;
   r <- Post.toHtml r;
   maxThreads <- Data.maxThreads;
+  maxPosts <- Data.maxPosts;
   themes <- Layout.allThemes;
   siteName <- siteName;
   selectedTheme <- source None;
@@ -451,6 +452,12 @@ and site_settings () =
     <form>
       <number{#Max} value={float maxThreads} min={5.0} max={200.0} step={1.0}/>
       <submit value="Set max threads" action={set_max_threads}/>
+    </form>
+  </section><section>
+    <header>Posts per thread</header>
+    <form>
+      <number{#Max} value={float maxPosts} min={50.0} max={10000.0} step={1.0}/>
+      <submit value="Set max threads" action={set_max_posts}/>
     </form>
   </section><section>
     <header>Readme</header>
@@ -604,6 +611,17 @@ and set_max_threads { Max = max } =
   (admin, _) <- Account.requireLevel Account.Admin;
   Data.setMaxThreads max;
   Log.info (admin ^ " set the max threads to " ^ show max);
+  redirect (url (site_settings ()))
+  end
+
+
+and set_max_posts { Max = max } =
+  let val max = ceil max in
+  if max < 1 then E.msg "You can't set the maximum number of posts to 0" else
+  if max > 10000 then E.msg "You really shouldn't set the maximum number of posts that high" else
+  (admin, _) <- Account.requireLevel Account.Admin;
+  Data.setMaxPosts max;
+  Log.info (admin ^ " set the max posts to " ^ show max);
   redirect (url (site_settings ()))
   end
 

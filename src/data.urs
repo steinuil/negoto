@@ -123,3 +123,7 @@ val deletePostByUid : int -> transaction unit
 val maxThreads : transaction int
 
 val setMaxThreads : int -> transaction unit
+
+val maxPosts : transaction int
+
+val setMaxPosts : int -> transaction unit

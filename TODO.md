@@ -41,6 +41,7 @@ in the post body.
   * [X] redo thread page
   * [X] interface for managing your account
   * [X] improve the CSS
+  * [ ] interface to manage affiliate links
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box
