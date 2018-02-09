@@ -9,8 +9,17 @@ in the post body.
   * [ ] configure the position of the saved files
     * how??
   * [X] return a checksum and image dimensions
-  * [ ] process thumbnails for images with libvips
-    * figure out how to statically link libvips and all its dependencies
+  * [ ] process thumbnails for images with ~~libvips~~ something
+    * ~~figure out how to statically link libvips and all its dependencies~~
+      * libvips uses libtool. terrible*!*
+
+* Options for processing thumbnails are:
+  * libvips (only compiles to a libtool library, gross API)
+  * ImageMagick (xboxhueg, don't really know if I'd want to link it statically)
+  * GraphicsMagick (similar problems to IM, had problems with certain kinds of images in the past)
+  * stb\_image/SOIL (don't handle problematic images very well)
+  * DevIL (probably the best out of the bunch)
+  * just write a wrapper for the imagemagick cli and just use that (horrible hack)
 
 * Post handling library
   * [X] parse newlines
