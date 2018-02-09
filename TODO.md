@@ -41,7 +41,7 @@ in the post body.
   * [X] redo thread page
   * [X] interface for managing your account
   * [X] improve the CSS
-  * [ ] interface to manage affiliate links
+  * [X] interface to manage affiliate links
 
 * Frontend niceties
   * [X] clicking on a post number should quote it in the comment box
@@ -65,7 +65,7 @@ in the post body.
   * [X] deleting the OP should delete the rest of the thread
   * [X] improve CSS, add different themes
   * [X] add cookie to switch themes
-  * [ ] a nicer error page in its own module
+  * [X] a nicer error page in its own module
   * [ ] come up with a nice logo
   * [ ] add banners
 

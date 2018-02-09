@@ -413,7 +413,6 @@ and site_settings () =
   maxPosts <- Data.maxPosts;
   themes <- Layout.allThemes;
   siteName <- siteName;
-  selectedTheme <- source None;
   accounts <- Account.all;
   accountTable <- List.mapXM
     (fn a =>
@@ -424,6 +423,7 @@ and site_settings () =
         <td>{del}</td>
       </tr></xml>)
     accounts;
+  selectedTheme <- source None;
   themeTable <- List.mapXM
     (fn t =>
       del <- deleteForm t.Filename t.Nam delete_theme;
@@ -433,19 +433,22 @@ and site_settings () =
         <td>{editButton [#Filename] selectedTheme t} {del}</td>
       </tr></xml>)
     themes;
+  links' <- links;
+  linkTable <- List.mapXM
+    (fn l =>
+      del <- deleteForm (show l.Link) l.Nam delete_affiliate_link;
+      return <xml><tr>
+        <td>{[l.Nam]}</td>
+        <td>{[l.Link]}</td>
+        <td>{del}</td>
+      </tr></xml>)
+      links';
   layout <xml><section>
   <!-- SITE NAME AND LINKS -->
     <header>Site name</header>
     <form>
       <textbox{#Nam} value={siteName}/>
       <submit value="Set site name" action={set_site_name}/>
-    </form>
-  </section><section>
-    <header>Affiliate links</header>
-    <form>
-      <textbox{#Nam} placeholder="Name"/>
-      <url{#Link} placeholder="URL"/>
-      <submit value="Add link" action={add_affiliate_link}/>
     </form>
   </section><section>
     <header>Threads per board</header>
@@ -466,6 +469,20 @@ and site_settings () =
       <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
+  </section><section>
+  <!-- LINKS -->
+    <header>Add a link</header>
+    <form>
+      <textbox{#Nam} placeholder="Name"/>
+      <url{#Link} placeholder="URL"/>
+      <submit value="Add link" action={add_affiliate_link}/>
+    </form>
+  </section><section>
+    <header>Manage links</header>
+    <table>
+      <tr><th>Name</th><th>Link</th><th/></tr>
+      {linkTable}
+    </table>
   </section><section>
   <!-- ACCOUNTS -->
     <header>Add an account</header>
@@ -538,6 +555,13 @@ and add_affiliate_link f =
   (admin, _) <- Account.requireLevel Account.Admin;
   addLink f;
   Log.info (admin ^ " added link " ^ f.Link);
+  redirect (url (site_settings ()))
+
+
+and delete_affiliate_link { Id = link } =
+  (admin, _) <- Account.requireLevel Account.Admin;
+  deleteLink (bless link);
+  Log.info (admin ^ " deleted link " ^ link);
   redirect (url (site_settings ()))
 
 
