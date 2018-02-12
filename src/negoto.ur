@@ -108,12 +108,12 @@ and front () =
           </ul>
         </section>
         <section>
-          <header>News</header>
-          <div class="section-body">{news}</div>
-        </section>
-        <section>
           <header>Readme</header>
           <div class="section-body">{readme}</div>
+        </section>
+        <section>
+          <header>News</header>
+          <div class="section-body">{news}</div>
         </section>
       </div>
     </main>

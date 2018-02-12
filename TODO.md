@@ -19,7 +19,7 @@ in the post body.
   * GraphicsMagick (similar problems to IM, had problems with certain kinds of images in the past)
   * stb\_image/SOIL (don't handle problematic images very well)
   * DevIL (probably the best out of the bunch)
-  * just write a wrapper for the imagemagick cli and just use that (horrible hack)
+  * just write a wrapper for the imagemagick cli (horrible hack)
 
 * Post handling library
   * [X] parse newlines
