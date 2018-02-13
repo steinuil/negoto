@@ -15,7 +15,7 @@ allow mime text/css
 allow mime text/plain
 library file
 library buffer
-library post
+library postFfi
 library uuid
 ffi tags
 library bcrypt
@@ -30,6 +30,7 @@ util
 logger
 keyVal
 styles
+post
 layout
 error
 data

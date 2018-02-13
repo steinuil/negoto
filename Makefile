@@ -12,11 +12,11 @@ s = src
 b = build
 
 file_lib = $s/file/lib.urp $s/file/file.urs $s/file/file.ur $s/file/fileFfi.urs $s/file/fileFfi.h
-post_lib = $s/post/lib.urp $s/post/post.urs $s/post/post.ur $s/post/postFfi.urs $s/post/postFfi.h
+post_lib = $s/postFfi/lib.urp $s/postFfi/postFfi.urs $s/postFfi/postFfi.h
 uuid_lib = $s/uuid/lib.urp $s/uuid/uuid.urs $s/uuid/uuid.h
 bcrypt_lib = $s/bcrypt/lib.urp $s/bcrypt/bcrypt.urs $s/bcrypt/bcrypt.h $s/bcrypt/bcrypt.c
 buffer_lib = $s/buffer/lib.urp $s/buffer/buffer.urs $s/buffer/buffer.h $s/buffer/buffer.c
-src_files = $s/negoto.urp $s/account.ur $s/account.urs $s/admin.ur $s/admin.urs $s/api.ur $s/api.urs $s/data.ur $s/data.urs $s/error.ur $s/keyVal.ur $s/keyVal.urs $s/layout.ur $s/layout.urs $s/logger.ur $s/logger.urs $s/main.ur $s/negoto.ur $s/negoto.urs $s/styles.ur $s/tags.urs $s/util.ur $(file_lib) $(post_lib) $(uuid_lib) $(bcrypt_lib)
+src_files = $s/negoto.urp $s/account.ur $s/account.urs $s/admin.ur $s/admin.urs $s/api.ur $s/api.urs $s/data.ur $s/data.urs $s/error.ur $s/keyVal.ur $s/keyVal.urs $s/layout.ur $s/layout.urs $s/logger.ur $s/logger.urs $s/main.ur $s/negoto.ur $s/negoto.urs $s/post.ur $s/post.urs $s/styles.ur $s/tags.urs $s/util.ur $(file_lib) $(post_lib) $(uuid_lib) $(bcrypt_lib)
 
 sass_base = themes/base.sass themes/reset.sass
 css_files = $b/yotsuba.css $b/yotsuba-b.css
@@ -47,7 +47,7 @@ $b/yotsuba-b.css: themes/yotsuba-b.sass $(sass_base) | $b
 $b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
-$b/postFfi.o: $s/post/postFfi.c $s/post/postFfi.h | $b
+$b/postFfi.o: $s/postFfi/postFfi.c $s/postFfi/postFfi.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
 
 $b/uuid.o: $s/uuid/uuid.c $s/uuid/uuid.h | $b

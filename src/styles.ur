@@ -7,7 +7,7 @@ style post_body
 style catalog_thread
 style separator
 style clickable
-style link
+style ulink
 style button
 style hidden_field
 style subject_field

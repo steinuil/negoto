@@ -15,14 +15,14 @@ li
   list-style: none
 
 
-a, .link
+a, .ulink
   text-decoration: none
   color: $link
 
   &:hover
     color: $link-hover
 
-.clickable, .link
+.clickable, .ulink
   cursor: pointer
 
 
@@ -33,10 +33,16 @@ a, .link
   color: $post-backlink
 
 
+.text-quote
+  &:before
+    content: ">"
+  color: $post-name
+
+
 body>header
   nav
     color: $nav-text
-    a, .link
+    a, .ulink
       color: $link2
     form
       display: inline-block

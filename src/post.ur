@@ -1,8 +1,3 @@
-style spoiler
-style quote
-style backlink
-
-
 val id = PostFfi.mkId
 val link = PostFfi.mkIdUrl
 
@@ -10,7 +5,7 @@ val link = PostFfi.mkIdUrl
 datatype text =
   | Linebreak
   | Text of Buffer.t
-  | Quote of list text
+  | Quote of Buffer.t
   | Spoiler of list text
   | Url of Buffer.t
   | Backlink of id
@@ -42,7 +37,7 @@ where
     | None => return (acc, pos)
     | Some c =>
       if c = end' then
-        return (acc, pos + 1)
+        return (acc, pos)
       else
         Buffer.addChar acc c;
         parseTil end' (pos + 1) acc
@@ -65,7 +60,11 @@ where
           acc <- appText #"!" acc;
           parse (pos + 1) acc
         | _ => (case acc of
-              | Linebreak :: _ => parse (pos + 1) (Quote [] :: acc)
+              | Linebreak :: _ =>
+                (* @Hack we need a better parsing function *)
+                buf <- Buffer.create 48;
+                (buf, pos) <- parseTil #"\n" (pos + 1) buf;
+                parse pos (Quote buf :: acc)
               | _              => acc <- appText #">" acc;
                                   parse (pos + 1) acc))
 
@@ -82,7 +81,7 @@ where
         | (Some #"u", Some #"r", Some #"l", Some #" ") =>
           buf <- Buffer.create 24;
           (link, pos) <- parseTil #"}" (pos + 5) buf;
-          parse pos (Url link :: acc)
+          parse (pos + 1) (Url link :: acc)
         | _ =>
           acc <- appText #"{" acc;
           parse (pos + 1) acc)
@@ -93,6 +92,13 @@ where
       acc <- appText chr acc;
       parse (pos + 1) acc
 end
+
+
+open Styles
+
+style quote
+style spoiler
+style backlink
 
 
 fun toHtml str : transaction xbody =
@@ -107,10 +113,11 @@ fun toHtml str : transaction xbody =
       | (Text buf) :: rest =>
         str <- Buffer.contents buf;
         loop rest <xml>{[str]}{acc}</xml>
-      | (Quote _) :: rest =>
-        loop rest <xml>QUOTE{acc}</xml>
+      | (Quote q) :: rest =>
+        q <- Buffer.contents q;
+        loop rest <xml><span class="quote">{[q]}</span>{acc}</xml>
       | (Url u) :: rest =>
         u <- Buffer.contents u;
-        loop rest <xml>LINK{[u]}{acc}</xml>
+        loop rest <xml><span class="ulink">{[u]}</span>{acc}</xml>
       | _ => error <xml>NOT IMPLEMENTED</xml>
   end

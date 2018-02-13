@@ -101,7 +101,7 @@ fun deleteForm value name (act : { Id : string } -> transaction page) =
   delButton <- fresh;
   return <xml><form>
     <hidden{#Id} value={value}/>
-    [<label for={delButton} class="link">delete</label>]
+    [<label for={delButton} class="ulink">delete</label>]
     <submit id={delButton} class="hidden-field"
       onclick={confirmDel name}
       action={act}/>
@@ -112,7 +112,7 @@ fun editButton [nm :: Name] [t ::: Type] [r ::: {Type}] [[nm] ~ r] (_ : eq t)
   (selected : source (option $([nm = t] ++ r)))
   (curr : $([nm = t] ++ r))
   : xbody =
-  <xml>[<span class="link" onclick={fn _ =>
+  <xml>[<span class="ulink" onclick={fn _ =>
     el <- get selected;
     case el of
     | None => set selected (Some curr)
@@ -133,7 +133,7 @@ fun layout (body' : xbody) : transaction page =
 
     val settings = <xml><a link={your_settings ()}>{[user]}</a></xml>
       :: <xml><form>
-           <label class="link" for={logout}>log out</label>
+           <label class="ulink" for={logout}>log out</label>
            <submit id={logout} action={log_out} class="hidden-field"/>
          </form></xml>
       :: []
@@ -229,7 +229,7 @@ and board name =
             return <xml><form>
               <hidden{#Id} value={show id}/>
               <hidden{#Tag} value={name}/> <!-- to redirect you back here -->
-              [<label for={button'} class="link">{[labl]}</label>]
+              [<label for={button'} class="ulink">{[labl]}</label>]
               <submit id={button'} onclick={confirm} class="hidden-field" action={act}/>
             </form></xml>
         in
@@ -287,7 +287,7 @@ and thread tid =
         <form>
           <hidden{#Id} value={show p.Id}/>
           <hidden{#Thread} value={show tid}/>
-          [<label for={delButton} class="link">delete</label>]
+          [<label for={delButton} class="ulink">delete</label>]
           <submit id={delButton} onclick={confirmDel (show p.Id)}
             class="hidden-field" action={delete_post}/>
         </form>
@@ -675,7 +675,7 @@ and your_settings () : transaction page =
     If you you lost access to a device on which you're logged into this website,
     or if you forgot to log out after using a public device,
     <form class="inline-form">
-      [<label for={logOutButton} class="link">click this link</label>]
+      [<label for={logOutButton} class="ulink">click this link</label>]
       <submit action={log_out_others} class="hidden-field" id={logOutButton}/>
     </form>
     to invalidate all other sessions on your account and automatically login
