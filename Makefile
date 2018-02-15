@@ -26,12 +26,17 @@ db = test.db
 exe = negoto.exe
 
 
+test: $(exe) $(db) public
+	cp $b/*.css public/css/
+	lighttpd -f lighttpd.conf -D
+
+
 negoto: $(exe) $(db) public
 
 # Because make is stupid and will run urweb twice with -j >1
 $b/schema.sql: $(exe) ;
 $(exe): $(src_files) $b/fileFfi.o $b/postFfi.o $b/uuid.o $b/buffer.o $b/yotsuba.css $b/yotsuba-b.css | $s/bcrypt/bcrypt.a
-	$(urweb) project -dbms sqlite -db $(db) -output negoto.exe
+	$(urweb) project -protocol fastcgi -dbms sqlite -db $(db) -output $(exe)
 
 $(db): $b/schema.sql init.sql
 	rm -f $@
@@ -71,8 +76,8 @@ $s/bcrypt/bcrypt.a: $(bcrypt_lib)
 check:
 	$(urweb) -tc project
 
-run: negoto
-	./$(exe)
+#run: negoto
+#	./$(exe)
 
 clean:
 	rm -rf $b $(exe) $(db) public

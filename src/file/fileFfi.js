@@ -1,4 +1,4 @@
-var NEGOTO_STATIC_DIR = "/static";
+var NEGOTO_STATIC_DIR = "/public";
 
 var FileFfi = {
   link: function(section, name) {

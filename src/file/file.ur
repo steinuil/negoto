@@ -51,7 +51,4 @@ fun linkThumb hash =
  * This makes requests crash when selecting a non-default theme. I better get a
  * test server running soon. *)
 fun linkCss name =
-  bless ("/" ^ name ^ ".css")
-  (*
   FileFfi.link css_dir (name ^ ".css")
-  *)

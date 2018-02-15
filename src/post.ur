@@ -24,13 +24,23 @@ where
       Buffer.addChar buf chr;
       return (Text buf :: acc)
 
+
   val len = strlen str
+
 
   fun at idx =
     if idx < len then
       Some (strsub str idx)
     else
       None
+
+
+  fun ats idx len' =
+    if idx + len' < len then
+      Some (substring str idx len')
+    else
+      None
+
 
   fun parseTil end' pos acc =
     case at pos of
@@ -41,6 +51,7 @@ where
       else
         Buffer.addChar acc c;
         parseTil end' (pos + 1) acc
+
 
   fun parse pos acc =
     case at pos of
@@ -57,16 +68,18 @@ where
     (* Meme arrows *)
     | Some #">" => (case at (pos + 1) of
         | Some #">" =>
+          (*  *)
           acc <- appText #"!" acc;
           parse (pos + 1) acc
         | _ => (case acc of
-              | Linebreak :: _ =>
-                (* @Hack we need a better parsing function *)
-                buf <- Buffer.create 48;
-                (buf, pos) <- parseTil #"\n" (pos + 1) buf;
-                parse pos (Quote buf :: acc)
-              | _              => acc <- appText #">" acc;
-                                  parse (pos + 1) acc))
+            | Linebreak :: _ =>
+              (* @Hack we need a better parsing function *)
+              buf <- Buffer.create 48;
+              (buf, pos) <- parseTil #"\n" (pos + 1) buf;
+              parse pos (Quote buf :: acc)
+            | _ =>
+              acc <- appText #">" acc;
+              parse (pos + 1) acc))
 
     | Some #"\\" => (case at (pos + 1) of
         | Some #"{" =>
@@ -77,8 +90,8 @@ where
           acc <- appText #"\\" acc;
           parse (pos + 1) acc)
 
-    | Some #"{" => (case (at (pos + 1), at (pos + 2), at (pos + 3), at (pos + 4)) of
-        | (Some #"u", Some #"r", Some #"l", Some #" ") =>
+    | Some #"{" => (case ats (pos + 1) 4 of
+        | Some "url " =>
           buf <- Buffer.create 24;
           (link, pos) <- parseTil #"}" (pos + 5) buf;
           parse (pos + 1) (Url link :: acc)
@@ -107,7 +120,6 @@ fun toHtml str : transaction xbody =
     loop post <xml/>
   where
     fun loop post acc = case post of
-      | [] => return acc
       | Linebreak :: rest =>
         loop rest <xml><br/>{acc}</xml>
       | (Text buf) :: rest =>
@@ -118,6 +130,9 @@ fun toHtml str : transaction xbody =
         loop rest <xml><span class="quote">{[q]}</span>{acc}</xml>
       | (Url u) :: rest =>
         u <- Buffer.contents u;
-        loop rest <xml><span class="ulink">{[u]}</span>{acc}</xml>
-      | _ => error <xml>NOT IMPLEMENTED</xml>
+        loop rest <xml><a class="ulink">{[u]}</a>{acc}</xml>
+      | [] =>
+        return acc
+      | _ =>
+        error <xml>NOT IMPLEMENTED</xml>
   end

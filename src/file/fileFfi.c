@@ -13,7 +13,7 @@
 
 
 #define NEGOTO_STATIC_DIR "public"
-#define NEGOTO_STATIC_URL "/static"
+#define NEGOTO_STATIC_URL "/public"
 
 
 uw_Basis_string uw_FileFfi_md5Hash(uw_context ctx, uw_Basis_file file) {
