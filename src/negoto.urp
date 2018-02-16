@@ -1,4 +1,3 @@
-database dbname=negoto
 allow meta *
 allow env NEGOTO_LOGLEVEL
 allow responseHeader Status

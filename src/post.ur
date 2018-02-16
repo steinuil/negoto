@@ -12,7 +12,7 @@ datatype text =
 
 
 (* Returns the parse tree reversed *)
-fun parsePost str : transaction (list text) = let
+fun parsePost { UrlAllowed = urlAllowed } str : transaction (list text) = let
   parse 0 []
 where
   fun appText chr acc = case acc of
@@ -90,15 +90,14 @@ where
           acc <- appText #"\\" acc;
           parse (pos + 1) acc)
 
-    | Some #"{" => (case ats (pos + 1) 4 of
-        | Some "url " =>
+    | Some #"{" => (case (ats (pos + 1) 4, urlAllowed) of
+        | (Some "url ", True) =>
           buf <- Buffer.create 24;
           (link, pos) <- parseTil #"}" (pos + 5) buf;
           parse (pos + 1) (Url link :: acc)
         | _ =>
           acc <- appText #"{" acc;
           parse (pos + 1) acc)
-
 
     (* All other characters *)
     | Some chr =>
@@ -115,7 +114,7 @@ style backlink
 
 
 fun toHtml str : transaction xbody =
-  post <- parsePost str;
+  post <- parsePost { UrlAllowed = False } str;
   let
     loop post <xml/>
   where

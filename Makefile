@@ -108,7 +108,6 @@ run: negoto $(css) | public/static
 	lighttpd -f lighttpd.conf -D
 
 
-
 check:
 	$(urweb) -tc project
 

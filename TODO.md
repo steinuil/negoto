@@ -6,8 +6,6 @@ in the post body.
 * File handling library
   * [X] save and delete files
   * [X] generate a filename with an appropriate extension
-  * [ ] configure the position of the saved files
-    * how??
   * [X] return a checksum and image dimensions
   * [ ] process thumbnails for images with ~~libvips~~ something
     * ~~figure out how to statically link libvips and all its dependencies~~
@@ -23,9 +21,10 @@ in the post body.
 
 * Post handling library
   * [X] parse newlines
-  * [ ] parse quote arrows, backlinks, spoilers
-  * [ ] parse inter-thread backlinks
-  * [ ] URLs
+  * [X] quotes
+  * [ ] backlinks
+  * [ ] spoilers
+  * [ ] urls
   * [X] buffer library similar to OCaml's
     * or at least fix the post length issue
 
@@ -78,6 +77,7 @@ in the post body.
   * [ ] come up with a nice logo
   * [ ] add banners
   * [X] turn to fastcgi to support files
+  * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
 
 * Feature completeness overview
   * [X] Account

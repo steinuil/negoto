@@ -214,7 +214,7 @@ and threadPost addToPostBody post' =
         <div class="info">
           <span class="name">{[post'.Nam]}</span>
           <time>{[post'.Time]}</time>
-          <a class="clickable" href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="clickable"
+          <a href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="ulink"
             onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
         </div>
         <div class="post-body">{postBody}</div>

@@ -1,8 +1,9 @@
-sql build/schema.sql
+library src/negoto
 link build/fileFfi.o -lssl -lcrypto
 link build/postFfi.o
 link build/uuid.o
 link build/buffer.o
-library src/negoto
+sql build/schema.sql
 allow url *
 prefix /negoto/
+minHeap 16384
