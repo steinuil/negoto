@@ -77,6 +77,7 @@ in the post body.
   * [X] a nicer error page in its own module
   * [ ] come up with a nice logo
   * [ ] add banners
+  * [X] turn to fastcgi to support files
 
 * Feature completeness overview
   * [X] Account

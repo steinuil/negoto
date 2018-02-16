@@ -33,5 +33,13 @@ git clone --recursive https://github.com/steinuil/negoto
 cd negoto && make
 ```
 
+To test it out, invoke make again:
+
+```
+make run
+```
+
+...and navigate to `localhost:8080/negoto/Negoto/front` on your browser.
+
 ## JSON API
 Negoto comes with a read-only JSON API. The endpoints are described in [API.md](API.md).

@@ -14,4 +14,4 @@ before_install:
 
 install: gem install sass
 
-script: make negoto.exe
+script: make negoto.fcgi

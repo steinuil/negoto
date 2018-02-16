@@ -12,8 +12,8 @@
 #include "fileFfi.h"
 
 
-#define NEGOTO_STATIC_DIR "public"
-#define NEGOTO_STATIC_URL "/public"
+#define NEGOTO_STATIC_DIR "public/static"
+#define NEGOTO_STATIC_URL "/static"
 
 
 uw_Basis_string uw_FileFfi_md5Hash(uw_context ctx, uw_Basis_file file) {

@@ -1,6 +1,5 @@
 database dbname=negoto
 allow meta *
-#allow url /static/*
 allow env NEGOTO_LOGLEVEL
 allow responseHeader Status
 rewrite style Styles/* [-]
@@ -17,8 +16,8 @@ library file
 library buffer
 library postFfi
 library uuid
-ffi tags
 library bcrypt
+ffi tags
 onError Error.errorPage
 
 $/list

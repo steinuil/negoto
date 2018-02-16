@@ -1,4 +1,5 @@
 *.exe
+*.fcgi
 *.db
 *.o
 *.a
