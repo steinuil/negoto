@@ -25,6 +25,7 @@ The normal installation also requires:
 * [sass](http://sass-lang.com/)
 * SQLite3
 * lighttpd
+* ImageMagick's `convert` in your $PATH
 
 To compile, simply clone the repository and invoke make:
 
