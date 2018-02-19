@@ -150,42 +150,78 @@ main
   main
     text-align: center
 
+    &>.container
+      display: flex
+      flex-flow: row wrap
+      justify-content: center
+      align-items: baseline
+      margin: 4px
+
   .catalog-thread
+    margin: 4px
+    width: 250px
+
     .info
       font-size: .85em
       color: $nav-text
 
     .description
       margin: .2em
+      max-height: 4em
+      overflow: hidden
 
-      .subject
-        font-weight: bold
+    .separator
+      color: $nav-text
+
+    .subject
+      font-weight: bold
 
 
-.Negoto-thread-page
-  .post
+.Negoto-thread-page .post
+  &.reply
     display: table
     background-color: $post-bg
     box-shadow: 2px 2px $shadow
 
-    margin: 4px 0
-    padding: 4px 6px
-
     &:target
       background-color: $post-target-bg
 
-    .info
-      margin-bottom: 4px
+    img
+      max-width: 150px
+      max-height: 150px
 
-      a, .ulink
-        color: inherit
+      &.expanded-img
+        max-width: 100%
+        max-height: 100%
 
-        &:hover
-          color: $link-hover
+    margin: 4px 0
+    padding: 4px 6px
 
-    .name
-      color: $post-name
-      font-weight: bold
+  .info
+    margin-bottom: 2px
+    padding-bottom: 2px
+    border-bottom: 1px solid $shadow
+    white-space: nowrap
+    display: inline-block
+
+    a, .ulink
+      color: inherit
+
+      &:hover
+        color: $link-hover
+
+  .name
+    color: $post-name
+    font-weight: bold
+
+  img
+    max-width: 100%
+    float: left
+    margin-right: 6px
+
+    &.expanded-img
+      float: none
+      margin: 0
 
 
 .button, input[type="text"], textarea

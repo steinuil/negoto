@@ -134,35 +134,6 @@ and catalog name =
     </xml>
 
 
-and thread id =
-  thread' <- Data.threadById id;
-  case thread' of
-  | None => error <xml>Thread not found: {[id]}</xml>
-  | Some (t, posts) =>
-    tags <- Data.allTags;
-    tForm <- threadForm t.Id;
-    postBody <- source "";
-    let
-      val title' =
-        List.find (fn tag => tag.Nam = t.Tag) tags
-        |> Option.mp show
-        |> Option.get ""
-
-      fun addTxt str =
-        t <- get postBody;
-        set postBody (t ^ str)
-    in
-      posts <- List.mapXM (threadPost addTxt) posts;
-      pForm <- postForm postBody id;
-      layout tags title' thread_page <xml>
-        <header>[ <a link={catalog t.Tag}>back</a> ] {[t.Subject]}</header>
-        <div class="container">{posts}</div>
-        {if t.Locked then <xml/> else
-        <xml>{tForm}{pForm}</xml>}
-      </xml>
-    end
-
-
 and catalogThread thread' =
   updated <- Util.elapsed thread'.Updated;
   return <xml>
@@ -195,36 +166,83 @@ and catalogThread thread' =
   </xml>
 
 
-and threadPost addToPostBody post' =
-  expanded <- source False;
-  postBody <- Post.toHtml post'.Body;
-  let
-    fun imgSrc file exp =
-      if exp then
-        File.linkImage file.Hash file.Mime
-      else
-        File.linkThumb file.Hash
+and thread id =
+  thread' <- Data.threadById id;
+  case thread' of
+  | None => error <xml>Thread not found: {[id]}</xml>
+  | Some (t, posts) =>
+    tags <- Data.allTags;
+    tForm <- threadForm t.Id;
+    postBody <- source "";
+    let
+      val title' =
+        List.find (fn tag => tag.Nam = t.Tag) tags
+        |> Option.mp show
+        |> Option.get ""
 
-    val picture = case post'.Files of
-      | [] => <xml/>
-      | file :: _ => <xml><figure onclick={fn _ => exp <- get expanded; set expanded (not exp)}>
-        <noscript><img src={File.linkThumb file.Hash}/></noscript>
-        <dyn signal={exp <- signal expanded; return <xml><img src={imgSrc file exp}/></xml>}/>
-      </figure></xml>
-  in
-    return <xml>
-      <div class="post" id={Post.id post'.Id}>
-        {picture}
-        <div class="info">
+      fun addTxt str =
+        t <- get postBody;
+        set postBody (t ^ str)
+
+      val (op, posts) = case posts of
+        | op :: rest => (op, rest)
+        | _ => error <xml>This thread doesn't have an OP</xml>
+
+      fun picture post' expanded =
+        let
+          fun src' file exp =
+            if exp then
+              File.linkImage file.Hash file.Mime
+            else
+              File.linkThumb file.Hash
+
+          fun tag' exp = if exp then expanded_img else null
+        in
+          case post'.Files of
+          | [] => <xml/>
+          | file :: _ => <xml><a href={File.linkImage file.Hash file.Mime}
+              onclick={fn _ => exp <- get expanded; preventDefault; set expanded (not exp)}>
+            <noscript><img src={File.linkThumb file.Hash}/></noscript>
+            <dyn signal={exp <- signal expanded; return <xml><img class={tag' exp} src={src' file exp}/></xml>}/>
+          </a></xml>
+        end
+
+      fun postInfo post' =
+        <xml><div class="info">
           <span class="name">{[post'.Nam]}</span>
           <time>{[post'.Time]}</time>
           <a href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="ulink"
-            onclick={fn _ => addToPostBody (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
-        </div>
-        <div class="post-body">{postBody}</div>
-      </div>
-    </xml>
-  end
+            onclick={fn _ => addTxt (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
+        </div></xml>
+
+      fun threadPost post' =
+        expanded <- source False;
+        postBody <- Post.toHtml post'.Body;
+        return <xml><div class="post reply" id={Post.id post'.Id}>
+          {picture post' expanded}
+          {postInfo post'}
+          <div class="post-body">{postBody}</div>
+        </div></xml>
+
+      val mkOp =
+        expanded <- source False;
+        body <- Post.toHtml op.Body;
+        return <xml><div class="post op-post" id={Post.id op.Id}>
+          {picture op expanded}
+          {postInfo op}
+          <div class="post-body">{body}</div>
+        </div></xml>
+    in
+      op <- mkOp;
+      posts <- List.mapXM threadPost posts;
+      pForm <- postForm postBody id;
+      layout tags title' thread_page <xml>
+        <header>[ <a link={catalog t.Tag}>back</a> ] {[t.Subject]}</header>
+        <div class="container">{op}{posts}</div>
+        {if t.Locked then <xml/> else
+        <xml>{tForm}{pForm}</xml>}
+      </xml>
+    end
 
 
 and navigation tags =

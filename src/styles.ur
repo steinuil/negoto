@@ -1,8 +1,11 @@
 style post
+style reply
+style op_post
 style info
 style description
 style name
 style subject
+style expanded_img
 style post_body
 style catalog_thread
 style separator
