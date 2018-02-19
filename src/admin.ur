@@ -443,6 +443,15 @@ and site_settings () =
         <td>{del}</td>
       </tr></xml>)
       links';
+  banners <- Layout.allBanners;
+  bannerTable <- List.mapXM
+    (fn b =>
+      del <- deleteForm b b delete_banner;
+      return <xml><tr>
+        <td><img width={300} height={100} src={File.linkBanner b}/></td>
+        <td>{del}</td>
+      </tr></xml>)
+    banners;
   layout <xml><section>
   <!-- SITE NAME AND LINKS -->
     <header>Site name</header>
@@ -538,6 +547,19 @@ and site_settings () =
       </select>
       <submit value="Set default theme" action={set_default_theme}/>
     </form>
+  </section><section>
+    <header>Add a banner</header>
+    The banner's size should be 300x100px, if not it will not display correctly.
+    <form>
+      <upload{#File}/>
+      <submit value="Upload banner" action={add_banner}/>
+    </form>
+  </section><section>
+    <header>Manage banners</header>
+    <table>
+      <tr><th>Image</th><th/></tr>
+      {bannerTable}
+    </table>
   </section></xml>
 
 
@@ -655,6 +677,20 @@ and edit_readme { Body = body } =
   (admin, _) <- Account.requireLevel Account.Admin;
   updateReadme body;
   Log.info (admin ^ " edited the readme");
+  redirect (url (site_settings ()))
+
+
+and add_banner { File = banner } =
+  (admin, _) <- Account.requireLevel Account.Admin;
+  Layout.addBanner banner;
+  Log.info (admin ^ " added banner " ^ Option.get "<unnamed>" (fileName banner));
+  redirect (url (site_settings ()))
+
+
+and delete_banner { Id = fname } =
+  (admin, _) <- Account.requireLevel Account.Admin;
+  Layout.deleteBanner fname;
+  Log.info (admin ^ " deleted banner " ^ fname);
   redirect (url (site_settings ()))
 
 

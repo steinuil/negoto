@@ -75,7 +75,7 @@ in the post body.
   * [X] add cookie to switch themes
   * [X] a nicer error page in its own module
   * [ ] come up with a nice logo
-  * [ ] add banners
+  * [X] add banners
   * [X] turn to fastcgi to support files
   * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
 

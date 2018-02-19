@@ -1,3 +1,12 @@
+(* Managing banners *)
+val addBanner : file -> transaction unit
+
+val deleteBanner : string -> transaction unit
+
+val allBanners : transaction (list string)
+
+val randBanner : transaction (option string)
+
 (** Managing themes *)
 type theme =
   { Nam      : string

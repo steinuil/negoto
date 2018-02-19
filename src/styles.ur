@@ -18,3 +18,4 @@ style edit_area
 style news_item
 style news_body
 style inline_form
+style banner

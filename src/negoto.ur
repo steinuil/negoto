@@ -62,10 +62,15 @@ end
 fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
   siteName <- Admin.siteName;
   nav' <- navigation tags;
+  banner' <- Layout.randBanner;
   Layout.layoutWithSwitcher switch_theme (title' ^ " - " ^ siteName) class' ""
     (fn switcher => <xml>
       <header>
         <nav>{nav'}</nav>
+        {case banner' of
+        | None => <xml/>
+        | Some b =>
+          <xml><img class="banner" width={300} height={100} src={File.linkBanner b}/></xml>}
         <h1>{[title']}</h1>
       </header>
       <main>{body'}</main>

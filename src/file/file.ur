@@ -1,12 +1,14 @@
 val css_dir = "css"
 val image_dir = "image"
 val thumb_dir = "thumb"
+val banner_dir = "banner"
 
 
 task initialize = fn () =>
   FileFfi.mkdir css_dir;
   FileFfi.mkdir image_dir;
-  FileFfi.mkdir thumb_dir
+  FileFfi.mkdir thumb_dir;
+  FileFfi.mkdir banner_dir
 
 
 fun saveCss name file =
@@ -27,6 +29,18 @@ fun extOfMime mime = case mime of
   | x => error <xml>Unsupported mime: {txt x}</xml>
 
 
+fun saveBanner file =
+  let val hash = FileFfi.md5Hash file
+      val fname = hash ^ "." ^ extOfMime (fileMimeType file) in
+    FileFfi.save banner_dir fname file;
+    return fname
+  end
+
+
+fun deleteBanner fname =
+  FileFfi.delete banner_dir fname
+
+
 fun saveImage file =
   let val hash = FileFfi.md5Hash file in
     FileFfi.save image_dir (hash ^ "." ^ extOfMime (fileMimeType file)) file;
@@ -37,6 +51,10 @@ fun saveImage file =
 fun deleteImage hash mime =
   FileFfi.delete image_dir (hash ^ "." ^ extOfMime mime);
   FileFfi.delete thumb_dir (hash ^ ".jpg")
+
+
+fun linkBanner fname =
+  FileFfi.link banner_dir fname
 
 
 fun linkImage hash mime =

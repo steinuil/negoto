@@ -1,3 +1,28 @@
+table banners :
+  { Filename : string }
+  PRIMARY KEY Filename
+
+
+fun addBanner banner =
+  fname <- File.saveBanner banner;
+  dml (INSERT INTO banners (Filename) VALUES ({[fname]}))
+
+
+val allBanners =
+  query (SELECT * FROM banners)
+    (fn { Banners = { Filename = fname } } acc => return <| fname :: acc)
+    []
+
+
+val randBanner =
+  b <- oneOrNoRows1 (SELECT * FROM banners ORDER BY RANDOM() LIMIT 1);
+  case b of Some { Filename = b } => return (Some b) | None => return None
+
+
+fun deleteBanner fname =
+  dml (DELETE FROM banners WHERE Filename = {[fname]})
+
+
 table themes :
   { Nam      : string
   , Filename : string
