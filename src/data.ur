@@ -360,10 +360,15 @@ fun deletePost thread id =
   if id > 1 then
     dml (DELETE FROM posts WHERE Thread = {[thread]} AND Id = {[id]})
   else
-    deleteThread id
+    deleteThread thread
 
 fun deletePostByUid uid =
-  dml (DELETE FROM posts WHERE Uid = {[uid]})
+  { Id = id, Thread = thread } <-
+    oneRow1 (SELECT posts.Id, posts.Thread FROM posts WHERE posts.Uid = {[uid]});
+  if id > 1 then
+    dml (DELETE FROM posts WHERE Uid = {[uid]})
+  else
+    deleteThread thread
 
 
 (* Tasks *)

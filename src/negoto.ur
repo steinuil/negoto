@@ -6,11 +6,6 @@ style base_page
 style front_page
 style catalog_page
 style thread_page
-style error_page
-
-
-val errorPage =
-  <xml>Error</xml>
 
 
 val show_tag =
@@ -129,7 +124,7 @@ and front () =
 and catalog name =
   tags <- Data.allTags;
   case List.find (fn t => t.Nam = name) tags of
-  | None => error errorPage
+  | None => error <xml>Board not found: {[name]}</xml>
   | Some tag =>
     threads <- (Data.catalogByTag tag.Nam `bind` List.mapXM catalogThread);
     postForm <- catalogForm tag.Nam;
@@ -142,7 +137,7 @@ and catalog name =
 and thread id =
   thread' <- Data.threadById id;
   case thread' of
-  | None => error errorPage
+  | None => error <xml>Thread not found: {[id]}</xml>
   | Some (t, posts) =>
     tags <- Data.allTags;
     tForm <- threadForm t.Id;
