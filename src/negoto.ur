@@ -108,7 +108,7 @@ and front () =
           </ul>
         </section>
         <section>
-          <header>Readme</header>
+          <header>About</header>
           <div class="section-body">{readme}</div>
         </section>
         <section>
@@ -179,13 +179,17 @@ and catalogThread thread' =
       <div class="info">
         <time>{updated}</time>
         <span class="separator">/</span>
-        {[thread'.Count]} post{if thread'.Count > 1 then <xml>s</xml> else <xml/>}
+        {[thread'.Count - 1]} repl{if thread'.Count = 2 then <xml>y</xml> else <xml>ies</xml>}
         {if thread'.Locked then <xml><span class="separator">/</span> Locked</xml> else <xml/>}
       </div>
       <div class="description">
         <span class="subject">{[thread'.Subject]}</span>
-        <span class="separator">//</span>
-        <span class="post-body">{[thread'.Body]}</span>
+        {if thread'.Body = "" then
+          <xml/>
+        else <xml>
+          <span class="separator">//</span>
+          <span class="post-body">{[thread'.Body]}</span>
+        </xml>}
       </div>
     </div>
   </xml>

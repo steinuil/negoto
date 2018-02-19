@@ -42,8 +42,9 @@ fun deleteBanner fname =
 
 
 fun saveImage file =
-  let val hash = FileFfi.md5Hash file in
-    FileFfi.save image_dir (hash ^ "." ^ extOfMime (fileMimeType file)) file;
+  let val hash = FileFfi.md5Hash file
+      val ext = extOfMime (fileMimeType file) in
+    FileFfi.saveImage image_dir thumb_dir (hash ^ "." ^ ext) (hash ^ ".jpg") file;
     return hash
   end
 

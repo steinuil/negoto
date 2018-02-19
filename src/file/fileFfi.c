@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdint.h>
+#include <sys/wait.h>
 #include <openssl/md5.h>
 
 #include <sys/types.h>
@@ -14,6 +15,8 @@
 
 #define NEGOTO_STATIC_DIR "public/static"
 #define NEGOTO_STATIC_URL "/static"
+#define NEGOTO_CONVERT_PATH "convert"
+#define NEGOTO_THUMB_SIZE "250x250"
 
 
 uw_Basis_string uw_FileFfi_md5Hash(uw_context ctx, uw_Basis_file file) {
@@ -186,6 +189,107 @@ uw_unit uw_FileFfi_delete(uw_context ctx, uw_Basis_string section, uw_Basis_stri
 
   if (ok != 0)
     uw_error(ctx, UNLIMITED_RETRY, "Failed to register save file functions");
+
+  return 0;
+}
+
+
+
+struct image_t {
+  uw_context ctx;
+  uw_Basis_string name;
+  uw_Basis_string thumb;
+  char *file;
+  size_t size;
+};
+
+
+static void free_image_data(void *d, int will_retry) {
+  if (d) {
+    struct image_t *data = (struct image_t *)d;
+    if (data->name) free(data->name);
+    if (data->thumb) free(data->thumb);
+    if (data->file) free(data->file);
+    free(data);
+  }
+}
+
+
+static void delete_image_and_thumbnail(void *d) {
+  struct image_t *data = (struct image_t *)d;
+
+  delete_filename((void *)data->name);
+  delete_filename((void *)data->thumb);
+}
+
+
+static void save_resize_image(void *d) {
+  struct image_t *data = (struct image_t *)d;
+
+  FILE *f = fopen(data->name, "w");
+  if (!f) {
+    uw_set_error_message(data->ctx, "Failed to open %s", data->name);
+    return;
+  }
+
+  size_t written = fwrite(data->file, sizeof(char), data->size, f);
+  if (written < sizeof(char) / data->size) {
+    uw_set_error_message(data->ctx, "Failed to write %s", data->name);
+  }
+
+  int ok = fclose(f);
+  if (ok != 0) {
+    uw_set_error_message(data->ctx, "Failed to close %s", data->name);
+  }
+
+  if (uw_has_error(data->ctx)) return;
+
+  pid_t pid = fork();
+  if (pid == 0) {
+    char *const argv[] = {
+      "convert", data->name,
+      "-strip",
+      "-quality", "70%",
+      "-resize", NEGOTO_THUMB_SIZE ">",
+      data->thumb, NULL
+    };
+    execvp("convert", argv);
+  }
+
+  if (pid < 0) {
+    uw_set_error_message(data->ctx, "Failed to fork to exec convert");
+    return;
+  }
+
+  int status;
+  wait(&status);
+
+  if (status != 0)
+    uw_set_error_message(data->ctx, "Failed to resize image %s", data->name);
+}
+
+
+uw_unit uw_FileFfi_saveImage(
+  uw_context ctx,
+  uw_Basis_string section, uw_Basis_string dest_section,
+  uw_Basis_string fname, uw_Basis_string dest_fname,
+  uw_Basis_file file
+) {
+  struct image_t *data = malloc(sizeof (struct image_t));
+  data->ctx = ctx;
+  data->name = gen_filename(section, fname);
+  data->thumb = gen_filename(dest_section, dest_fname);
+  data->file = memcpy(malloc(file.data.size), file.data.data, file.data.size);
+  data->size = file.data.size;
+
+  int ok = uw_register_transactional(ctx, data,
+    save_resize_image,
+    delete_image_and_thumbnail,
+    free_image_data
+  );
+
+  if (ok != 0)
+    uw_error(ctx, UNLIMITED_RETRY, "Failed to register resize file functions");
 
   return 0;
 }

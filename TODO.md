@@ -7,9 +7,9 @@ in the post body.
   * [X] save and delete files
   * [X] generate a filename with an appropriate extension
   * [X] return a checksum and image dimensions
-  * [ ] process thumbnails for images with ~~libvips~~ something
-    * ~~figure out how to statically link libvips and all its dependencies~~
-      * libvips uses libtool. terrible*!*
+  * [X] process thumbnails for images with `convert`
+  * [ ] use DevIL for converting images instead
+
 
 * Options for processing thumbnails are:
   * libvips (only compiles to a libtool library, gross API)

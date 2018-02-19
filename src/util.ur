@@ -27,7 +27,7 @@ fun elapsed tim =
       else
         (diff / oneYear, "year")
 
-    val suffix = if elapsed' > 1 then "s" else ""
+    val suffix = if elapsed' <> 1 then "s" else ""
   in
     return <xml>{[elapsed']} {[unit']}{[suffix]} ago</xml>
   end

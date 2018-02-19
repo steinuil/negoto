@@ -7,6 +7,8 @@ val save : string -> string -> file -> transaction unit
    * or the filename is longer than 32 characters,
    * they will be truncated. *)
 
+val saveImage : string -> string -> string -> string -> file -> transaction unit
+
 val delete : string -> string -> transaction unit
 
 val link : string -> string -> url
