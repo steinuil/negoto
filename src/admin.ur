@@ -90,6 +90,7 @@ fun editNews id { Title = title, Body = body } =
 open Styles
 structure E = Error
 style page
+style login
 
 
 fun confirmDel name _ =
@@ -743,7 +744,7 @@ and front () : transaction page =
       Welcome to the admin page, {[name]}
     </xml>
   | None =>
-    Layout.layout "Login" page "Login page" <xml><main><div class="container"><form>
+    Layout.layout "Login" page "Login page" <xml><main><div class="container login"><form>
       <textbox{#Nam} placeholder="Name" required/><br/>
       <password{#Password} placeholder="password" required/><br/>
       <submit value="Log in" action={log_in}/>
