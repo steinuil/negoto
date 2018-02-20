@@ -28,8 +28,7 @@ in the post body.
     * or at least fix the post length issue
 
 * Ajax post forms
-  * [ ] write AJAX form javascript library
-    * is this even possible?
+  * [ ] use ajaxUpload and RPC for files
 
 * Limits on number of threads and posts
   * [X] bump old threads off the board
@@ -77,6 +76,7 @@ in the post body.
   * [X] add banners
   * [X] turn to fastcgi to support files
   * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
+  * [ ] fix original image being deleted when posting a duplicated image
 
 * Feature completeness overview
   * [X] Account
@@ -87,19 +87,15 @@ in the post body.
   * [X] KeyVal
   * [ ] Layout
     * manage the favicon
-  * [ ] Logger
-    * needs some way to select the log level at startup time
-    * or not
+  * [X] Logger
   * [ ] Negoto
     * ajax forms
-    * images
     * form validation
     * css fixes
   * [X] Bcrypt
     * add some tests maybe? how does testing even work in Ur/Web?
   * [ ] File
     * managing the favicon
-    * generate thumbnails
   * [ ] Post
   * [X] Uuid
 
@@ -119,6 +115,8 @@ real servers.
   * [ ] function composition
   * [ ] higher arity functions
   * [ ] user-defined functions
+
+* Live preview of post
 
 * [ ] Multiple files in single post
 

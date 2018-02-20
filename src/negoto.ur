@@ -237,11 +237,15 @@ and thread id =
       op <- mkOp;
       posts <- List.mapXM threadPost posts;
       layout tags title' thread_page <xml>
-        <header>[<a link={catalog t.Tag}>back</a>] <span class="subject">{[t.Subject]}</span></header>
+        <header>
+          [<a link={catalog t.Tag}>back</a>]
+          <span class="subject">{[t.Subject]}</span>
+          {if t.Locked then <xml>(locked)</xml> else <xml/>}
+        </header>
         <div class="container">{op}{posts}</div>
         {if t.Locked then <xml/> else
         <xml>
-          <noscript class="static-form-container">{staticForm}</noscript>
+          <div class="static-form-container">{staticForm}</div>
           <!-- {pForm} -->
         </xml>}
       </xml>

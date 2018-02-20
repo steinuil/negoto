@@ -72,6 +72,7 @@ main
 
 .Error-page
   text-align: center
+  padding: 24px
 
   header
     font-size: 1.6em
@@ -191,6 +192,9 @@ main
     background-color: $post-bg
     box-shadow: 2px 2px $shadow
 
+    .info
+      display: inline-block
+
     &:target
       background-color: $post-target-bg
 
@@ -210,7 +214,6 @@ main
     padding-bottom: 2px
     border-bottom: 1px solid $shadow
     white-space: nowrap
-    display: inline-block
 
     a, .ulink
       color: inherit
