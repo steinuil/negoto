@@ -10,7 +10,6 @@ in the post body.
   * [X] process thumbnails for images with `convert`
   * [ ] use DevIL for converting images instead
 
-
 * Options for processing thumbnails are:
   * libvips (only compiles to a libtool library, gross API)
   * ImageMagick (xboxhueg, don't really know if I'd want to link it statically)

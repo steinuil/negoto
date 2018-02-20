@@ -22,3 +22,4 @@ style news_item
 style news_body
 style inline_form
 style banner
+style static_form_container

@@ -172,8 +172,9 @@ and thread id =
   | None => error <xml>Thread not found: {[id]}</xml>
   | Some (t, posts) =>
     tags <- Data.allTags;
-    tForm <- threadForm t.Id;
+    staticForm <- staticThreadForm t.Id;
     postBody <- source "";
+    pForm <- postForm postBody id;
     let
       val title' =
         List.find (fn tag => tag.Nam = t.Tag) tags
@@ -235,12 +236,14 @@ and thread id =
     in
       op <- mkOp;
       posts <- List.mapXM threadPost posts;
-      pForm <- postForm postBody id;
       layout tags title' thread_page <xml>
-        <header>[ <a link={catalog t.Tag}>back</a> ] {[t.Subject]}</header>
+        <header>[<a link={catalog t.Tag}>back</a>] <span class="subject">{[t.Subject]}</span></header>
         <div class="container">{op}{posts}</div>
         {if t.Locked then <xml/> else
-        <xml>{tForm}{pForm}</xml>}
+        <xml>
+          <noscript class="static-form-container">{staticForm}</noscript>
+          <!-- {pForm} -->
+        </xml>}
       </xml>
     end
 
@@ -285,7 +288,7 @@ and catalogForm (boardId : string) : transaction xbody =
   </form></xml>
 
 
-and threadForm (threadId : int) : transaction xbody =
+and staticThreadForm (threadId : int) : transaction xbody =
   submitButton <- fresh;
   bumpButton <- fresh;
   spoilerButton <- fresh;
@@ -364,7 +367,7 @@ and postForm (body : source string) (threadId : int) : transaction xbody =
         <label for={bumpId} class="button">Bump</label>
         <span class="button" onclick={fn _ => mkPost}>Post</span>
       </div>
-      <ctextarea source={body}/>
+      <ctextarea placeholder="Comment" source={body}/>
       <div>
         <ccheckbox source={spoiler} id={spoilerId} class="hidden-field"/>
         <label for={spoilerId} class="button">Spoiler</label>
