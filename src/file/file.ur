@@ -71,3 +71,86 @@ fun linkThumb hash =
  * test server running soon. *)
 fun linkCss name =
   FileFfi.link css_dir (name ^ ".css")
+
+
+signature M = sig
+  val path : string -> string -> string
+
+  val save : string -> string -> file -> transaction unit
+
+  val delete : string -> string -> transaction unit
+end
+
+
+signature Handler = sig
+  type handle
+
+  val save : file -> transaction handle
+
+  val link : handle -> transaction (option url)
+
+  val delete : handle -> transaction unit
+end
+
+
+functor Handler(M : M) : Handler = struct
+  table files :
+    { Hash : string
+    , Mime : string }
+    PRIMARY KEY Hash
+
+  task periodic (5 * 60) = fn () =>
+    (* @Fixme stub *)
+    return ()
+
+  sequence handle_Ids
+
+  table handles :
+    { File   : string
+    , Handle : int }
+
+  type handle = int
+
+
+  fun getHandle hash =
+    handle <- nextval handle_Ids;
+    dml (INSERT INTO handles (Handle, File) VALUES ({[handle]}, {[hash]}));
+    return handle
+
+
+  (* Idea: expose this as a join expression so that we can let external
+   * queries join on these instead of making hundreds of calls per page *)
+  fun fileOfHandle handle =
+    file <- oneOrNoRows (SELECT files.* FROM files
+                           JOIN handles ON handles.File = files.Hash
+                          WHERE handles.Handle = {[handle]});
+    case file of
+    | None                  => return None
+    | Some { Files = file } => return (Some file)
+
+
+  fun link handle =
+    file <- fileOfHandle handle;
+    case file of
+    | None      => return None
+    | Some file => return (Some (bless (M.path file.Hash file.Mime)))
+
+
+  fun delete handle =
+    dml (DELETE FROM handles WHERE Handle = {[handle]})
+
+
+  fun save file =
+    let val hash = FileFfi.md5Hash file in
+      exists <- oneOrNoRows1 (SELECT * FROM files WHERE files.Hash = {[hash]});
+      case exists of
+      | Some _ =>
+        getHandle hash
+      | None =>
+        let val mime = fileMimeType file in
+          M.save hash mime file;
+          dml (INSERT INTO files (Hash, Mime) VALUES ({[hash]}, {[mime]}));
+          getHandle hash
+        end
+    end
+end
