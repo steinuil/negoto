@@ -412,7 +412,6 @@ and site_settings () =
   r <- Post.toHtml r;
   maxThreads <- Data.maxThreads;
   maxPosts <- Data.maxPosts;
-  themes <- Layout.allThemes;
   siteName <- siteName;
   accounts <- Account.all;
   accountTable <- List.mapXM
@@ -424,14 +423,14 @@ and site_settings () =
         <td>{del}</td>
       </tr></xml>)
     accounts;
+  themes <- Layout.allThemes;
   selectedTheme <- source None;
   themeTable <- List.mapXM
     (fn t =>
-      del <- deleteForm t.Filename t.Nam delete_theme;
+      del <- deleteForm (show t.Handle) t.Nam delete_theme;
       return <xml><tr>
         <td>{[t.Nam]}</td>
-        <td>{[t.Filename]}</td>
-        <td>{editButton [#Filename] selectedTheme t} {del}</td>
+        <td>{editButton [#Handle] selectedTheme t} {del}</td>
       </tr></xml>)
     themes;
   links' <- links;
@@ -447,9 +446,9 @@ and site_settings () =
   banners <- Layout.allBanners;
   bannerTable <- List.mapXM
     (fn b =>
-      del <- deleteForm b b delete_banner;
+      del <- deleteForm (show b.Handle) (show b.Handle) delete_banner;
       return <xml><tr>
-        <td><img width={300} height={100} src={File.linkBanner b}/></td>
+        <td><img width={300} height={100} src={b.Link}/></td>
         <td>{del}</td>
       </tr></xml>)
     banners;
@@ -518,14 +517,13 @@ and site_settings () =
     <form>
       <textbox{#Nam} placeholder="Name"/>
       <textbox{#TabColor} placeholder="Tab color (on mobile Chrome)"/>
-      <textbox{#Filename} placeholder="Desired filename (without .css)"/>
       <upload{#Css}/>
       <submit value="Upload theme" action={add_theme}/>
     </form>
   </section><section>
     <header>Themes</header>
     <table>
-      <tr><th>Name</th><th>Filename</th><th/></tr>
+      <tr><th>Name</th><th/></tr>
       {themeTable}
     </table>
     <dyn signal={
@@ -534,7 +532,7 @@ and site_settings () =
       | None => return <xml/>
       | Some theme =>
         return <xml><form class="edit-area">
-          <hidden{#Filename} value={theme.Filename}/>
+          <hidden{#Handle} value={show theme.Handle}/>
           <textbox{#Nam} placeholder="Name" value={theme.Nam}/><br/>
           <textbox{#TabColor} placeholder="Tab color" value={theme.TabColor}/><br/>
           <submit value="Edit theme" action={edit_theme}/>
@@ -543,8 +541,8 @@ and site_settings () =
     <header>Default theme</header>
     <form>
       <select{#Theme}>
-        {List.mapX (fn { Nam = name, Filename = fname, ... } =>
-          <xml><option value={fname}>{[name]}</option></xml>) themes}
+        {List.mapX (fn { Nam = name, Handle = handle, ... } =>
+          <xml><option value={show handle}>{[name]}</option></xml>) themes}
       </select>
       <submit value="Set default theme" action={set_default_theme}/>
     </form>
@@ -619,35 +617,33 @@ and delete_account { Id = name } =
 
 and add_theme f =
   if strlen f.TabColor < 1 then E.length0 "Tab Color" else
-  if strlen f.Filename < 1 then E.length0 "Filename" else
   if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
   Layout.addTheme (f -- #Css) f.Css;
-  Log.info (admin ^ " uploaded theme " ^ f.Filename);
+  Log.info (admin ^ " uploaded theme " ^ f.Nam);
   redirect (url (site_settings ()))
 
 
 and edit_theme f =
   if strlen f.TabColor < 1 then E.length0 "Tab Color" else
-  if strlen f.Filename < 1 then E.length0 "Filename" else
   if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.editTheme f;
-  Log.info (admin ^ " edited theme " ^ f.Filename);
+  Layout.editTheme (readError f.Handle) (f -- #Handle);
+  Log.info (admin ^ " edited theme " ^ f.Nam);
   redirect (url (site_settings ()))
 
 
-and delete_theme { Id = fname } =
+and delete_theme { Id = handle } =
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.deleteTheme fname;
-  Log.info (admin ^ " edited theme " ^ fname);
+  Layout.deleteTheme (readError handle);
+  Log.info (admin ^ " edited theme " ^ handle);
   redirect (url (site_settings ()))
 
 
-and set_default_theme { Theme = theme } =
+and set_default_theme { Theme = handle } =
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.setDefaultTheme theme;
-  Log.info (admin ^ " set the default theme to " ^ theme);
+  Layout.setDefaultTheme (readError handle);
+  Log.info (admin ^ " set the default theme to " ^ handle);
   redirect (url (site_settings ()))
 
 
@@ -688,10 +684,10 @@ and add_banner { File = banner } =
   redirect (url (site_settings ()))
 
 
-and delete_banner { Id = fname } =
+and delete_banner { Id = handle } =
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.deleteBanner fname;
-  Log.info (admin ^ " deleted banner " ^ fname);
+  Layout.deleteBanner (readError handle);
+  Log.info (admin ^ " deleted banner " ^ handle);
   redirect (url (site_settings ()))
 
 

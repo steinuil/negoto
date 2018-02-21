@@ -1,8 +1,20 @@
 -- At least one theme and a default theme are required
 -- for the program to work correctly.
+
+
+INSERT INTO uw_File_Css_files VALUES
+("yotsuba.css", "text/css"),
+("yotsuba-b.css", "text/css");
+
+
+INSERT INTO uw_File_Css_handles VALUES
+("yotsuba.css", -1),
+("yotsuba-b.css", 0);
+
+
 INSERT INTO uw_Layout_themes VALUES
-("Yotsuba", "yotsuba", "#FFD6AE"),
-("Yotsuba B", "yotsuba-b", "#D0D5E7");
+("Yotsuba", "/static/css/yotsuba.css", -1, "#FFD6AE"),
+("Yotsuba B", "/static/css/yotsuba-b.css", 0, "#D0D5E7");
 
 
 INSERT INTO uw_KeyVal_store VALUES

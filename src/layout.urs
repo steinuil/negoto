@@ -1,30 +1,28 @@
 (* Managing banners *)
 val addBanner : file -> transaction unit
 
-val deleteBanner : string -> transaction unit
+val deleteBanner : File.handle -> transaction unit
 
-val allBanners : transaction (list string)
+val allBanners : transaction (list { Handle : File.handle, Link : url })
 
-val randBanner : transaction (option string)
+val randBanner : transaction (option url)
 
 (** Managing themes *)
-type theme =
-  { Nam      : string
-  , Filename : string
-  , TabColor : string }
+val allThemes : transaction (list { Nam      : string
+                                  , Link     : url
+                                  , Handle   : File.handle
+                                  , TabColor : string })
 
-val allThemes : transaction (list theme)
+val addTheme : { Nam : string, TabColor : string } -> file -> transaction unit
 
-val addTheme : theme -> file -> transaction unit
+val editTheme : File.handle -> { Nam : string, TabColor : string } -> transaction unit
 
-val editTheme : theme -> transaction unit
+val deleteTheme : File.handle -> transaction unit
 
-val deleteTheme : string -> transaction unit
-
-val setDefaultTheme : string -> transaction unit
+val setDefaultTheme : File.handle -> transaction unit
 
 
-val setTheme : string -> transaction unit
+val setTheme : File.handle -> transaction unit
   (* Sets the theme for the current session with a cookie. *)
 
 

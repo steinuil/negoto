@@ -1,73 +1,61 @@
+(* Banners management (maybe I should move this elsewhere) *)
 table banners :
-  { Filename : string }
-  PRIMARY KEY Filename
+  { Link   : url
+  , Handle : File.handle }
+  PRIMARY KEY Handle
 
 
 fun addBanner banner =
-  fname <- File.saveBanner banner;
-  dml (INSERT INTO banners (Filename) VALUES ({[fname]}))
+  (handle, link) <- File.Banner.save banner;
+  dml (INSERT INTO banners (Handle, Link) VALUES ({[handle]}, {[link]}))
 
 
 val allBanners =
-  query (SELECT * FROM banners)
-    (fn { Banners = { Filename = fname } } acc => return <| fname :: acc)
-    []
+  queryL1 (SELECT * FROM banners)
 
 
 val randBanner =
-  b <- oneOrNoRows1 (SELECT * FROM banners ORDER BY RANDOM() LIMIT 1);
-  case b of Some { Filename = b } => return (Some b) | None => return None
+  l <- oneOrNoRows1 (SELECT banners.Link FROM banners ORDER BY RANDOM() LIMIT 1);
+  case l of Some { Link = l } => return (Some l) | None => return None
 
 
-fun deleteBanner fname =
-  dml (DELETE FROM banners WHERE Filename = {[fname]})
+val deleteBanner handle =
+  dml (DELETE FROM banners WHERE Handle = {[handle]});
+  File.Banner.delete handle
 
 
+
+(* Themes management *)
 table themes :
   { Nam      : string
-  , Filename : string
+  , Link     : url
+  , Handle   : File.handle
   , TabColor : string }
-  PRIMARY KEY Filename
+  PRIMARY KEY Handle
   CONSTRAINT UniqueName UNIQUE Nam
 
 
-type theme = { Nam : string, Filename : string, TabColor : string }
+cookie selectedTheme : File.handle
 
 
-cookie selectedTheme : string
+fun addTheme { Nam = name, TabColor = color } file =
+  (handle, link) <- File.Css.save file;
+  dml (INSERT INTO themes (Nam, Link, Handle, TabColor)
+       VALUES ({[name]}, {[link]}, {[handle]}, {[color]}))
 
 
-fun addTheme { Nam = name, TabColor = tabColor, Filename = fname } file =
-  File.saveCss fname file;
-  dml (INSERT INTO themes (Nam, Filename, TabColor)
-       VALUES ({[name]}, {[fname]}, {[tabColor]}))
+fun editTheme handle { TabColor = color, Nam = name } =
+  dml (UPDATE themes SET TabColor = {[color]}, Nam = {[name]}
+       WHERE Handle = {[handle]})
 
 
-fun deleteTheme filename =
+fun deleteTheme handle =
   def <- KeyVal.unsafeGet "defaultTheme";
-  if filename <> def then
-    File.deleteCss filename;
-    dml (DELETE FROM themes WHERE Filename = {[filename]})
+  if handle <> def then
+    dml (DELETE FROM themes WHERE Handle = {[handle]});
+    File.Css.delete handle
   else
-    error <xml>You can't delete the default theme!</xml>
-
-
-fun editTheme { Filename = fname, TabColor = tabColor, Nam = name } =
-  dml (UPDATE themes SET TabColor = {[tabColor]}, Nam = {[name]}
-       WHERE Filename = {[fname]})
-
-
-fun setDefaultTheme filename =
-  exists <- hasRows (SELECT TRUE FROM themes
-                     WHERE themes.Filename = {[filename]});
-  if exists then
-    KeyVal.set "defaultTheme" filename
-  else
-    error <xml>The theme "{[filename]}" doesn't exist in the database!</xml>
-
-
-fun themeOfId name =
-  oneOrNoRows1 (SELECT * FROM themes WHERE themes.Filename = {[name]})
+    error <xml>You can't delete the default theme</xml>
 
 
 val allThemes =
@@ -76,12 +64,101 @@ val allThemes =
 
 val defaultTheme =
   def <- KeyVal.unsafeGet "defaultTheme";
+  oneRow1 (SELECT * FROM themes WHERE themes.Handle = {[def]})
+
+
+fun setDefaultTheme handle =
+  exists <- hasRows (SELECT 1 FROM themes WHERE themes.Handle = {[handle]});
+  if exists then
+    KeyVal.set "defaultTheme" handle
+  else
+    error <xml>The theme {[handle]} doesn't exist in the database</xml>
+
+
+val currentSessionTheme =
+  selected <- getCookie selectedTheme;
+  case selected of
+  | None =>
+    defaultTheme
+  | Some t =>
+    t <- oneOrNoRows1 (SELECT * FROM themes WHERE themes.Handle = {[t]});
+    case t of
+    | None =>
+      clearCookie selectedTheme;
+      defaultTheme
+    | Some t =>
+      return t
+
+
+
+
+      (*
+
+
+
+type theme = { Nam : string, TabColor : string }
+
+
+cookie selectedTheme : File.handle
+
+
+fun addTheme { Nam = name, TabColor = tabColor } file =
+  (handle, link) <- File.Css.save file;
+  dml (INSERT INTO themes (Nam, Link, Handle, TabColor)
+       VALUES ({[name]}, {[link]}, {[handle]}, {[tabColor]}))
+
+
+fun deleteTheme handle =
+  def <- KeyVal.unsafeGet "defaultTheme";
+  if handle <> def then
+    dml (DELETE FROM themes WHERE Handle = {[handle]});
+    File.Css.delete handle
+  else
+    error <xml>You can't delete the default theme!</xml>
+
+
+fun editTheme handle { TabColor = tabColor, Nam = name } =
+  dml (UPDATE themes SET TabColor = {[tabColor]}, Nam = {[name]}
+       WHERE Handle = {[handle]})
+
+
+val allThemes =
+  query (SELECT * FROM themes) (fn { Themes = t } acc => return ((t -- #Link) :: acc)) []
+
+
+  (*
+fun themeOfId handle =
+  oneOrNoRows1 (SELECT * FROM themes WHERE themes.handle = {[handle]})
+  *)
+
+(* *)
+
+
+val getDefaultTheme =
+  def <- KeyVal.unsafeGet "defaultTheme";
+  oneRow1 (SELECT * FROM themes WHERE themes.Handle = {[def]})
+
+
+fun setDefaultTheme handle =
+  exists <- hasRows (SELECT TRUE FROM themes
+                     WHERE themes.Handle = {[handle]});
+  if exists then
+    KeyVal.set "defaultTheme" handle
+  else
+    error <xml>The theme {[handle]} doesn't exist in the database!</xml>
+
+
+    (*
+val defaultTheme =
+  def <- KeyVal.unsafeGet "defaultTheme";
   t <- themeOfId def;
   case t of
   | None    => error <xml>Default theme not found!</xml>
   | Some t' => return t'
+  *)
 
 
+  (*
 val currThemeId : transaction string =
   theme <- getCookie selectedTheme;
   case theme of
@@ -99,13 +176,30 @@ val getTheme =
     { Filename = css, TabColor = color, ... } <- curTheme;
     return (File.linkCss css, color)
   end
+  *)
+
+
+val currentSessionTheme =
+  selected <- getCookie selectedTheme;
+  case selected of
+  | None =>
+    getDefaultTheme
+  | Some t =>
+    t <- oneOrNoRows1 (SELECT * FROM themes WHERE themes.Handle = {[t]});
+    case t of
+    | None =>
+      clearCookie selectedTheme;
+      getDefaultTheme
+    | Some t =>
+      return t
+      *)
 
 
 fun themeSwitcher themes' curr act : xbody =
   <xml><form>
     <select{#Theme}>
-      {List.mapX (fn { Filename = id, Nam = name, ... } =>
-        <xml><option value={id} selected={id = curr}>{[name]}</option></xml>)
+      {List.mapX (fn { Handle = id, Nam = name, ... } =>
+        <xml><option value={show id} selected={id = curr}>{[name]}</option></xml>)
         themes'}
     </select>
     <submit action={act} value="Switch theme"/>
@@ -128,7 +222,6 @@ fun layout' theme color (title' : string) (class' : css_class) desc (body' : xbo
       <meta name="theme-color" content={color}/>
       <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
       <!-- <link rel="icon" type="image/png" href=""/> -->
-      <!-- <meta name="msapplication-config" content="browserconfig.xml" /> -->
       <link rel="stylesheet" type="text/css" href={theme}/>
     </head>
     <body class={class'}>{body'}</body>
@@ -137,13 +230,16 @@ fun layout' theme color (title' : string) (class' : css_class) desc (body' : xbo
 
 
 fun layout (title' : string) class' desc body' =
-  (theme, color) <- getTheme;
+  { Link = theme, TabColor = color, ... } <- currentSessionTheme;
   return (layout' theme color title' class' desc body')
 
 
 fun layoutWithSwitcher act title' class' desc f =
-  id <- currThemeId;
+  curr <- currentSessionTheme;
   themes <- allThemes;
+  return <| layout' curr.Link curr.TabColor title' class' desc (f (themeSwitcher themes curr.Handle act))
+
+  (*
   let
     val color =
       case List.find (fn { Filename = f, ... } => f = id) themes of
@@ -156,6 +252,7 @@ fun layoutWithSwitcher act title' class' desc f =
     color <- color;
     return (layout' (File.linkCss id) color title' class' desc (f switcher))
   end
+  *)
 
 
 val navMenu =

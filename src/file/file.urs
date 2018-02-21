@@ -1,27 +1,20 @@
-val saveCss : string -> file -> transaction unit
-
-val deleteCss : string -> transaction unit
-
-val saveBanner : file -> transaction string
-
-val deleteBanner : string -> transaction unit
-
 val saveImage : file -> transaction string
 
 val deleteImage : string -> string -> transaction unit
-
-val linkBanner : string -> url
 
 val linkImage : string -> string -> url
 
 val linkThumb : string -> url
 
-val linkCss : string -> url
 
+type handle
+
+val show_handle : show handle
+val read_handle : read handle
+val sql_handle  : sql_injectable_prim handle
+val eq_handle   : eq handle
 
 signature Handler = sig
-  type handle
-
   con link :: Type
 
   val save : file -> transaction (handle * link)

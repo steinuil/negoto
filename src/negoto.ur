@@ -65,7 +65,7 @@ fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
         {case banner' of
         | None => <xml/>
         | Some b =>
-          <xml><img class="banner" width={300} height={100} src={File.linkBanner b}/></xml>}
+          <xml><img class="banner" width={300} height={100} src={b}/></xml>}
         <h1>{[title']}</h1>
       </header>
       <main>{body'}</main>
@@ -74,7 +74,7 @@ fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
 
 
 and switch_theme { Theme = t } =
-  Layout.setTheme t;
+  Layout.setTheme (readError t);
   redirect (url (front ()))
 
 

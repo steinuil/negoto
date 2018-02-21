@@ -1,25 +1,10 @@
-val css_dir = "css"
 val image_dir = "image"
 val thumb_dir = "thumb"
-val banner_dir = "banner"
 
 
 task initialize = fn () =>
-  FileFfi.mkdir css_dir;
   FileFfi.mkdir image_dir;
-  FileFfi.mkdir thumb_dir;
-  FileFfi.mkdir banner_dir
-
-
-fun saveCss name file =
-  if fileMimeType file = "text/css" then
-    FileFfi.save css_dir (name ^ ".css") file
-  else
-    error <xml>Not a CSS file: {txt name}</xml>
-
-
-fun deleteCss name =
-  FileFfi.delete css_dir (name ^ ".css")
+  FileFfi.mkdir thumb_dir
 
 
 fun extOfMime mime = case mime of
@@ -27,18 +12,6 @@ fun extOfMime mime = case mime of
   | "image/jpeg" => "jpg"
   | "image/gif" => "gif"
   | x => error <xml>Unsupported mime: {txt x}</xml>
-
-
-fun saveBanner file =
-  let val hash = FileFfi.md5Hash file
-      val fname = hash ^ "." ^ extOfMime (fileMimeType file) in
-    FileFfi.save banner_dir fname file;
-    return fname
-  end
-
-
-fun deleteBanner fname =
-  FileFfi.delete banner_dir fname
 
 
 fun saveImage file =
@@ -54,10 +27,6 @@ fun deleteImage hash mime =
   FileFfi.delete thumb_dir (hash ^ ".jpg")
 
 
-fun linkBanner fname =
-  FileFfi.link banner_dir fname
-
-
 fun linkImage hash mime =
   FileFfi.link image_dir (hash ^ "." ^ extOfMime mime)
 
@@ -65,9 +34,6 @@ fun linkImage hash mime =
 fun linkThumb hash =
   FileFfi.link thumb_dir (hash ^ ".jpg")
 
-
-fun linkCss name =
-  FileFfi.link css_dir (name ^ ".css")
 
 
 signature M = sig
@@ -83,9 +49,17 @@ signature M = sig
 end
 
 
-signature Handler = sig
-  type handle
+type handle = int
 
+val show_handle = show_int
+val read_handle = read_int
+val sql_handle  = sql_int
+val eq_handle   = eq_int
+
+sequence handle_Ids
+
+
+signature Handler = sig
   con link :: Type
 
   val save : file -> transaction (handle * link)
@@ -97,8 +71,6 @@ end
 
 
 functor Handler(M : M) : sig
-  type handle
-
   type link = M.link
 
   val save : file -> transaction (handle * link)
@@ -111,10 +83,6 @@ end = struct
     { Nam  : string
     , Mime : string }
     PRIMARY KEY Nam
-
-  sequence handle_Ids
-
-  type handle = int
 
   table handles :
     { File   : string
