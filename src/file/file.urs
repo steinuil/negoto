@@ -19,28 +19,21 @@ val linkThumb : string -> url
 val linkCss : string -> url
 
 
-signature M = sig
-  val path : string -> string -> string
-
-  val save : string -> string -> file -> transaction unit
-
-  val delete : string -> string -> transaction unit
-end
-
-
 signature Handler = sig
-  (**  *)
-
   type handle
-  (** A handle to a file. *)
 
-  val save : file -> transaction handle
-  (** Save a file and get back a handle. *)
+  con link :: Type
 
-  val link : handle -> transaction (option url)
+  val save : file -> transaction (handle * link)
+
+  val link : handle -> transaction (option link)
 
   val delete : handle -> transaction unit
 end
 
 
-functor Handler(M : M) : Handler
+structure Image  : Handler where con link = { Src : url, Thumb : url }
+
+structure Banner : Handler where con link = url
+
+structure Css    : Handler where con link = url

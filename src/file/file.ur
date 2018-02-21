@@ -66,15 +66,16 @@ fun linkThumb hash =
   FileFfi.link thumb_dir (hash ^ ".jpg")
 
 
-(* @Hack so that the default files load without needing an external server.
- * This makes requests crash when selecting a non-default theme. I better get a
- * test server running soon. *)
 fun linkCss name =
   FileFfi.link css_dir (name ^ ".css")
 
 
 signature M = sig
-  val path : string -> string -> string
+  con link :: Type
+
+  val basename : file -> string
+
+  val path : string -> string -> link
 
   val save : string -> string -> file -> transaction unit
 
@@ -85,44 +86,71 @@ end
 signature Handler = sig
   type handle
 
-  val save : file -> transaction handle
+  con link :: Type
 
-  val link : handle -> transaction (option url)
+  val save : file -> transaction (handle * link)
+
+  val link : handle -> transaction (option link)
 
   val delete : handle -> transaction unit
 end
 
 
-functor Handler(M : M) : Handler = struct
-  table files :
-    { Hash : string
-    , Mime : string }
-    PRIMARY KEY Hash
+functor Handler(M : M) : sig
+  type handle
 
-  task periodic (5 * 60) = fn () =>
-    (* @Fixme stub *)
-    return ()
+  type link = M.link
+
+  val save : file -> transaction (handle * link)
+
+  val link : handle -> transaction (option link)
+
+  val delete : handle -> transaction unit
+end = struct
+  table files :
+    { Nam  : string
+    , Mime : string }
+    PRIMARY KEY Nam
 
   sequence handle_Ids
 
-  table handles :
-    { File   : string
-    , Handle : int }
-
   type handle = int
 
+  table handles :
+    { File   : string
+    , Handle : handle }
+    PRIMARY KEY Handle
+    CONSTRAINT File FOREIGN KEY File
+      REFERENCES files(Nam)
+      ON DELETE CASCADE
 
-  fun getHandle hash =
+  (* Delete the files that have no handles attached every 5 minutes. *)
+  task periodic (5 * 60) = fn () =>
+    names <- query (SELECT DISTINCT handles.File FROM handles)
+               (fn { Handles = { File = file } } acc =>
+                 return (file :: acc)) [];
+    let fun many acc (ls : list string) = case ls of
+      | []      => acc
+      | x :: xs => many (WHERE t.Nam <> {[x]} AND {acc}) xs
+    in
+      xs <- queryL (SELECT * FROM files AS T WHERE {many (WHERE TRUE) names});
+      List.app (fn { T = x } => M.delete x.Nam x.Mime) xs;
+      dml (DELETE FROM files WHERE {many (WHERE TRUE) names})
+    end
+
+
+  con link :: Type = M.link
+
+
+  fun getHandle name =
     handle <- nextval handle_Ids;
-    dml (INSERT INTO handles (Handle, File) VALUES ({[handle]}, {[hash]}));
+    dml (INSERT INTO handles (Handle, File) VALUES ({[handle]}, {[name]}));
     return handle
 
 
-  (* Idea: expose this as a join expression so that we can let external
-   * queries join on these instead of making hundreds of calls per page *)
   fun fileOfHandle handle =
     file <- oneOrNoRows (SELECT files.* FROM files
-                           JOIN handles ON handles.File = files.Hash
+                           JOIN handles ON handles.File = files.Nam
                           WHERE handles.Handle = {[handle]});
     case file of
     | None                  => return None
@@ -133,7 +161,7 @@ functor Handler(M : M) : Handler = struct
     file <- fileOfHandle handle;
     case file of
     | None      => return None
-    | Some file => return (Some (bless (M.path file.Hash file.Mime)))
+    | Some file => return (Some (M.path file.Nam file.Mime))
 
 
   fun delete handle =
@@ -141,16 +169,116 @@ functor Handler(M : M) : Handler = struct
 
 
   fun save file =
-    let val hash = FileFfi.md5Hash file in
-      exists <- oneOrNoRows1 (SELECT * FROM files WHERE files.Hash = {[hash]});
+    let val basename = M.basename file in
+      exists <- oneOrNoRows1 (SELECT * FROM files WHERE files.Nam = {[basename]});
       case exists of
-      | Some _ =>
-        getHandle hash
+      | Some { Mime = mime, ... } =>
+        handle <- getHandle basename;
+        return (handle, M.path basename mime)
       | None =>
         let val mime = fileMimeType file in
-          M.save hash mime file;
-          dml (INSERT INTO files (Hash, Mime) VALUES ({[hash]}, {[mime]}));
-          getHandle hash
+          M.save basename mime file;
+          dml (INSERT INTO files (Nam, Mime) VALUES ({[basename]}, {[mime]}));
+          handle <- getHandle basename;
+          return (handle, M.path basename mime)
         end
     end
 end
+
+
+fun extOfMimeImg mime = case mime of
+  | "image/jpeg" => "jpg"
+  | "image/png"  => "png"
+  | "image/gif"  => "gif"
+  | x => error <xml>Unsupported mime: {[mime]}</xml>
+
+
+structure Image = Handler(struct
+  val thumb_dir = "t"
+  val image_dir = "s"
+
+  task initialize = fn () =>
+    FileFfi.mkdir thumb_dir;
+    FileFfi.mkdir image_dir
+
+
+  type link = { Src : url, Thumb : url }
+
+
+  fun basename file =
+    FileFfi.md5Hash file
+
+
+  fun path hash mime =
+    { Src   = FileFfi.link image_dir (hash ^ "." ^ extOfMimeImg mime)
+    , Thumb = FileFfi.link thumb_dir (hash ^ ".jpg") }
+
+
+  fun save hash mime file =
+    FileFfi.saveImage image_dir thumb_dir
+      (hash ^ "." ^ extOfMimeImg mime) (hash ^ ".jpg") file
+
+
+  fun delete hash mime =
+    FileFfi.delete image_dir (hash ^ "." ^ extOfMimeImg mime);
+    FileFfi.delete thumb_dir (hash ^ ".jpg")
+end)
+
+
+
+structure Banner = Handler(struct
+  val banner_dir = "banner"
+
+  task initialize = fn () =>
+    FileFfi.mkdir banner_dir
+
+  type link = url
+
+
+  fun basename file =
+    FileFfi.md5Hash file
+
+
+  fun fname hash mime = hash ^ "." ^ extOfMimeImg mime
+
+
+  fun path hash mime =
+    FileFfi.link banner_dir (fname hash mime)
+
+
+  fun save hash mime file =
+    FileFfi.save banner_dir (fname hash mime) file
+
+
+  fun delete hash mime =
+    FileFfi.delete banner_dir (fname hash mime)
+end)
+
+
+
+structure Css = Handler(struct
+  val css_dir = "css"
+
+  task initialize = fn () =>
+    FileFfi.mkdir css_dir
+
+  type link = url
+
+
+  fun basename file =
+    case fileName file of
+    | Some n => n
+    | None => error <xml>The uploaded file has no name!</xml>
+
+
+  fun path name _ =
+    FileFfi.link css_dir name
+
+
+  fun save name _ file =
+    FileFfi.save css_dir name file
+
+
+  fun delete name _ =
+    FileFfi.delete css_dir name
+end)

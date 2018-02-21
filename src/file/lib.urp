@@ -3,4 +3,5 @@ include fileFfi.h
 jsFile fileFfi.js
 jsFunc FileFfi.link=FileFfi.link
 
+$/list
 file
