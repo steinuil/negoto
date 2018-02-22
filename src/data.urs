@@ -1,3 +1,41 @@
+structure X : sig
+type board =
+  { Id  : string
+  , Nam : string }
+
+val allBoards   : transaction (list board)
+val nameOfBoard : string -> transaction (option string)
+
+val addBoard      : board  -> transaction unit
+val editBoardName : board  -> transaction unit
+val deleteBoard   : string -> transaction unit
+
+type postFile =
+  { Handle  : File.handle
+  , Fname   : string
+  , Src     : url
+  , Thumb   : url
+  , Spoiler : bool }
+
+type catalogThread =
+  { Id      : int
+  , Board   : string
+  , Updated : time
+  , Subject : string
+  , Count   : int
+  , Locked  : bool
+  , Nam     : string
+  , Time    : time
+  , Body    : string
+  , Files   : list postFile }
+
+val wholeCatalog : transaction (list catalogThread)
+
+val catalog  : string -> transaction (option (list catalogThread))
+val catalog' : string -> transaction (list catalogThread)
+end
+
+
 (** Manage threads and boards and posts *)
 
 type tag =

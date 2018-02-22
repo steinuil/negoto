@@ -72,3 +72,36 @@ fun mapNoneM [m] (_ : monad m) [a]
 fun getM [m] (_ : monad m) [a] (default : a) (f : m (option a)) =
   x <- f;
   return (Option.get default x)
+
+
+fun oneColOpt [tbl ::: Name] [row ::: {Type}] [col :: Name] [t ::: Type] [[col] ~ row]
+    (q : sql_query [] [] [tbl = (row ++ [col = t])] []) =
+  query q
+    (fn fs _ => return (Some fs.tbl.col))
+    None
+
+
+fun oneCols [tbl ::: Name] [row ::: {Type}] [col :: Name] [t ::: Type] [[col] ~ row]
+    (q : sql_query [] [] [tbl = (row ++ [col = t])] []) =
+  query q
+    (fn fs acc => return (fs.tbl.col :: acc))
+    []
+
+
+
+
+    (*
+fun rowCount [tbl ::: Name] [row ::: {Type}] t expr =
+  { Count = count } <- oneRow (SELECT COUNT( * ) AS Count FROM t WHERE {expr});
+  return count
+  *)
+
+
+
+fun record_seqOpt [ts ::: {Type}] (fl : folder ts) (r : $(map option ts)) : option $ts =
+    @foldR [option] [fn ts => option $ts]
+     (fn [nm ::_] [v ::_] [r ::_] [[nm] ~ r] v vs =>
+         case (v, vs) of
+             (Some v, Some vs) => Some ({nm = v} ++ vs)
+           | _ => None)
+     (Some {}) fl r

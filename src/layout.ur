@@ -15,8 +15,8 @@ val allBanners =
 
 
 val randBanner =
-  l <- oneOrNoRows1 (SELECT banners.Link FROM banners ORDER BY RANDOM() LIMIT 1);
-  case l of Some { Link = l } => return (Some l) | None => return None
+  Util.oneColOpt [#Link] (SELECT banners.Link FROM banners
+                          ORDER BY RANDOM() LIMIT 1)
 
 
 val deleteBanner handle =
