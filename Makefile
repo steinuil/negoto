@@ -99,12 +99,18 @@ $(db): $b/schema.sql init.sql
 negoto: $(exe) $(db)
 
 
-public/static:
+static = public/static
+
+$(static):
 	mkdir -p $@
 
-run: negoto $(css) | public/static
-	mkdir -p public/static/css
-	cp $(css) public/static/css
+static_dirs = $(static)/image $(static)/thumb
+static_dirs += $(static)/s $(static)/t
+static_dirs += $(static)/banner $(static)/css
+
+run: negoto $(css) | $(static)
+	mkdir -p $(static_dirs)
+	cp $(css) $(static)/css
 	lighttpd -f lighttpd.conf -D
 
 

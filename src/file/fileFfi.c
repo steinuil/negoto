@@ -114,6 +114,8 @@ static void create_dir(void *data) {
   struct dirname_t *dirname = data;
   struct stat *s = {0};
 
+  fprintf(stderr, "Creating dir %s\n", dirname->name);
+
   if (stat(dirname->name, s) == -1) {
     int ok = mkdir(dirname->name, 0700);
     if (ok != 0)

@@ -1,10 +1,7 @@
+(* NOTE: the directories should be created as part of the build process. *)
+
 val image_dir = "image"
 val thumb_dir = "thumb"
-
-
-task initialize = fn () =>
-  FileFfi.mkdir image_dir;
-  FileFfi.mkdir thumb_dir
 
 
 fun extOfMime mime = case mime of
@@ -36,19 +33,6 @@ fun linkThumb hash =
 
 
 
-signature M = sig
-  con link :: Type
-
-  val basename : file -> string
-
-  val path : string -> string -> link
-
-  val save : string -> string -> file -> transaction unit
-
-  val delete : string -> string -> transaction unit
-end
-
-
 type handle = int
 
 val show_handle = show_int
@@ -70,6 +54,17 @@ signature Handler = sig
 end
 
 
+signature M = sig
+  con link :: Type
+
+  val path : string -> string -> link
+
+  val save : string -> string -> file -> transaction unit
+
+  val delete : string -> string -> transaction unit
+end
+
+
 functor Handler(M : M) : sig
   type link = M.link
 
@@ -80,45 +75,49 @@ functor Handler(M : M) : sig
   val delete : handle -> transaction unit
 end = struct
   table files :
-    { Nam  : string
+    { Hash : string
     , Mime : string }
-    PRIMARY KEY Nam
+    PRIMARY KEY Hash
 
   table handles :
     { File   : string
     , Handle : handle }
     PRIMARY KEY Handle
     CONSTRAINT File FOREIGN KEY File
-      REFERENCES files(Nam)
+      REFERENCES files(Hash)
       ON DELETE CASCADE
 
   (* Delete the files that have no handles attached every 5 minutes. *)
   task periodic (5 * 60) = fn () =>
-    names <- query (SELECT DISTINCT handles.File FROM handles)
-               (fn { Handles = { File = file } } acc =>
-                 return (file :: acc)) [];
-    let fun many acc (ls : list string) = case ls of
-      | []      => acc
-      | x :: xs => many (WHERE t.Nam <> {[x]} AND {acc}) xs
+    hashes <- query (SELECT DISTINCT handles.File FROM handles)
+                (fn { Handles = { File = file } } acc =>
+                  return (file :: acc)) [];
+    let
+      fun many acc (ls : list string) = case ls of
+        | []      => acc
+        | x :: xs => many (WHERE t.Hash <> {[x]} AND {acc}) xs
     in
-      xs <- queryL (SELECT * FROM files AS T WHERE {many (WHERE TRUE) names});
-      List.app (fn { T = x } => M.delete x.Nam x.Mime) xs;
-      dml (DELETE FROM files WHERE {many (WHERE TRUE) names})
+      case hashes of
+      | [] => return ()
+      | _  =>
+        xs <- queryL (SELECT * FROM files AS T WHERE {many (WHERE TRUE) hashes});
+        List.app (fn { T = x } => M.delete x.Hash x.Mime) xs;
+        dml (DELETE FROM files WHERE {many (WHERE TRUE) hashes})
     end
 
 
   con link :: Type = M.link
 
 
-  fun getHandle name =
+  fun getHandle hash =
     handle <- nextval handle_Ids;
-    dml (INSERT INTO handles (Handle, File) VALUES ({[handle]}, {[name]}));
+    dml (INSERT INTO handles (Handle, File) VALUES ({[handle]}, {[hash]}));
     return handle
 
 
   fun fileOfHandle handle =
     file <- oneOrNoRows (SELECT files.* FROM files
-                           JOIN handles ON handles.File = files.Nam
+                           JOIN handles ON handles.File = files.Hash
                           WHERE handles.Handle = {[handle]});
     case file of
     | None                  => return None
@@ -129,7 +128,7 @@ end = struct
     file <- fileOfHandle handle;
     case file of
     | None      => return None
-    | Some file => return (Some (M.path file.Nam file.Mime))
+    | Some file => return (Some (M.path file.Hash file.Mime))
 
 
   fun delete handle =
@@ -137,18 +136,18 @@ end = struct
 
 
   fun save file =
-    let val basename = M.basename file in
-      exists <- oneOrNoRows1 (SELECT * FROM files WHERE files.Nam = {[basename]});
+    let val hash = FileFfi.md5Hash file in
+      exists <- oneOrNoRows1 (SELECT * FROM files WHERE files.Hash = {[hash]});
       case exists of
       | Some { Mime = mime, ... } =>
-        handle <- getHandle basename;
-        return (handle, M.path basename mime)
+        handle <- getHandle hash;
+        return (handle, M.path hash mime)
       | None =>
         let val mime = fileMimeType file in
-          M.save basename mime file;
-          dml (INSERT INTO files (Nam, Mime) VALUES ({[basename]}, {[mime]}));
-          handle <- getHandle basename;
-          return (handle, M.path basename mime)
+          M.save hash mime file;
+          dml (INSERT INTO files (Hash, Mime) VALUES ({[hash]}, {[mime]}));
+          handle <- getHandle hash;
+          return (handle, M.path hash mime)
         end
     end
 end
@@ -165,16 +164,8 @@ structure Image = Handler(struct
   val thumb_dir = "t"
   val image_dir = "s"
 
-  task initialize = fn () =>
-    FileFfi.mkdir thumb_dir;
-    FileFfi.mkdir image_dir
-
 
   type link = { Src : url, Thumb : url }
-
-
-  fun basename file =
-    FileFfi.md5Hash file
 
 
   fun path hash mime =
@@ -197,14 +188,7 @@ end)
 structure Banner = Handler(struct
   val banner_dir = "banner"
 
-  task initialize = fn () =>
-    FileFfi.mkdir banner_dir
-
   type link = url
-
-
-  fun basename file =
-    FileFfi.md5Hash file
 
 
   fun fname hash mime = hash ^ "." ^ extOfMimeImg mime
@@ -227,16 +211,7 @@ end)
 structure Css = Handler(struct
   val css_dir = "css"
 
-  task initialize = fn () =>
-    FileFfi.mkdir css_dir
-
   type link = url
-
-
-  fun basename file =
-    case fileName file of
-    | Some n => n
-    | None => error <xml>The uploaded file has no name!</xml>
 
 
   fun path name _ =

@@ -1,7 +1,11 @@
 -- At least one theme and a default theme are required
 -- for the program to work correctly.
 
+-- Prevent the db from locking up from many concurrent reads
+PRAGMA journal_mode=WAL;
 
+-- @Fixme these should be the md5 hashes of the files. We should generate
+-- this file as part of the build process.
 INSERT INTO uw_File_Css_files VALUES
 ("yotsuba.css", "text/css"),
 ("yotsuba-b.css", "text/css");
@@ -18,7 +22,7 @@ INSERT INTO uw_Layout_themes VALUES
 
 
 INSERT INTO uw_KeyVal_store VALUES
-("defaultTheme", "yotsuba");
+("defaultTheme", -1);
 
 
 INSERT INTO uw_Data_tags VALUES

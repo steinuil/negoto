@@ -100,9 +100,11 @@ in the post body.
   * [X] Uuid
 
 
-## Advanced features
+## Later
 Wishlist of stuff to maybe work on after the imageboard is stable and usable on
 real servers.
+
+* Rewrite the admin panel so that modules can define their own panels without exposing unnecessary data to the rest of the app
 
 * Buffer library
   * [X] C version if I haven't already done it before
