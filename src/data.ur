@@ -84,6 +84,15 @@ type postFile =
   , Spoiler : bool }
 
 
+type thread =
+  { Id      : int
+  , Board   : string
+  , Updated : time
+  , Subject : string
+  , Count   : int
+  , Locked  : bool }
+
+
 type catalogThread =
   { Id      : int
   , Board   : string
@@ -95,6 +104,15 @@ type catalogThread =
   , Time    : time
   , Body    : string
   , Files   : list postFile }
+
+type post =
+  { Id     : int
+  , Number : int
+  , Thread : int
+  , Nam    : string
+  , Time   : time
+  , Body   : string
+  , Files  : list postFile }
 
 
 (* Maximum threads per board *)

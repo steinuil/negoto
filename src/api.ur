@@ -1,65 +1,63 @@
 open Json
 
 
-fun jsonPage [a] (_ : json a) (x : a) : transaction page =
-  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
-
-fun jsonPageM [a] (_ : json a) (f : transaction a) : transaction page =
-  x <- f;
-  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
-
-fun jsonError (msg : string) : transaction page =
-  setHeader (blessResponseHeader "Status") "404 Not Found";
-  returnBlob (textBlob (toJson msg)) (blessMime "text/plain")
-
-
 (* Provide implementations of the `json` typeclass for the types we need,
  * since Ur/Web doesn't do record name serialization automatically. *)
-val json_Time : json time =
+val json_time : json time =
   mkJson
     { ToJson   = toSeconds >>> show
     , FromJson = fn x => (readError x, "") (* dummy conversion *) }
 
-val json_Tag : json Data.tag =
-  json_record { Nam = "name", Slug = "slug" }
 
-val json_PostFile : json Data.postFile =
-  json_record { Hash = "hash", Nam = "name", Mime = "mimetype", Spoiler = "spoiler" }
+val json_url : json url =
+  mkJson
+    { ToJson = show >>> toJson
+    , FromJson = fn x => let val (x, rst) = fromJson' x in (bless x, rst) end }
 
-val json_Thread : json Data.thread =
+
+val json_board : json Data.X.board =
+  json_record { Id = "id", Nam = "name" }
+
+
+type postFile =
+  { Fname   : string
+  , Src     : url
+  , Thumb   : url
+  , Spoiler : bool }
+
+val json_postFile : json postFile =
+  json_record
+    { Fname   = "filename"
+    , Src     = "src"
+    , Thumb   = "thumb"
+    , Spoiler = "spoiler" }
+
+
+type catalogThread =
+  { Id      : int
+  , Board   : string
+  , Updated : time
+  , Subject : string
+  , Count   : int
+  , Locked  : bool
+  , Nam     : string
+  , Time    : time
+  , Body    : string
+  , Files   : list postFile }
+
+val json_catalogThread : json catalogThread =
   json_record
     { Id      = "id"
+    , Board   = "board"
     , Updated = "updated"
     , Subject = "subject"
     , Count   = "count"
     , Locked  = "locked"
-    , Tag     = "board" }
-
-val json_Post : json Data.post =
-  json_record
-    { Id     = "id"
-    , Thread = "thread"
-    , Nam    = "name"
-    , Time   = "time"
-    , Body   = "body"
-    , Files  = "files" }
-
-type thread' = { Thread : Data.thread, Posts : list Data.post }
-val json_Thread' : json thread' =
-  json_record { Thread = "op", Posts = "posts" }
-
-val json_CatalogThread : json Data.catalogThread =
-  json_record
-    { Id      = "id"
-    , Updated = "updated"
-    , Subject = "subject"
-    , Count   = "count"
-    , Locked  = "locked"
-    , Tag     = "board"
     , Nam     = "name"
     , Time    = "time"
     , Body    = "body"
     , Files   = "files" }
+
 
 val json_newsItem : json Admin.newsItem =
   json_record
@@ -69,26 +67,81 @@ val json_newsItem : json Admin.newsItem =
     , Body   = "body" }
 
 
-(* The actual endpoints *)
+val json_Thread : json Data.X.thread =
+  json_record
+    { Id      = "id"
+    , Updated = "updated"
+    , Subject = "subject"
+    , Count   = "count"
+    , Locked  = "locked"
+    , Board   = "board" }
+
+
+type post =
+  { Number : int
+  , Nam    : string
+  , Time   : time
+  , Body   : string
+  , Files  : list postFile }
+
+val json_Post : json post =
+  json_record
+    { Number = "number"
+    , Nam    = "name"
+    , Time   = "time"
+    , Body   = "body"
+    , Files  = "files" }
+
+
+type thread' =
+  { Thread : Data.X.thread, Posts : list post }
+
+val json_thread' : json thread' =
+  json_record { Thread = "op", Posts = "posts" }
+
+
+
+
+fun jsonPage [a] (_ : json a) (x : a) : transaction page =
+  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
+
+
+fun jsonPageM [a] (_ : json a) (f : transaction a) : transaction page =
+  x <- f;
+  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
+
+
+fun jsonError (msg : string) : transaction page =
+  setHeader (blessResponseHeader "Status") "404 Not Found";
+  returnBlob (textBlob (toJson msg)) (blessMime "text/plain")
+
+
+
 val boards =
-  jsonPageM Data.allTags
+  jsonPageM Data.X.allBoards
+
 
 fun catalog board =
-  c <- Data.catalogByTag' board;
+  c <- Data.X.catalog board;
   case c of
-  | Some cat => jsonPage cat
-  | None => jsonError "No such board"
+  | Some c =>
+    jsonPage (List.mp (fn x => x -- #Files ++ { Files = (List.mp (fn f => f -- #Handle) x.Files) }) c)
+  | None =>
+    jsonError "No such board"
+
 
 fun thread id =
-  t <- Data.threadById id;
+  t <- Data.X.thread id;
   case t of
   | Some (t, p) =>
-    jsonPage { Thread = t, Posts = p }
+    jsonPage { Thread = t, Posts = List.mp (fn p => p -- #Id -- #Thread -- #Files ++ { Files = List.mp (fn f => f -- #Handle) p.Files }) p }
   | None =>
     jsonError "No such thread"
 
+
 val news =
   jsonPageM Admin.news
+
 
 val readme =
   jsonPageM Admin.readme
