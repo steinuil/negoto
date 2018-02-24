@@ -59,14 +59,6 @@ val json_catalogThread : json catalogThread =
     , Files   = "files" }
 
 
-val json_newsItem : json Admin.newsItem =
-  json_record
-    { Title  = "title"
-    , Author = "author"
-    , Time   = "time"
-    , Body   = "body" }
-
-
 val json_Thread : json Data.X.thread =
   json_record
     { Id      = "id"
@@ -99,6 +91,13 @@ type thread' =
 val json_thread' : json thread' =
   json_record { Thread = "op", Posts = "posts" }
 
+
+val json_newsItem : json Admin.newsItem =
+  json_record
+    { Title  = "title"
+    , Author = "author"
+    , Time   = "time"
+    , Body   = "body" }
 
 
 

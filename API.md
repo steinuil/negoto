@@ -7,63 +7,61 @@ The returned items will be described as Typescript type signatures.
 ## Basic types
 
 ```typescript
-// An ID is an integer > 0.
+// An identifier for a certain resource.
 type id = number;
-
-// The hex md5 checksum of a file.
-type checksum = string;
 
 // The time in seconds since January 1st, 1970 at 00:00.
 type unix_time = number;
 
+type url = string;
+
 interface Board {
+  id:   string;
   name: string;
-  slug: string;
 }
 
 interface File {
-  hash: checksum;
-  name: string;
-  mimetype: string;
-  spoiler: boolean;
+  filename: string;
+  src:      url;
+  thumb:    url;
+  spoiler:  boolean;
 }
 
 interface Thread {
-  id: id;
+  id:      id;
   updated: unix_time;
   subject: string;
-  count: int;
-  locked: boolean;
-  board: string;
+  count:   number;
+  locked:  boolean;
+  board:   string;
 }
 
 interface ThreadOp {
-  id: id;
+  id:      id;
+  board:   string;
   updated: unix_time;
   subject: string;
-  count: int;
-  locked: boolean;
-  board: string;
-  name: string;
-  time: unix_time;
-  body: string;
-  files: Array<string>;
+  count:   number;
+  locked:  boolean;
+  name:    string;
+  time:    unix_time;
+  body:    string;
+  files:   Array<File>;
 }
 
 interface Post {
-  id: number;
-  thread: int;
-  name: string;
-  time: unix_time;
-  body: string;
-  files: Array<string>
+  number: id;
+  name:   string;
+  time:   unix_time;
+  body:   string;
+  files:  Array<File>;
 }
 
 interface NewsItem {
-  title: string;
+  title:  string;
   author: string;
-  time: unix_time;
-  body: string;
+  time:   unix_time;
+  body:   string;
 }
 ```
 
