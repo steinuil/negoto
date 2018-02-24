@@ -87,7 +87,7 @@ and newsItem item : transaction xbody =
 
 
 and front () =
-  tags <- Data.allTags;
+  boards <- Data.X.allBoards;
   news <- Admin.news;
   news <- List.mapXM newsItem news;
   readme <- Admin.readme;
@@ -102,9 +102,9 @@ and front () =
         <section>
           <header>Boards</header>
           <ul class="section-body">
-            {List.mapX (fn t => <xml><li>
-              <a link={catalog t.Nam}>{[t]}</a>
-            </li></xml>) tags}
+            {List.mapX
+              (fn b => <xml><li><a link={catalog b.Id}>{[t]}</a></li></xml>)
+              boards}
           </ul>
         </section>
         <section>
