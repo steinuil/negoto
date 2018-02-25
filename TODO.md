@@ -76,7 +76,7 @@ in the post body.
   * [X] add banners
   * [X] turn to fastcgi to support files
   * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
-  * [ ] fix original image being deleted when posting a duplicated image
+  * [X] fix original image being deleted when posting a duplicated image
 
 * Feature completeness overview
   * [X] Account

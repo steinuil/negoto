@@ -4,6 +4,7 @@
 -- Prevent the db from locking up from many concurrent reads
 PRAGMA journal_mode=WAL;
 
+
 -- @Fixme these should be the md5 hashes of the files. We should generate
 -- this file as part of the build process.
 INSERT INTO uw_File_Css_files VALUES

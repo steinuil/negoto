@@ -252,7 +252,7 @@ and board board =
 
 and delete_thread { Id = id, Board = b } =
   admin <- Account.authenticate;
-  Data.deleteBoard (readError id);
+  Data.deleteThread (readError id);
   Log.info (admin ^ " deleted thread " ^ id);
   redirect (url (board b))
 
