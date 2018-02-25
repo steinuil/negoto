@@ -8,9 +8,9 @@ style catalog_page
 style thread_page
 
 
-val show_tag =
-  mkShow (fn { Nam = name, Slug = slug } =>
-    "/" ^ name ^ "/ - " ^ slug)
+val show_board : show Data.board =
+  mkShow (fn { Id = id, Nam = name } =>
+    "/" ^ id ^ "/ - " ^ name)
 
 
 (* Create a subform that can hold up to `max` files. *)
@@ -54,9 +54,30 @@ in
 end
 
 
+(*
 fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
-  siteName <- Admin.siteName;
+  sitename <- admin.sitename;
   nav' <- navigation tags;
+  banner' <- layout.randbanner;
+  layout.layoutwithswitcher switch_theme (title' ^ " - " ^ sitename) class' ""
+    (fn switcher => <xml>
+      <header>
+        <nav>{nav'}</nav>
+        {case banner' of
+        | none => <xml/>
+        | some b =>
+          <xml><img class="banner" width={300} height={100} src={b}/></xml>}
+        <h1>{[title']}</h1>
+      </header>
+      <main>{body'}</main>
+      <footer>{switcher}</footer>
+    </xml>)
+    *)
+
+
+fun layout boards (title' : string) (class' : css_class) (body : xbody) =
+  siteName <- Admin.siteName;
+  nav' <- navigation boards;
   banner' <- Layout.randBanner;
   Layout.layoutWithSwitcher switch_theme (title' ^ " - " ^ siteName) class' ""
     (fn switcher => <xml>
@@ -68,7 +89,7 @@ fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
           <xml><img class="banner" width={300} height={100} src={b}/></xml>}
         <h1>{[title']}</h1>
       </header>
-      <main>{body'}</main>
+      <main>{body}</main>
       <footer>{switcher}</footer>
     </xml>)
 
@@ -87,7 +108,7 @@ and newsItem item : transaction xbody =
 
 
 and front () =
-  boards <- Data.X.allBoards;
+  boards <- Data.allBoards;
   news <- Admin.news;
   news <- List.mapXM newsItem news;
   readme <- Admin.readme;
@@ -103,7 +124,7 @@ and front () =
           <header>Boards</header>
           <ul class="section-body">
             {List.mapX
-              (fn b => <xml><li><a link={catalog b.Id}>{[t]}</a></li></xml>)
+              (fn b => <xml><li><a link={catalog b.Id}>{[b]}</a></li></xml>)
               boards}
           </ul>
         </section>
@@ -121,14 +142,14 @@ and front () =
   </xml>
 
 
-and catalog name =
-  tags <- Data.allTags;
-  case List.find (fn t => t.Nam = name) tags of
-  | None => error <xml>Board not found: {[name]}</xml>
-  | Some tag =>
-    threads <- (Data.catalogByTag tag.Nam `bind` List.mapXM catalogThread);
-    postForm <- catalogForm tag.Nam;
-    layout tags (show tag) catalog_page <xml>
+and catalog board =
+  boards <- Data.allBoards;
+  case List.find (fn b => b.Id = board) boards of
+  | None => error <xml>Board not found: {[board]}</xml>
+  | Some board =>
+    threads <- (Data.catalog' board.Id `bind` List.mapXM catalogThread);
+    postForm <- catalogForm board.Id;
+    layout boards (show board) catalog_page <xml>
       {postForm}
       <div class="container">{threads}</div>
     </xml>
@@ -143,7 +164,7 @@ and catalogThread thread' =
           {case thread'.Files of
           | [] => <xml>link</xml>
           | file :: _ => <xml><figure>
-            <img src={File.linkThumb file.Hash}/>
+            <img src={file.Thumb}/>
           </figure></xml>}
         </a>
       </figure>
@@ -167,17 +188,17 @@ and catalogThread thread' =
 
 
 and thread id =
-  thread' <- Data.threadById id;
-  case thread' of
+  t <- Data.thread id;
+  case t of
   | None => error <xml>Thread not found: {[id]}</xml>
   | Some (t, posts) =>
-    tags <- Data.allTags;
+    boards <- Data.allBoards;
     staticForm <- staticThreadForm t.Id;
     postBody <- source "";
     pForm <- postForm postBody id;
     let
       val title' =
-        List.find (fn tag => tag.Nam = t.Tag) tags
+        List.find (fn board => board.Id = t.Board) boards
         |> Option.mp show
         |> Option.get ""
 
@@ -189,24 +210,20 @@ and thread id =
         | op :: rest => (op, rest)
         | _ => error <xml>This thread doesn't have an OP</xml>
 
-      fun picture post' expanded =
-        let
-          fun src' file exp =
-            if exp then
-              File.linkImage file.Hash file.Mime
-            else
-              File.linkThumb file.Hash
-
-          fun tag' exp = if exp then expanded_img else null
-        in
-          case post'.Files of
-          | [] => <xml/>
-          | file :: _ => <xml><a href={File.linkImage file.Hash file.Mime}
-              onclick={fn _ => exp <- get expanded; preventDefault; set expanded (not exp)}>
-            <noscript><img src={File.linkThumb file.Hash}/></noscript>
-            <dyn signal={exp <- signal expanded; return <xml><img class={tag' exp} src={src' file exp}/></xml>}/>
-          </a></xml>
-        end
+      fun picture files expanded =
+        case files of
+        | [] => <xml/>
+        | f :: _ => <xml><a href={f.Src} onclick={fn _ =>
+                                                    exp <- get expanded;
+                                                    preventDefault;
+                                                    set expanded (not exp)}>
+          <noscript><img src={f.Thumb}/></noscript>
+          <dyn signal={exp <- signal expanded;
+                       return (if exp then
+                         <xml><img class="expanded-img" src={f.Src}/></xml>
+                       else
+                         <xml><img src={f.Thumb}/></xml>)}/>
+        </a></xml>
 
       fun postInfo post' =
         <xml><div class="info">
@@ -220,7 +237,7 @@ and thread id =
         expanded <- source False;
         postBody <- Post.toHtml post'.Body;
         return <xml><div class="post reply" id={Post.id post'.Id}>
-          {picture post' expanded}
+          {picture post'.Files expanded}
           {postInfo post'}
           <div class="post-body">{postBody}</div>
         </div></xml>
@@ -229,16 +246,16 @@ and thread id =
         expanded <- source False;
         body <- Post.toHtml op.Body;
         return <xml><div class="post op-post" id={Post.id op.Id}>
-          {picture op expanded}
+          {picture op.Files expanded}
           {postInfo op}
           <div class="post-body">{body}</div>
         </div></xml>
     in
       op <- mkOp;
       posts <- List.mapXM threadPost posts;
-      layout tags title' thread_page <xml>
+      layout boards title' thread_page <xml>
         <header>
-          [<a link={catalog t.Tag}>back</a>]
+          [<a link={catalog t.Board}>back</a>]
           <span class="subject">{[t.Subject]}</span>
           {if t.Locked then <xml>(locked)</xml> else <xml/>}
         </header>
@@ -252,14 +269,14 @@ and thread id =
     end
 
 
-and navigation tags =
+and navigation boards =
   affiliateLinks <- Admin.links;
   let
     val boards =
       <xml><a link={front ()}>Home</a></xml>
-      :: List.mp (fn { Nam = name, Slug = slug } =>
-        <xml><a link={catalog name} title={slug}>{[name]}</a></xml>)
-        tags
+      :: List.mp (fn { Id = id, Nam = name } =>
+        <xml><a link={catalog id} title={name}>{[id]}</a></xml>)
+        boards
 
     val aff =
       List.mp (fn { Link = link, Nam = name } =>
@@ -287,7 +304,7 @@ and catalogForm (boardId : string) : transaction xbody =
       <checkbox{#Spoiler} class="hidden-field" id={spoilerButton} />
       <label for={spoilerButton} class="button">Spoiler</label>
     </div>
-    <hidden{#Tag} value={show boardId}/>
+    <hidden{#Board} value={show boardId}/>
     <submit action={create_thread} class="hidden-field" id={submitButton} />
   </form></xml>
 
@@ -323,7 +340,7 @@ and create_thread f = let
   val thread' = f -- #File -- #Spoiler ++
     { Files = files }
 in
-  id <- Data.newThread thread';
+  id <- Data.addThread thread';
   redirect (url (thread id))
 end
 
@@ -340,14 +357,14 @@ and create_post f =
     val post = f -- #Thread -- #File -- #Spoiler ++
       { Thread = readError f.Thread, Files = files }
   in
-  _ <- Data.newPost post;
+  _ <- Data.addPost post;
   redirect (url (thread post.Thread))
   end
 
 
 and create_post' f =
   let val post = f -- #Spoiler ++ { Files = [] } in
-    _ <- Data.newPost post;
+    _ <- Data.addPost post;
     return ()
   end
 

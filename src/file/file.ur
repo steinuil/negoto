@@ -1,38 +1,4 @@
 (* NOTE: the directories should be created as part of the build process. *)
-
-val image_dir = "image"
-val thumb_dir = "thumb"
-
-
-fun extOfMime mime = case mime of
-  | "image/png" => "png"
-  | "image/jpeg" => "jpg"
-  | "image/gif" => "gif"
-  | x => error <xml>Unsupported mime: {txt x}</xml>
-
-
-fun saveImage file =
-  let val hash = FileFfi.md5Hash file
-      val ext = extOfMime (fileMimeType file) in
-    FileFfi.saveImage image_dir thumb_dir (hash ^ "." ^ ext) (hash ^ ".jpg") file;
-    return hash
-  end
-
-
-fun deleteImage hash mime =
-  FileFfi.delete image_dir (hash ^ "." ^ extOfMime mime);
-  FileFfi.delete thumb_dir (hash ^ ".jpg")
-
-
-fun linkImage hash mime =
-  FileFfi.link image_dir (hash ^ "." ^ extOfMime mime)
-
-
-fun linkThumb hash =
-  FileFfi.link thumb_dir (hash ^ ".jpg")
-
-
-
 type handle = int
 
 val show_handle = show_int

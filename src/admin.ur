@@ -39,11 +39,11 @@ fun updateReadme body =
 sequence newsItems_id
 
 table newsItems :
-  { Id      : int
-  , Title   : string
-  , Author  : string
-  , Time    : time
-  , Body    : string }
+  { Id     : int
+  , Title  : string
+  , Author : string
+  , Time   : time
+  , Body   : string }
   PRIMARY KEY (Id)
 
 
@@ -147,96 +147,93 @@ fun layout (body' : xbody) : transaction page =
 
 
 and boards () =
-  tags <- Data.allTags;
+  boards <- Data.allBoards;
   selectedBoard <- source None;
   let
-    val slugEditor =
+    val nameEditor =
       sel <- signal selectedBoard;
       case sel of
       | None => return <xml/>
       | Some board =>
         return <xml><form class="edit-area">
-          <hidden{#Nam} value={board.Nam}/>
-          <textbox{#Slug} required placeholder="Slug" value={board.Slug}/>
-          <submit value="Edit slug" action={edit_slug}/>
+          <hidden{#Id} value={board.Id}/>
+          <textbox{#Nam} required placeholder="Name" value={board.Nam}/>
+          <submit value="Edit name" action={edit_name}/>
         </form></xml>
 
     fun boardRow b =
-      del <- deleteForm b.Nam ("/" ^ b.Nam ^ "/") delete_board;
+      del <- deleteForm b.Id ("/" ^ b.Id ^ "/") delete_board;
       return <xml><tr>
-        <td><a link={board b.Nam}>{[b.Nam]}</a></td>
-        <td>{[b.Slug]}</td>
-        <td>{editButton [#Nam] selectedBoard b} {del}</td>
+        <td><a link={board b.Id}>{[b.Id]}</a></td>
+        <td>{[b.Nam]}</td>
+        <td>{editButton [#Id] selectedBoard b} {del}</td>
       </tr></xml>
   in
-    rows <- List.mapXM boardRow tags;
+    rows <- List.mapXM boardRow boards;
     layout <xml><section>
       <header>Add a board</header>
       <form>
+        <textbox{#Id} required placeholder="Id"/>
         <textbox{#Nam} required placeholder="Name"/>
-        <textbox{#Slug} required placeholder="Slug"/>
         <submit value="Create board" action={create_board}/>
       </form>
     </section><section>
       <header>Boards</header>
       <table>
         <tr>
+          <th>Id</th>
           <th>Name</th>
-          <th>Slug</th>
           <th/>
         </tr>
         {rows}
       </table>
-      <dyn signal={slugEditor}/>
+      <dyn signal={nameEditor}/>
     </section></xml>
   end
 
 
 (* TODO: validation *)
 and create_board f =
-  if strlen f.Slug < 1 then E.length0 "Slug" else
-  if E.notBetween f.Nam 1 10 then E.between "Name" 1 10 else
+  if strlen f.Nam < 1 then E.length0 "Name" else
+  if E.notBetween f.Id 1 10 then E.between "Id" 1 10 else
   admin <- Account.authenticate;
-  Data.newTag f;
-  Log.info (admin ^ " created board /" ^ f.Nam ^ "/ - " ^ f.Slug);
+  Data.addBoard f;
+  Log.info (admin ^ " created board /" ^ f.Id ^ "/ - " ^ f.Nam);
   redirect (url (boards ()))
 
 
 and delete_board { Id = name } =
   admin <- Account.authenticate;
-  Data.deleteTag name;
+  Data.deleteBoard name;
   Log.info (admin ^ " deleted board /" ^ name ^ "/");
   redirect (url (boards ()))
 
 
-and edit_slug f =
-  if strlen f.Slug < 1 then E.length0 "Slug" else
+and edit_name f =
+  if strlen f.Nam < 1 then E.length0 "Name" else
   admin <- Account.authenticate;
-  Data.editSlug f;
-  Log.info (admin ^ " changed board /" ^ f.Nam ^ "/'s slug to " ^ f.Slug);
+  Data.editBoardName f;
+  Log.info (admin ^ " changed board /" ^ f.Id ^ "/'s name to " ^ f.Nam);
   redirect (url (boards ()))
 
 
-and board name =
-  t <- Data.catalogByTag' name;
+and board board =
+  t <- Data.catalog board;
   case t of None => error <xml>Board not found</xml> | Some threads =>
     rows <- List.mapXM
       (fn { Id = id, Subject = subject, Locked = locked, ... } =>
-        let
-          val lockAction = if locked then unlock_thread else lock_thread
-
-          fun button labl act confirm =
-            button' <- fresh;
-            return <xml><form>
-              <hidden{#Id} value={show id}/>
-              <hidden{#Tag} value={name}/> <!-- to redirect you back here -->
-              [<label for={button'} class="ulink">{[labl]}</label>]
-              <submit id={button'} onclick={confirm} class="hidden-field" action={act}/>
-            </form></xml>
+        let fun button labl act confirm =
+          button' <- fresh;
+          return <xml><form>
+            <hidden{#Id} value={show id}/>
+            <hidden{#Board} value={board}/> <!-- to redirect you back here -->
+            [<label for={button'} class="ulink">{[labl]}</label>]
+            <submit id={button'} onclick={confirm} class="hidden-field" action={act}/>
+          </form></xml>
         in
           delButton <- button "delete" delete_thread (confirmDel subject);
           lockButton <- button ((if locked then "un" else "") ^ "lock thread")
-                               lockAction (fn _ => return ());
+                               toggle_thread_lock (fn _ => return ());
           return <xml><tr>
             <td><a link={thread id}>{[id]}</a></td>
             <td>{[subject]}</td>
@@ -253,35 +250,28 @@ and board name =
     </section></xml>
 
 
-and delete_thread { Id = id, Tag = tag } =
+and delete_thread { Id = id, Board = b } =
   admin <- Account.authenticate;
-  Data.deleteThread (readError id);
+  Data.deleteBoard (readError id);
   Log.info (admin ^ " deleted thread " ^ id);
-  redirect (url (board tag))
+  redirect (url (board b))
 
 
-and unlock_thread { Id = id, Tag = tag } =
+and toggle_thread_lock { Id = id, Board = b } =
   admin <- Account.authenticate;
-  Data.unlockThread (readError id);
-  Log.info (admin ^ " unlocked thread " ^ id);
-  redirect (url (board tag))
-
-
-and lock_thread { Id = id, Tag = tag } =
-  admin <- Account.authenticate;
-  Data.lockThread (readError id);
-  Log.info (admin ^ " locked thread " ^ id);
-  redirect (url (board tag))
+  Data.toggleThreadLock (readError id);
+  Log.info (admin ^ " toggled lock on " ^ id);
+  redirect (url (board b))
 
 
 and thread tid =
-  x <- Data.threadById tid;
+  x <- Data.thread tid;
   case x of None => error <xml>Thread not found</xml> | Some (thread', posts) =>
   selectedPost <- source None;
   postTable <- List.mapXM (fn p =>
     delButton <- fresh;
     return <xml><tr>
-      <td>{[p.Id]}</td>
+      <td>{[p.Number]}</td>
       <td>{[p.Nam]}</td>
       <td>
         {editButton [#Id] selectedPost p}
@@ -296,11 +286,11 @@ and thread tid =
     </tr></xml>)
     posts;
   layout <xml><section>
-    [<a link={board thread'.Tag}>go back to the thread list</a>]
+    [<a link={board thread'.Board}>go back to the thread list</a>]
   </section><section>
     <header>Manage posts of thread {[tid]}</header>
     <table>
-      <tr><th>ID</th><th>Name</th><th/></tr>
+      <tr><th>Number</th><th>Name</th><th/></tr>
       {postTable}
     </table>
     <dyn signal={
@@ -309,8 +299,7 @@ and thread tid =
       return <xml><form class="edit-area">
         <select{#Id}>
           {List.mapX (fn file =>
-            <xml><option value={file.Hash}>{[file.Nam]}
-            ({[file.Hash]})</option></xml>)
+            <xml><option value={show file.Handle}>{[file.Fname]}</option></xml>)
             post.Files}
         </select>
         <hidden{#Thread} value={show tid}/>
@@ -322,17 +311,15 @@ and thread tid =
 
 and delete_post { Id = id, Thread = thread' } =
   admin <- Account.authenticate;
-  let val t = readError thread' in
-    Data.deletePost t (readError id);
-    Log.info (admin ^ " deleted post " ^ id ^ "on thread " ^ thread');
-    redirect (url (thread t))
-  end
+  Data.deletePost (readError id);
+  Log.info (admin ^ " deleted post " ^ id);
+  redirect (url (thread (readError thread')))
 
 
-and delete_file { Id = hash, Thread = thread' } : transaction page =
+and delete_file { Id = handle, Thread = thread' } =
   admin <- Account.authenticate;
-  Data.deleteFileByHash hash;
-  Log.info (admin ^ " deleted file " ^ hash);
+  Data.deleteFile (readError handle);
+  Log.info (admin ^ " deleted file " ^ handle);
   redirect (url (thread (readError thread')))
 
 

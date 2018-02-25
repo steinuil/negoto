@@ -104,8 +104,7 @@ static = public/static
 $(static):
 	mkdir -p $@
 
-static_dirs = $(static)/image $(static)/thumb
-static_dirs += $(static)/s $(static)/t
+static_dirs  = $(static)/s $(static)/t
 static_dirs += $(static)/banner $(static)/css
 
 run: negoto $(css) | $(static)

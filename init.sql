@@ -25,7 +25,7 @@ INSERT INTO uw_KeyVal_store VALUES
 ("defaultTheme", -1);
 
 
-INSERT INTO uw_Data_tags VALUES
+INSERT INTO uw_Data_boards VALUES
 ("test", "Test board");
 
 

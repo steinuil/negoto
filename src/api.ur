@@ -15,7 +15,7 @@ val json_url : json url =
     , FromJson = fn x => let val (x, rst) = fromJson' x in (bless x, rst) end }
 
 
-val json_board : json Data.X.board =
+val json_board : json Data.board =
   json_record { Id = "id", Nam = "name" }
 
 
@@ -59,7 +59,7 @@ val json_catalogThread : json catalogThread =
     , Files   = "files" }
 
 
-val json_Thread : json Data.X.thread =
+val json_Thread : json Data.thread =
   json_record
     { Id      = "id"
     , Updated = "updated"
@@ -86,7 +86,7 @@ val json_Post : json post =
 
 
 type thread' =
-  { Thread : Data.X.thread, Posts : list post }
+  { Thread : Data.thread, Posts : list post }
 
 val json_thread' : json thread' =
   json_record { Thread = "op", Posts = "posts" }
@@ -117,11 +117,11 @@ fun jsonError (msg : string) : transaction page =
 
 
 val boards =
-  jsonPageM Data.X.allBoards
+  jsonPageM Data.allBoards
 
 
 fun catalog board =
-  c <- Data.X.catalog board;
+  c <- Data.catalog board;
   case c of
   | Some c =>
     jsonPage (List.mp (fn x => x -- #Files ++ { Files = (List.mp (fn f => f -- #Handle) x.Files) }) c)
@@ -130,7 +130,7 @@ fun catalog board =
 
 
 fun thread id =
-  t <- Data.X.thread id;
+  t <- Data.thread id;
   case t of
   | Some (t, p) =>
     jsonPage { Thread = t, Posts = List.mp (fn p => p -- #Id -- #Thread -- #Files ++ { Files = List.mp (fn f => f -- #Handle) p.Files }) p }

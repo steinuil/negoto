@@ -61,14 +61,3 @@ structure Image  : Handler where con link = { Src : url, Thumb : url }
 structure Banner : Handler where con link = url
 
 structure Css    : Handler where con link = url
-
-
-
-(* IT HURTS TO LIVE *)
-val saveImage : file -> transaction string
-
-val deleteImage : string -> string -> transaction unit
-
-val linkImage : string -> string -> url
-
-val linkThumb : string -> url
