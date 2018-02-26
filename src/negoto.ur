@@ -229,8 +229,8 @@ and thread id =
         <xml><div class="info">
           <span class="name">{[post'.Nam]}</span>
           <time>{[post'.Time]}</time>
-          <a href={Post.link (Post.id post'.Id)}>&#8470;</a><span class="ulink"
-            onclick={fn _ => addTxt (">>" ^ show post'.Id ^ "\n")}>{[post'.Id]}</span>
+          <a href={Post.link (Post.id post'.Number)}>&#8470;</a><span class="ulink"
+            onclick={fn _ => addTxt (">>" ^ show post'.Number ^ "\n")}>{[post'.Number]}</span>
         </div></xml>
 
       fun threadPost post' =

@@ -133,7 +133,9 @@ fun thread id =
   t <- Data.thread id;
   case t of
   | Some (t, p) =>
-    jsonPage { Thread = t, Posts = List.mp (fn p => p -- #Id -- #Thread -- #Files ++ { Files = List.mp (fn f => f -- #Handle) p.Files }) p }
+    jsonPage { Thread = t
+             , Posts = List.mp (fn p => p -- #Id -- #Thread -- #Files ++ { Files = List.mp (fn f => f -- #Handle) p.Files }) p
+             }
   | None =>
     jsonError "No such thread"
 

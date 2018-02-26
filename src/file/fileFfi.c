@@ -248,8 +248,12 @@ static void save_resize_image(void *d) {
 
   pid_t pid = fork();
   if (pid == 0) {
+    char name[sizeof(NEGOTO_STATIC_DIR) + 1 + 16 + 1 + 32 + 1 + 3 + 3 + 1];
+    strcpy(name, data->name);
+    strcat(name, "[0]");
+
     char *const argv[] = {
-      "convert", data->name,
+      "convert", name,
       "-strip",
       "-quality", "70%",
       "-resize", NEGOTO_THUMB_SIZE ">",
