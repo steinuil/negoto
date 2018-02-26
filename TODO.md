@@ -1,109 +1,38 @@
 ## Version 1.0
-A basic frontend that mimics imageboards like 4chan, where threads can only be
-associated with one tag, posts can only hold one file and with limited markup
-in the post body.
+* Handle images in a better way
+  * [ ] use a library for processing images instead of invoking ImageMagick
+  * [ ] return some image info like width/height and thumbnail width/height
 
-* File handling library
-  * [X] save and delete files
-  * [X] generate a filename with an appropriate extension
-  * [X] return a checksum and image dimensions
-  * [X] process thumbnails for images with `convert`
-  * [ ] use DevIL for converting images instead
-
-* Options for processing thumbnails are:
+* Options for processing images are:
   * libvips (only compiles to a libtool library, gross API)
   * ImageMagick (xboxhueg, don't really know if I'd want to link it statically)
   * GraphicsMagick (similar problems to IM, had problems with certain kinds of images in the past)
   * stb\_image/SOIL (don't handle problematic images very well)
   * DevIL (probably the best out of the bunch)
-  * just write a wrapper for the imagemagick cli (horrible hack)
 
-* Post handling library
-  * [X] parse newlines
-  * [X] quotes
+* Handle some markup
   * [ ] backlinks
   * [ ] spoilers
   * [ ] urls
-  * [X] buffer library similar to OCaml's
-    * or at least fix the post length issue
+  * [ ] inter-thread backlinks
 
 * Ajax post forms
-  * [ ] use ajaxUpload and RPC for files
+  * [ ] either use ajaxUpload or roll my own library
 
-* Limits on number of threads and posts
-  * [X] bump old threads off the board
-  * [X] lock threads when they're over their post limit
+* [ ] Manage the favicon
 
-* Admin control panel
-  * [X] implement admin accounts
-  * [X] restrict admin privileges to admins
-  * [X] interface for deleting boards, posts, threads and files
-  * [X] interface for adding boards
-  * [X] interface for editing the readme file
-  * [X] interface for adding/deleting news
-  * [X] interface for editing news
-  * [X] interface for editing accounts
-  * [X] interface for managing themes
-  * [X] redo thread page
-  * [X] interface for managing your account
-  * [X] improve the CSS
-  * [X] interface to manage affiliate links
-
-* Frontend niceties
-  * [X] clicking on a post number should quote it in the comment box
-  * [X] links to single posts should focus that post in its thread
-  * [X] clicking on an image should expand it inline
-
-* JSON API
-  * [X] boards endpoint
-  * [X] catalog endpoint
-  * [X] thread endpoint
-  * [X] include API links without linking it from the readme page
-  * [X] readme endpoint
-  * [X] return proper HTTP statuses on error
-    * this is only possible with the CGI modes
-  * [X] news endpoint
-
-* News
-  * [X] show some news on the front page
+* Handle IPs and bans (env variable `REMOTE_ADDR`)
+  * [ ] store post IPs for a while and remove them from the db after a day or so
+  * [ ] add posting cooldown
+  * [ ] add IP bans
+  * [ ] add IP region bans
 
 * Other
-  * [X] deleting the OP should delete the rest of the thread
-  * [X] improve CSS, add different themes
-  * [X] add cookie to switch themes
-  * [X] a nicer error page in its own module
   * [ ] come up with a nice logo
-  * [X] add banners
-  * [X] turn to fastcgi to support files
   * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
-  * [X] fix original image being deleted when posting a duplicated image
-
-* Feature completeness overview
-  * [X] Account
-  * [X] Admin
-  * [X] Api
-  * [X] Data
-    * kinda needs a cleanup
-  * [X] KeyVal
-  * [ ] Layout
-    * manage the favicon
-  * [X] Logger
-  * [ ] Negoto
-    * ajax forms
-    * form validation
-    * css fixes
-  * [X] Bcrypt
-    * add some tests maybe? how does testing even work in Ur/Web?
-  * [ ] File
-    * managing the favicon
-  * [ ] Post
-  * [X] Uuid
 
 
-## Later
-Wishlist of stuff to maybe work on after the imageboard is stable and usable on
-real servers.
-
+## Wishlist
 * Rewrite the admin panel so that modules can define their own panels without exposing unnecessary data to the rest of the app
 
 * Buffer library

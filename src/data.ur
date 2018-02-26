@@ -278,7 +278,6 @@ fun deleteFile handle =
   File.Image.delete handle
 
 
-
 fun insertFile post { Spoiler = spoiler, File = file } =
   (handle, { Src = src, Thumb = thumb }) <- File.Image.save file;
   let val fname = fileName file |> Option.get "<unnamed>" in
@@ -322,7 +321,7 @@ fun addThread { Nam = name, Subject = subject, Body = body, Files = files, Board
 
 (* Periodically check for orphaned files
  * and delete them from the database/filesystem *)
-task periodic (30 * 60) = fn () =>
+task periodic (2 * 60) = fn () =>
   Log.info "checking for orphaned files";
   files <- oneCols [#Handle] (SELECT files.Handle FROM files WHERE files.Post IS NULL);
   List.app deleteFile files

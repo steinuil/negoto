@@ -331,31 +331,44 @@ and staticThreadForm (threadId : int) : transaction xbody =
   </form></xml>
 
 
-and create_thread f = let
-  val files =
-    if blobSize (fileData f.File) > 0 then
-      { File = f.File, Spoiler = f.Spoiler } :: []
-    else []
+and create_thread f =
+  if strlen f.Body > 2000 then E.tooLong "Body" 2000 else
+  if strlen f.Nam > 40 then E.tooLong "Name" 40 else
+  if strlen f.Subject > 140 || strlen f.Subject < 1 then E.between "Subject" 1 140 else
+  let
+    val name = if f.Nam = "" then f.Nam else "Anonymous"
 
-  val thread' = f -- #File -- #Spoiler ++
-    { Files = files }
-in
-  id <- Data.addThread thread';
-  redirect (url (thread id))
-end
+    val files =
+      if blobSize (fileData f.File) > 0 then
+        { File = f.File, Spoiler = f.Spoiler } :: []
+      else
+        E.msg "You have to post a file to start a thread"
+
+    val thread' = f -- #File -- #Spoiler -- #Nam ++
+      { Files = files, Nam = name }
+  in
+    id <- Data.addThread thread';
+    redirect (url (thread id))
+  end
 
 
 and create_post f =
   if strlen f.Body > 2000 then E.tooLong "Body" 2000 else
+  if strlen f.Nam > 40 then E.tooLong "Name" 40 else
+  if strlen f.Body = 0 && blobSize (fileData f.File) = 0 then
+    E.msg "You can't post with an empty comment and no file"
+  else
   let
+    val name = if f.Nam = "" then f.Nam else "Anonymous"
+
     val files =
       if blobSize (fileData f.File) > 0 then
         { File = f.File, Spoiler = f.Spoiler } :: []
       else
         []
 
-    val post = f -- #Thread -- #File -- #Spoiler ++
-      { Thread = readError f.Thread, Files = files }
+    val post = f -- #Thread -- #File -- #Spoiler -- #Nam ++
+      { Thread = readError f.Thread, Files = files, Nam = name }
   in
   _ <- Data.addPost post;
   redirect (url (thread post.Thread))
