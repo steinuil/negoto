@@ -30,6 +30,8 @@
 * Other
   * [ ] come up with a nice logo
   * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
+  * [X] purge old files from the database in some other way
+  * [ ] generate the css files hashes as part of the build process
 
 
 ## Wishlist

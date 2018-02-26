@@ -20,6 +20,10 @@ The very least Negoto requires to build is:
 * GNU Make
 * [Ur/Web](http://impredicative.com/ur/)
 
+There's some bugs with SQLite that at the moment are only fixed in
+[my fork](https://github.com/steinuil/urweb/tree/sqlite-fix) on the branch
+`sqlite-fix`, so you should build with that for the moment.
+
 The normal installation also requires:
 
 * [sass](http://sass-lang.com/)

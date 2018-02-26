@@ -1,9 +1,7 @@
 -- At least one theme and a default theme are required
 -- for the program to work correctly.
 
--- Prevent the db from locking up from many concurrent reads
-PRAGMA journal_mode=WAL;
-
+PRAGMA foreign_keys=TRUE;
 
 -- @Fixme these should be the md5 hashes of the files. We should generate
 -- this file as part of the build process.

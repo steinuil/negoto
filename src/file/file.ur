@@ -53,23 +53,14 @@ end = struct
       REFERENCES files(Hash)
       ON DELETE CASCADE
 
-  (* Delete the files that have no handles attached every 5 minutes. *)
+  (* Reap zombie files that are not referenced by any handles. *)
   task periodic (5 * 60) = fn () =>
-    hashes <- query (SELECT DISTINCT handles.File FROM handles)
-                (fn { Handles = { File = file } } acc =>
-                  return (file :: acc)) [];
-    let
-      fun many acc (ls : list string) = case ls of
-        | []      => acc
-        | x :: xs => many (WHERE t.Hash <> {[x]} AND {acc}) xs
-    in
-      case hashes of
-      | [] => return ()
-      | _  =>
-        xs <- queryL (SELECT * FROM files AS T WHERE {many (WHERE TRUE) hashes});
-        List.app (fn { T = x } => M.delete x.Hash x.Mime) xs;
-        dml (DELETE FROM files WHERE {many (WHERE TRUE) hashes})
-    end
+    zombies <- queryL1 (SELECT files.* FROM files
+                        LEFT JOIN handles ON handles.File = files.Hash
+                        WHERE handles.File IS NULL);
+    zombies |> List.app (fn f =>
+      M.delete f.Hash f.Mime;
+      dml (DELETE FROM files WHERE Hash = {[f.Hash]}))
 
 
   con link :: Type = M.link
