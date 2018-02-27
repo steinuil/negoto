@@ -3,10 +3,9 @@ fun compose2 [a] [b] [c] [d] (f1 : c -> d) (f2 : a -> b -> c) x y =
   f1 (f2 x y)
 
 
-fun elapsed tim =
-  tnow <- now;
+fun elapsed' t1 t2 =
   let
-    val diff = tim `diffInSeconds` tnow
+    val diff = t1 `diffInSeconds` t2
 
     val (oneMinute, oneHour, oneDay, oneWeek, oneMonth, oneYear) =
       (60, 3600, 86400, 86400 * 7, 86400 * 30, 86400 * 365)
@@ -29,8 +28,13 @@ fun elapsed tim =
 
     val suffix = if elapsed' <> 1 then "s" else ""
   in
-    return <xml>{[elapsed']} {[unit']}{[suffix]} ago</xml>
+    <xml>{[elapsed']} {[unit']}{[suffix]}</xml>
   end
+
+
+fun elapsed tim =
+  tnow <- now;
+  return <xml>{(elapsed' tnow tim)} ago</xml>
 
 
 fun interpose [a] (sep : a) (ls : list a) : list a = case ls of

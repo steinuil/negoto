@@ -22,16 +22,16 @@
 * [ ] Manage the favicon
 
 * Handle IPs and bans (env variable `REMOTE_ADDR`)
-  * [ ] store post IPs for a while and remove them from the db after a day or so
-  * [ ] add posting cooldown
-  * [ ] add IP bans
-  * [ ] add IP region bans
+  * [X] store post IPs for a while and remove them from the db after a day or so
+  * [X] posting cooldown
+  * [ ] IP bans
+  * [ ] IP region bans (?)
 
 * Other
   * [ ] come up with a nice logo
-  * [ ] conjure up some way to configure paths (in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf)
   * [X] purge old files from the database in some other way
-  * [ ] generate the css files hashes as part of the build process
+  * [ ] a preprocessor that lets you configure paths in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf and css file hashes in init.sql
+  * [ ] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC.
 
 
 ## Wishlist

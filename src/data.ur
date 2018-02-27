@@ -75,6 +75,15 @@ table files :
     ON DELETE SET NULL
 
 
+table cooldowns :
+  { Ip    : string
+  , Post  : option int
+  , Until : time }
+  CONSTRAINT Post FOREIGN KEY Post
+    REFERENCES posts(Id)
+    ON DELETE SET NULL
+
+
 type postFile =
   { Handle  : File.handle
   , Fname   : string
@@ -286,6 +295,33 @@ fun insertFile post { Spoiler = spoiler, File = file } =
   end
 
 
+val getIp =
+  ip <- getenv (blessEnvVar "REMOTE_ADDR");
+  case ip of
+  | None    => error <xml>UNEXPECTED: couldn't access remote IP</xml>
+  | Some ip => return ip
+
+
+fun postCooldown id =
+  ip <- getIp;
+  tim <- now;
+  til <- oneColOpt [#Until] (SELECT cooldowns.Until FROM cooldowns WHERE cooldowns.Ip = {[ip]}
+                             AND {[tim]} < cooldowns.Until);
+  case til of
+  | Some til =>
+    error <xml>You are on cooldown, wait {[elapsed' tim til]} before posting again</xml>
+  | None =>
+    dml (INSERT INTO cooldowns (Ip, Post, Until)
+         VALUES ({[ip]}, {[Some id]}, {[addSeconds tim 5]}))
+
+
+task periodic (60 * 60) = fn () =>
+  (* Delete cooldowns that have been around for longer than a day *)
+  tim <- now;
+  dml (DELETE FROM cooldowns
+       WHERE Until > {[addSeconds tim (60 * 60 * 24)]})
+
+
 fun addPost { Nam = name, Body = body, Bump = shouldBump
             , Files = files, Thread = thread } =
   { Count = count, Locked = locked } <-
@@ -297,6 +333,7 @@ fun addPost { Nam = name, Body = body, Bump = shouldBump
   id <- nextval post_id;
   dml (INSERT INTO posts (Id, Number, Thread, Nam, Time, Body) VALUES
        ({[id]}, {[count + 1]}, {[thread]}, {[name]}, CURRENT_TIMESTAMP, {[body]}));
+  postCooldown id;
   List.app (insertFile id) files;
   if shouldBump then
     dml (UPDATE threads SET Count = {[count + 1]}, Updated = CURRENT_TIMESTAMP
@@ -315,6 +352,7 @@ fun addThread { Nam = name, Subject = subject, Body = body, Files = files, Board
   postId <- nextval post_id;
   dml (INSERT INTO posts (Id, Number, Thread, Nam, Time, Body) VALUES
        ({[postId]}, 1, {[id]}, {[name]}, CURRENT_TIMESTAMP, {[body]}));
+  postCooldown id;
   List.app (insertFile postId) files;
   return id
 

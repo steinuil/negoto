@@ -1,5 +1,6 @@
 allow meta *
 allow env NEGOTO_LOGLEVEL
+allow env REMOTE_ADDR
 allow responseHeader Status
 rewrite style Styles/* [-]
 rewrite style Negoto/* Negoto_ [-]
@@ -8,7 +9,6 @@ rewrite style Error/*  Error_ [-]
 rewrite style Post/*   text_ [-]
 rewrite style * [-]
 rewrite url * [-]
-rewrite url */front [-]
 timeFormat %Y/%m/%d %H:%M:%S
 allow mime text/css
 allow mime text/plain
@@ -19,6 +19,7 @@ library uuid
 library bcrypt
 ffi tags
 onError Error.errorPage
+benignEffectful Basis.getenv
 
 $/list
 $/option
