@@ -31,7 +31,9 @@
   * [ ] come up with a nice logo
   * [X] purge old files from the database in some other way
   * [ ] a preprocessor that lets you configure paths in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf and css file hashes in init.sql
-  * [ ] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC.
+  * [X] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC
+    * or actually fix this in the compiler
+  * [ ] handle spoilers
 
 
 ## Wishlist

@@ -3,6 +3,7 @@ fun compose2 [a] [b] [c] [d] (f1 : c -> d) (f2 : a -> b -> c) x y =
   f1 (f2 x y)
 
 
+(* @Fixme give this a new name *)
 fun elapsed' t1 t2 =
   let
     val diff = t1 `diffInSeconds` t2
@@ -34,7 +35,7 @@ fun elapsed' t1 t2 =
 
 fun elapsed tim =
   tnow <- now;
-  return <xml>{(elapsed' tnow tim)} ago</xml>
+  return <xml>{elapsed' tim tnow} ago</xml>
 
 
 fun interpose [a] (sep : a) (ls : list a) : list a = case ls of

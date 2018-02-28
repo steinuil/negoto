@@ -69,8 +69,9 @@ fun getNews id =
 
 fun addNews { Title = title, Author = author, Body = body } =
   id <- nextval newsItems_id;
+  time <- now;
   dml (INSERT INTO newsItems (Id, Title, Author, Time, Body)
-       VALUES ( {[id]}, {[title]}, {[author]}, CURRENT_TIMESTAMP, {[body]} ));
+       VALUES ( {[id]}, {[title]}, {[author]}, {[time]}, {[body]} ));
   return id
 
 

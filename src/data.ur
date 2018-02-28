@@ -199,7 +199,8 @@ fun toggleThreadLock id =
 
 
 fun bumpThread id =
-  dml (UPDATE threads SET Updated = CURRENT_TIMESTAMP WHERE Id = {[id]})
+  time <- now;
+  dml (UPDATE threads SET Updated = {[time]} WHERE Id = {[id]})
 
 
 fun deleteThread id =
@@ -331,12 +332,13 @@ fun addPost { Nam = name, Body = body, Bump = shouldBump
   postLimit <- maxPosts;
   if count >= postLimit then error <xml>Post limit exceeded</xml> else
   id <- nextval post_id;
+  time <- now;
   dml (INSERT INTO posts (Id, Number, Thread, Nam, Time, Body) VALUES
-       ({[id]}, {[count + 1]}, {[thread]}, {[name]}, CURRENT_TIMESTAMP, {[body]}));
+       ({[id]}, {[count + 1]}, {[thread]}, {[name]}, {[time]}, {[body]}));
   postCooldown id;
   List.app (insertFile id) files;
   if shouldBump then
-    dml (UPDATE threads SET Count = {[count + 1]}, Updated = CURRENT_TIMESTAMP
+    dml (UPDATE threads SET Count = {[count + 1]}, Updated = {[time]}
          WHERE Id = {[thread]});
     return id
   else
@@ -347,11 +349,12 @@ fun addPost { Nam = name, Body = body, Bump = shouldBump
 fun addThread { Nam = name, Subject = subject, Body = body, Files = files, Board = board } =
   deleteOldThreads board;
   id <- nextval thread_id;
+  time <- now;
   dml (INSERT INTO threads (Id, Board, Updated, Subject, Count, Locked) VALUES
-       ({[id]}, {[board]}, CURRENT_TIMESTAMP, {[subject]}, 1, FALSE));
+       ({[id]}, {[board]}, {[time]}, {[subject]}, 1, FALSE));
   postId <- nextval post_id;
   dml (INSERT INTO posts (Id, Number, Thread, Nam, Time, Body) VALUES
-       ({[postId]}, 1, {[id]}, {[name]}, CURRENT_TIMESTAMP, {[body]}));
+       ({[postId]}, 1, {[id]}, {[name]}, {[time]}, {[body]}));
   postCooldown id;
   List.app (insertFile postId) files;
   return id
