@@ -86,8 +86,6 @@ fun editNews id { Title = title, Body = body } =
 
 
 (* Admin stuff *)
-
-
 open Styles
 structure E = Error
 style page

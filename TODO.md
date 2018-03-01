@@ -12,7 +12,7 @@
 
 * Handle some markup
   * [X] backlinks
-  * [ ] spoilers
+  * [X] spoilers
   * [ ] urls
   * [ ] inter-thread backlinks
 
@@ -33,6 +33,7 @@
   * [ ] a preprocessor that lets you configure paths in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf and css file hashes in init.sql
   * [X] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC
   * [ ] handle spoilered images
+  * [ ] a key-value interface to the filesystem for resources with fixed URLs (favicon, spoiler image)
 
 
 ## Wishlist

@@ -7,11 +7,11 @@ datatype text =
   | Backlink of int
 
 
-datatype parserState = Init | QuoteS
+datatype parserState = Init | QuoteS | SpoilerS
 
 
 (* Returns the parse tree reversed *)
-fun parsePost { UrlAllowed = urlAllowed } str : transaction (list text) = let
+fun parsePost opts str : transaction (list text) = let
   (post, _) <- parse' Init 0 [];
   return post
 where
@@ -74,8 +74,8 @@ where
     | (QuoteS, Some #"\n") =>
       return (acc, pos)
 
-    | (_, Some #"\n") =>
-      parse' Init (pos + 1) (Linebreak :: acc)
+    | (state, Some #"\n") =>
+      parse' state (pos + 1) (Linebreak :: acc)
 
     | (Init, Some #">") =>
       if at (pos + 1) = Some #">" then
@@ -95,6 +95,17 @@ where
           acc <- appText #">" acc;
           parse' Init (pos + 1) acc)
 
+    | (SpoilerS, Some #"\\") =>
+      if at (pos + 1) = Some #"}" then
+        acc <- appText #"}" acc;
+        parse' state (pos + 2) acc
+      else
+        acc <- appText #"\\" acc;
+        parse' state (pos + 1) acc
+
+    | (SpoilerS, Some #"}") =>
+      return (acc, pos + 1)
+
     | (state, Some #"\\") =>
       if at (pos + 1) = Some #"{" then
         acc <- appText #"{" acc;
@@ -103,72 +114,21 @@ where
         acc <- appText #"\\" acc;
         parse' state (pos + 1) acc
 
-    | (state, Some #"{") => (case (ats (pos + 1) 4, urlAllowed) of
-      | (Some "url ", True) =>
+    | (state, Some #"{") =>
+      if opts.UrlAllowed && ats (pos + 1) 4 = Some "url " then
         buf <- Buffer.create 24;
         (link, pos) <- parseTil #"}" (pos + 5) buf;
         parse' state (pos + 1) (Url link :: acc)
-      | _ =>
+      else if ats (pos + 1) 8 = Some "spoiler " then
+        (x, pos) <- parse' SpoilerS (pos + 9) [];
+        parse' state pos (Spoiler x :: acc)
+      else
         acc <- appText #"{" acc;
-        parse' state (pos + 1) acc)
+        parse' state (pos + 1) acc
 
     | (state, Some chr) =>
       acc <- appText chr acc;
       parse' state (pos + 1) acc
-
-
-      (*
-  fun parse pos acc =
-    case at pos of
-    (* EOS *)
-    | None => return acc
-
-    (* Line breaks *)
-    | Some #"\n" => parse (pos + 1) (Linebreak :: acc)
-
-    | Some #"\r" => (case at (pos + 1) of
-        | Some #"\n" => parse (pos + 2) (Linebreak :: acc)
-        | _          => parse (pos + 1) (Linebreak :: acc))
-
-    (* Meme arrows *)
-    | Some #">" => (case at (pos + 1) of
-        | Some #">" =>
-          (*  *)
-          acc <- appText #"!" acc;
-          parse (pos + 1) acc
-        | _ => (case acc of
-            | Linebreak :: _ =>
-              (* @Hack we need a better parsing function *)
-              buf <- Buffer.create 48;
-              (buf, pos) <- parseTil #"\n" (pos + 1) buf;
-              parse pos (Quote buf :: acc)
-            | _ =>
-              acc <- appText #">" acc;
-              parse (pos + 1) acc))
-
-    | Some #"\\" => (case at (pos + 1) of
-        | Some #"{" =>
-          acc <- appText #"\\" acc;
-          acc <- appText #"{" acc;
-          parse (pos + 2) acc
-        | _ =>
-          acc <- appText #"\\" acc;
-          parse (pos + 1) acc)
-
-    | Some #"{" => (case (ats (pos + 1) 4, urlAllowed) of
-        | (Some "url ", True) =>
-          buf <- Buffer.create 24;
-          (link, pos) <- parseTil #"}" (pos + 5) buf;
-          parse (pos + 1) (Url link :: acc)
-        | _ =>
-          acc <- appText #"{" acc;
-          parse (pos + 1) acc)
-
-    (* All other characters *)
-    | Some chr =>
-      acc <- appText chr acc;
-      parse (pos + 1) acc
-      *)
 end
 
 
@@ -198,6 +158,9 @@ fun toHtml str : transaction xbody =
       | (Url u) :: rest =>
         u <- Buffer.contents u;
         loop rest <xml><a class="ulink">{[u]}</a>{acc}</xml>
+      | (Spoiler s) :: rest =>
+        x <- loop s <xml/>;
+        loop rest <xml><span class="spoiler">{x}</span>{acc}</xml>
       | [] =>
         return acc
       | _ =>
