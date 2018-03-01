@@ -296,13 +296,6 @@ fun insertFile post { Spoiler = spoiler, File = file } =
   end
 
 
-val getIp =
-  ip <- getenv (blessEnvVar "REMOTE_ADDR");
-  case ip of
-  | None    => error <xml>UNEXPECTED: couldn't access remote IP</xml>
-  | Some ip => return ip
-
-
 fun postCooldown id =
   ip <- getIp;
   tim <- now;
@@ -314,6 +307,12 @@ fun postCooldown id =
   | None =>
     dml (INSERT INTO cooldowns (Ip, Post, Until)
          VALUES ({[ip]}, {[Some id]}, {[addSeconds tim 5]}))
+
+
+fun banIp ip secs =
+  time <- now;
+  dml (INSERT INTO cooldowns (Ip, Post, Until)
+       VALUES ({[ip]}, {[None]}, {[addSeconds time secs]}))
 
 
 task periodic (60 * 60) = fn () =>

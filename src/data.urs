@@ -90,3 +90,6 @@ val maxThreads : transaction int
 val maxPosts   : transaction int
 val setMaxThreads : int -> transaction unit
 val setMaxPosts   : int -> transaction unit
+
+val banIp : string -> int -> transaction unit
+  (** Ban the selected IP for [n] seconds. *)

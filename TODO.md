@@ -11,7 +11,7 @@
   * DevIL (probably the best out of the bunch)
 
 * Handle some markup
-  * [ ] backlinks
+  * [X] backlinks
   * [ ] spoilers
   * [ ] urls
   * [ ] inter-thread backlinks
@@ -32,8 +32,7 @@
   * [X] purge old files from the database in some other way
   * [ ] a preprocessor that lets you configure paths in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf and css file hashes in init.sql
   * [X] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC
-    * or actually fix this in the compiler
-  * [ ] handle spoilers
+  * [ ] handle spoilered images
 
 
 ## Wishlist

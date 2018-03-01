@@ -1,19 +1,19 @@
-val id = PostFfi.mkId
-val link = PostFfi.mkIdUrl
-
-
 datatype text =
   | Linebreak
   | Text of Buffer.t
-  | Quote of Buffer.t
+  | Quote of list text
   | Spoiler of list text
   | Url of Buffer.t
-  | Backlink of id
+  | Backlink of int
+
+
+datatype parserState = Init | QuoteS
 
 
 (* Returns the parse tree reversed *)
 fun parsePost { UrlAllowed = urlAllowed } str : transaction (list text) = let
-  parse 0 []
+  (post, _) <- parse' Init 0 [];
+  return post
 where
   fun appText chr acc = case acc of
     | (Text b) :: rest =>
@@ -53,6 +53,71 @@ where
         parseTil end' (pos + 1) acc
 
 
+  fun parseBacklink pos acc =
+    if acc >= 10000 then return (acc, pos) else
+    case at pos of
+    | None => Some (acc, pos)
+    | Some chr =>
+      if chr >= #"0" && chr <= #"9" then
+        parseBacklink (pos + 1) ((acc * 10) + (ord chr - 48))
+      else if acc = 0 then
+        None
+      else
+        Some (acc, pos)
+
+
+  fun parse' state pos acc =
+    case (state, at pos) of
+    | (_, None) =>
+      return (acc, pos)
+
+    | (QuoteS, Some #"\n") =>
+      return (acc, pos)
+
+    | (_, Some #"\n") =>
+      parse' Init (pos + 1) (Linebreak :: acc)
+
+    | (Init, Some #">") =>
+      if at (pos + 1) = Some #">" then
+        case parseBacklink (pos + 2) 0 of
+        | None =>
+          acc <- appText #">" acc;
+          acc <- appText #">" acc;
+          parse' Init (pos + 2) acc
+        | Some (id, pos) =>
+          parse' Init pos (Backlink id :: acc)
+      else
+        (case acc of
+        | Linebreak :: _ =>
+          (q, pos) <- parse' QuoteS (pos + 1) [];
+          parse' Init pos (Quote q :: acc)
+        | _ =>
+          acc <- appText #">" acc;
+          parse' Init (pos + 1) acc)
+
+    | (state, Some #"\\") =>
+      if at (pos + 1) = Some #"{" then
+        acc <- appText #"{" acc;
+        parse' state (pos + 2) acc
+      else
+        acc <- appText #"\\" acc;
+        parse' state (pos + 1) acc
+
+    | (state, Some #"{") => (case (ats (pos + 1) 4, urlAllowed) of
+      | (Some "url ", True) =>
+        buf <- Buffer.create 24;
+        (link, pos) <- parseTil #"}" (pos + 5) buf;
+        parse' state (pos + 1) (Url link :: acc)
+      | _ =>
+        acc <- appText #"{" acc;
+        parse' state (pos + 1) acc)
+
+    | (state, Some chr) =>
+      acc <- appText chr acc;
+      parse' state (pos + 1) acc
+
+
+      (*
   fun parse pos acc =
     case at pos of
     (* EOS *)
@@ -103,6 +168,7 @@ where
     | Some chr =>
       acc <- appText chr acc;
       parse (pos + 1) acc
+      *)
 end
 
 
@@ -125,8 +191,10 @@ fun toHtml str : transaction xbody =
         str <- Buffer.contents buf;
         loop rest <xml>{[str]}{acc}</xml>
       | (Quote q) :: rest =>
-        q <- Buffer.contents q;
-        loop rest <xml><span class="quote">{[q]}</span>{acc}</xml>
+        x <- loop q <xml/>;
+        loop rest <xml><span class="quote">{x}</span>{acc}</xml>
+      | (Backlink n) :: rest =>
+        loop rest <xml><a class="backlink" href={PostFfi.mkIdUrl (PostFfi.mkId n)}>{[n]}</a>{acc}</xml>
       | (Url u) :: rest =>
         u <- Buffer.contents u;
         loop rest <xml><a class="ulink">{[u]}</a>{acc}</xml>
@@ -135,3 +203,7 @@ fun toHtml str : transaction xbody =
       | _ =>
         error <xml>NOT IMPLEMENTED</xml>
   end
+
+
+val id = PostFfi.mkId
+val link = PostFfi.mkIdUrl

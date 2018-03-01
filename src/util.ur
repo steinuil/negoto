@@ -102,6 +102,12 @@ fun rowCount [tbl ::: Name] [row ::: {Type}] t expr =
   *)
 
 
+val getIp =
+  ip <- getenv (blessEnvVar "REMOTE_ADDR");
+  case ip of
+  | None    => error <xml>UNEXPECTED: couldn't access remote IP</xml>
+  | Some ip => return ip
+
 
 fun record_seqOpt [ts ::: {Type}] (fl : folder ts) (r : $(map option ts)) : option $ts =
     @foldR [option] [fn ts => option $ts]
