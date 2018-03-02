@@ -106,6 +106,7 @@ $(static):
 
 static_dirs  = $(static)/s $(static)/t
 static_dirs += $(static)/banner $(static)/css
+static_dirs += $(static)/assets
 
 run: negoto $(css) | $(static)
 	mkdir -p $(static_dirs)
@@ -117,7 +118,7 @@ check:
 	$(urweb) -tc project
 
 clean:
-	rm -rf $b $(exe) public
+	rm -rf $b $(exe)
 	@$(MAKE) -C $s/bcrypt clean
 
 pull-submodules:

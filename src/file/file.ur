@@ -9,6 +9,23 @@ val eq_handle   = eq_int
 sequence handle_Ids
 
 
+val assets = "assets"
+
+val spoiler =
+  FileFfi.link assets "spoiler.jpg"
+
+
+(*
+fun set filename file =
+  (* @Hack DANGEROUS failing the transaction will delete the previous version
+   * of this file *)
+  FileFfi.save assets filename file
+
+val link =
+  FileFfi.link assets
+*)
+
+
 signature Handler = sig
   con link :: Type
 

@@ -19,8 +19,6 @@
 * Ajax post forms
   * [ ] either use ajaxUpload or roll my own library
 
-* [ ] Manage the favicon
-
 * Handle IPs and bans (env variable `REMOTE_ADDR`)
   * [X] store post IPs for a while and remove them from the db after a day or so
   * [X] posting cooldown
@@ -28,12 +26,13 @@
   * [ ] IP region bans (?)
 
 * Other
-  * [ ] come up with a nice logo
   * [X] purge old files from the database in some other way
   * [ ] a preprocessor that lets you configure paths in fileFfi.c, fileFfi.js, project.urp, lighttpd.conf and css file hashes in init.sql
   * [X] convert all the `CURRENT_TIMESTAMP` into machine time, because SQLite uses UTC
-  * [ ] handle spoilered images
-  * [ ] a key-value interface to the filesystem for resources with fixed URLs (favicon, spoiler image)
+  * [X] handle spoilered images
+  * [ ] come up with a nice logo
+  * [ ] add default favicon
+  * [ ] add default spoiler image
 
 
 ## Wishlist
@@ -53,7 +52,14 @@
 
 * Live preview of post
 
+* [ ] Less relevant news such as scheduled downtime, hidden on the front page but shown in a blotter
+
 * [ ] Multiple files in single post
+
+* Manage files with an immutable URL (favicon, other stuff)
+  * [ ] write a key-value interface to File, use symlinks to avoid deleting stuff
+  * [ ] manage the favicon
+  * [ ] manage the spoiler fallback image
 
 * WebM support
   * [ ] player

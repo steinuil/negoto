@@ -13,6 +13,20 @@ val show_board : show Data.board =
     "/" ^ id ^ "/ - " ^ name)
 
 
+fun srcOf (file : Data.postFile) = case file of
+  | { Spoiler = True, ... } =>
+    File.spoiler
+  | { Src = src, ... } =>
+    src
+
+
+fun thumbOf (file : Data.postFile) = case file of
+  | { Spoiler = True, ... } =>
+    File.spoiler
+  | { Thumb = t, ... } =>
+    t
+
+
 (* Create a subform that can hold up to `max` files. *)
 (* FIXME: fails with `Fatal error: Tried to read a normal form input as files` when files in subforms *)
 fun filesForm [form ::: {Type}] [[Files] ~ form] max
@@ -164,7 +178,7 @@ and catalogThread thread' =
           {case thread'.Files of
           | [] => <xml>link</xml>
           | file :: _ => <xml><figure>
-            <img src={file.Thumb}/>
+            <img src={thumbOf file}/>
           </figure></xml>}
         </a>
       </figure>
@@ -217,12 +231,12 @@ and thread id =
                                                     exp <- get expanded;
                                                     preventDefault;
                                                     set expanded (not exp)}>
-          <noscript><img src={f.Thumb}/></noscript>
+          <noscript><img src={thumbOf f}/></noscript>
           <dyn signal={exp <- signal expanded;
                        return (if exp then
                          <xml><img class="expanded-img" src={f.Src}/></xml>
                        else
-                         <xml><img src={f.Thumb}/></xml>)}/>
+                         <xml><img src={thumbOf f}/></xml>)}/>
         </a></xml>
 
       fun postInfo post' =

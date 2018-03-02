@@ -132,6 +132,12 @@ uw_unit uw_FileFfi_save(uw_context ctx, uw_Basis_string section, uw_Basis_string
 }
 
 
+/*
+// Move the existing file to a temporary location
+uw_unit uw_FileFfi_saveAsset
+*/
+
+
 uw_unit uw_FileFfi_delete(uw_context ctx, uw_Basis_string section, uw_Basis_string name) {
   int ok = uw_register_transactional(ctx, gen_filename(section, name),
     delete_filename,

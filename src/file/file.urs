@@ -36,6 +36,17 @@ val sql_handle  : sql_injectable_prim handle
 val eq_handle   : eq handle
 
 
+(*
+val set : string -> file -> transaction unit
+  (** Save a file with the given filename. *)
+
+val link : string -> url
+  (** Get a link to the file with the given filename. *)
+*)
+
+
+val spoiler : url
+
 signature Handler = sig
   con link :: Type
     (** The type of the link we can acquire from the file.
@@ -56,8 +67,11 @@ signature Handler = sig
 end
 
 
-structure Image  : Handler where con link = { Src : url, Thumb : url }
+structure Image : Handler
+  where con link = { Src : url, Thumb : url }
 
-structure Banner : Handler where con link = url
+structure Banner : Handler
+  where con link = url
 
-structure Css    : Handler where con link = url
+structure Css : Handler
+  where con link = url
