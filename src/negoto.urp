@@ -10,8 +10,7 @@ rewrite style Post/*   text_ [-]
 rewrite style * [-]
 rewrite url * [-]
 timeFormat %Y/%m/%d %H:%M:%S
-allow mime text/css
-allow mime text/plain
+allow mime application/json
 library file
 library buffer
 library postFfi

@@ -250,7 +250,7 @@ and thread id =
       fun threadPost post' =
         expanded <- source False;
         postBody <- Post.toHtml post'.Body;
-        return <xml><div class="post reply" id={Post.id post'.Id}>
+        return <xml><div class="post reply" id={Post.id post'.Number}>
           {picture post'.Files expanded}
           {postInfo post'}
           <div class="post-body">{postBody}</div>
@@ -259,7 +259,7 @@ and thread id =
       val mkOp =
         expanded <- source False;
         body <- Post.toHtml op.Body;
-        return <xml><div class="post op-post" id={Post.id op.Id}>
+        return <xml><div class="post op-post" id={Post.id op.Number}>
           {picture op.Files expanded}
           {postInfo op}
           <div class="post-body">{body}</div>

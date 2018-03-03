@@ -102,17 +102,17 @@ val json_newsItem : json Admin.newsItem =
 
 
 fun jsonPage [a] (_ : json a) (x : a) : transaction page =
-  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
+  returnBlob (textBlob (toJson x)) (blessMime "application/json")
 
 
 fun jsonPageM [a] (_ : json a) (f : transaction a) : transaction page =
   x <- f;
-  returnBlob (textBlob (toJson x)) (blessMime "text/plain")
+  returnBlob (textBlob (toJson x)) (blessMime "application/json")
 
 
 fun jsonError (msg : string) : transaction page =
   setHeader (blessResponseHeader "Status") "404 Not Found";
-  returnBlob (textBlob (toJson msg)) (blessMime "text/plain")
+  returnBlob (textBlob (toJson msg)) (blessMime "application/json")
 
 
 
