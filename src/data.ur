@@ -354,7 +354,7 @@ fun addThread { Nam = name, Subject = subject, Body = body, Files = files, Board
   postId <- nextval post_id;
   dml (INSERT INTO posts (Id, Number, Thread, Nam, Time, Body) VALUES
        ({[postId]}, 1, {[id]}, {[name]}, {[time]}, {[body]}));
-  postCooldown id;
+  postCooldown postId;
   List.app (insertFile postId) files;
   return id
 

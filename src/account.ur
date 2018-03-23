@@ -150,10 +150,12 @@ val getAuth =
 fun genLogin name =
   token <- Uuid.random;
   hash <- Bcrypt.hash token;
+  time <- now;
   dml (INSERT INTO logged (User, Hash)
        VALUES ( {[name]}, {[hash]} ));
   setCookie loginToken { Value = { User = name, Token = token }
-                       , Expires = None, Secure = False }
+                       , Expires = Some (addSeconds time (86400 * 365))
+                       , Secure = False }
   (* @Hack this cookie should be secure in version 1.0 *)
 
 

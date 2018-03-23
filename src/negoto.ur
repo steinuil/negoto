@@ -68,27 +68,6 @@ in
 end
 
 
-(*
-fun layout tags (title' : string) (class' : css_class) (body' : xbody) =
-  sitename <- admin.sitename;
-  nav' <- navigation tags;
-  banner' <- layout.randbanner;
-  layout.layoutwithswitcher switch_theme (title' ^ " - " ^ sitename) class' ""
-    (fn switcher => <xml>
-      <header>
-        <nav>{nav'}</nav>
-        {case banner' of
-        | none => <xml/>
-        | some b =>
-          <xml><img class="banner" width={300} height={100} src={b}/></xml>}
-        <h1>{[title']}</h1>
-      </header>
-      <main>{body'}</main>
-      <footer>{switcher}</footer>
-    </xml>)
-    *)
-
-
 fun layout boards (title' : string) (class' : css_class) (body : xbody) =
   siteName <- Admin.siteName;
   nav' <- navigation boards;
@@ -350,7 +329,7 @@ and create_thread f =
   if strlen f.Nam > 40 then E.tooLong "Name" 40 else
   if strlen f.Subject > 140 || strlen f.Subject < 1 then E.between "Subject" 1 140 else
   let
-    val name = if f.Nam = "" then f.Nam else "Anonymous"
+    val name = if f.Nam = "" then "Anonymous" else f.Nam
 
     val files =
       if blobSize (fileData f.File) > 0 then
@@ -373,7 +352,7 @@ and create_post f =
     E.msg "You can't post with an empty comment and no file"
   else
   let
-    val name = if f.Nam = "" then f.Nam else "Anonymous"
+    val name = if f.Nam = "" then "Anonymous" else f.Nam
 
     val files =
       if blobSize (fileData f.File) > 0 then

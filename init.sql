@@ -29,4 +29,4 @@ INSERT INTO uw_Data_boards VALUES
 
 
 INSERT INTO uw_Admin_affLinks VALUES
-("https://github.com/steinuil/negoto", "source")
+("https://github.com/steinuil/negoto", "source");

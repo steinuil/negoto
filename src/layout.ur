@@ -207,7 +207,8 @@ fun themeSwitcher themes' curr act : xbody =
 
 
 fun setTheme t =
-  setCookie selectedTheme { Value = t, Expires = None, Secure = False }
+  setCookie selectedTheme { Value = t, Secure = False
+                          , Expires = Some (addSeconds time (86400 * 365)) }
 
 
 open Tags

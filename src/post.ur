@@ -139,8 +139,8 @@ style spoiler
 style backlink
 
 
-fun toHtml str : transaction xbody =
-  post <- parsePost { UrlAllowed = False } str;
+fun toHtml' opts str : transaction xbody =
+  post <- parsePost opts str;
   let
     loop post <xml/>
   where
@@ -166,6 +166,10 @@ fun toHtml str : transaction xbody =
       | _ =>
         error <xml>NOT IMPLEMENTED</xml>
   end
+
+
+val toHtml =
+  toHtml' { UrlAllowed = False }
 
 
 val id = PostFfi.mkId

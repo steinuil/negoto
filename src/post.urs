@@ -4,3 +4,5 @@ val id : int -> id
 val link : id -> url
 
 val toHtml : string -> transaction xbody
+
+val toHtml' : { UrlAllowed : bool } -> string -> transaction xbody
