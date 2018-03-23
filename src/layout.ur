@@ -207,6 +207,7 @@ fun themeSwitcher themes' curr act : xbody =
 
 
 fun setTheme t =
+  time <- now;
   setCookie selectedTheme { Value = t, Secure = False
                           , Expires = Some (addSeconds time (86400 * 365)) }
 
