@@ -6,8 +6,13 @@ more popular PHP-based imageboard), and [ostensibly bug-free](https://github.com
 [![Build Status](https://travis-ci.org/steinuil/negoto.svg?branch=master)](https://travis-ci.org/steinuil/negoto)
 
 ## Does this work?
-Not yet. Negoto is still in development, but it'll soon be ready to be deployed.
-See [TODO.md](TODO.md) for details on what's not done yet.
+Sort of. It runs fine on my server, but if you want to run it on yours you'll
+have to configure a few things (the paths in fileFfi.c, fileFfi.js, project.urp
+and bring your own lighttpd.conf file). There's also a few features that I'd
+like the 1.0 version to have, along with some small bugs to fix.
+
+If you want to use it and have trouble installing it, feel free to open an
+issue and I'll try to get back to it and maybe finish it asap.
 
 ## Dependencies
 Negoto depends on OpenSSL, and it assumes that `/dev/urandom` exists and is

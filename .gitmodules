@@ -2,7 +2,3 @@
 	path = src/bcrypt
 	url = https://github.com/steinuil/urweb-bcrypt
 	branch = master
-[submodule "src/ajaxUpload"]
-	path = src/ajaxUpload
-	url = https://github.com/urweb/ajaxUpload
-	branch = master
