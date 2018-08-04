@@ -6,9 +6,10 @@ urweb = urweb
 sqlite = sqlite3
 sass = sass
 CC ?= gcc
+CPP = cpp
 
 cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -std=gnu11
-ur_include = -I$(shell urweb -print-cinclude)
+includes = -I$(shell urweb -print-cinclude) -I$(shell pwd)
 
 # Source and build dir
 s = src
@@ -39,9 +40,13 @@ src += $s/file/lib.urp
 src += $s/file/file.ur $s/file/file.urs
 src += $s/file/fileFfi.urs $s/file/fileFfi.h
 src += $b/fileFfi.o
+src += $s/file/fileFfi.js.gen
+
+$s/file/fileFfi.js.gen: $s/file/fileFfi.js
+	$(CPP) -include negoto_config.h -undef -P $< -o $@
 
 $b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h | $b
-	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(includes)
 
 # Post library
 src += $s/postFfi/lib.urp
@@ -49,7 +54,7 @@ src += $s/postFfi/postFfi.urs $s/postFfi/postFfi.h
 src += $b/postFfi.o
 
 $b/postFfi.o: $s/postFfi/postFfi.c $s/postFfi/postFfi.h | $b
-	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(includes)
 
 # UUID library
 src += $s/uuid/lib.urp
@@ -57,7 +62,7 @@ src += $s/uuid/uuid.urs $s/uuid/uuid.h
 src += $b/uuid.o
 
 $b/uuid.o: $s/uuid/uuid.c $s/uuid/uuid.h | $b
-	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(includes)
 
 # Buffer library
 src += $s/buffer/lib.urp
@@ -65,7 +70,7 @@ src += $s/buffer/buffer.urs $s/buffer/buffer.h
 src += $b/buffer.o
 
 $b/buffer.o: $s/buffer/buffer.c $s/buffer/buffer.h | $b
-	$(CC) -c $(cc_flags) $< -o $@ $(ur_include)
+	$(CC) -c $(cc_flags) $< -o $@ $(includes)
 
 # Bcrypt
 ext += $s/bcrypt/bcrypt.a

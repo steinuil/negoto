@@ -1,6 +1,6 @@
 ffi fileFfi
 include fileFfi.h
-jsFile fileFfi.js
+jsFile fileFfi.js.gen
 jsFunc FileFfi.link=FileFfi.link
 
 $/list

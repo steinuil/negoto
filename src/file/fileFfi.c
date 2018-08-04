@@ -9,14 +9,9 @@
 #include <sys/stat.h>
 
 #include <urweb.h>
+#include <negoto_config.h>
 
 #include "fileFfi.h"
-
-
-#define NEGOTO_STATIC_DIR "public/static"
-#define NEGOTO_STATIC_URL "/static"
-#define NEGOTO_CONVERT_PATH "convert"
-#define NEGOTO_THUMB_SIZE "250x250"
 
 
 uw_Basis_string uw_FileFfi_md5Hash(uw_context ctx, uw_Basis_file file) {
