@@ -9,7 +9,8 @@ CC ?= gcc
 CPP = cpp
 
 cc_flags = -Wall -Wextra -Wno-unused-parameter -Wno-implicit-fallthrough -std=gnu11
-includes = -I$(shell urweb -print-cinclude) -I$(shell pwd)
+ur_include = $(shell urweb -print-cinclude)
+includes = -I$(ur_include) -I$(shell pwd)
 
 # Source and build dir
 s = src
@@ -42,10 +43,10 @@ src += $s/file/fileFfi.urs $s/file/fileFfi.h
 src += $b/fileFfi.o
 src += $s/file/fileFfi.js.gen
 
-$s/file/fileFfi.js.gen: $s/file/fileFfi.js
+$s/file/fileFfi.js.gen: $s/file/fileFfi.js negoto_config.h
 	$(CPP) -include negoto_config.h -undef -P $< -o $@
 
-$b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h | $b
+$b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h negoto_config.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(includes)
 
 # Post library
@@ -99,6 +100,7 @@ $(db): $b/schema.sql init.sql
 	rm -f $@
 	$(sqlite) $@ < $b/schema.sql
 	$(sqlite) $@ < init.sql
+
 
 
 negoto: $(exe) $(db)
