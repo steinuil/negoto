@@ -394,8 +394,8 @@ and edit_news_item f =
 
 and site_settings () =
   (admin, role) <- Account.requireLevel Account.Admin;
-  r <- readme;
-  r <- Post.toHtml r;
+  r' <- readme;
+  r <- Post.toHtml r';
   maxThreads <- Data.maxThreads;
   maxPosts <- Data.maxPosts;
   siteName <- siteName;
@@ -461,7 +461,7 @@ and site_settings () =
     <header>Readme</header>
     <div>{r}</div>
     <form>
-      <textarea{#Body} required placeholder="Readme">{[r]}</textarea><br/>
+      <textarea{#Body} required placeholder="Readme">{[r']}</textarea><br/>
       <submit value="Edit readme" action={edit_readme}/>
     </form>
   </section><section>
