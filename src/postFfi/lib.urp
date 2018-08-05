@@ -1,2 +1,5 @@
 ffi postFfi
 include postFfi.h
+jsFile postFfi.js
+jsFunc PostFfi.mkId=PostFfi.mkId
+jsFunc PostFfi.mkIdUrl=PostFfi.mkIdUrl

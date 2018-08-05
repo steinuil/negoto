@@ -5,3 +5,9 @@ benignEffectful Buffer.contents
 benignEffectful Buffer.addString
 benignEffectful Buffer.addChar
 include buffer.h
+jsFile buffer.js
+jsFunc Buffer.create=Buffer.create
+jsFunc Buffer.contents=Buffer.contents
+jsFunc Buffer.length=Buffer.length
+jsFunc Buffer.addChar=Buffer.addChar
+jsFunc Buffer.addString=Buffer.addString

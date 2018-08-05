@@ -53,6 +53,7 @@ $b/fileFfi.o: $s/file/fileFfi.c $s/file/fileFfi.h negoto_config.h | $b
 src += $s/postFfi/lib.urp
 src += $s/postFfi/postFfi.urs $s/postFfi/postFfi.h
 src += $b/postFfi.o
+src += $s/postFfi/postFfi.js
 
 $b/postFfi.o: $s/postFfi/postFfi.c $s/postFfi/postFfi.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(includes)
@@ -69,6 +70,7 @@ $b/uuid.o: $s/uuid/uuid.c $s/uuid/uuid.h | $b
 src += $s/buffer/lib.urp
 src += $s/buffer/buffer.urs $s/buffer/buffer.h
 src += $b/buffer.o
+src += $s/buffer/buffer.js
 
 $b/buffer.o: $s/buffer/buffer.c $s/buffer/buffer.h | $b
 	$(CC) -c $(cc_flags) $< -o $@ $(includes)
