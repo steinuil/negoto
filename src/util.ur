@@ -116,3 +116,10 @@ fun record_seqOpt [ts ::: {Type}] (fl : folder ts) (r : $(map option ts)) : opti
              (Some v, Some vs) => Some ({nm = v} ++ vs)
            | _ => None)
      (Some {}) fl r
+
+
+fun listLast ls =
+  case ls of
+  | [] => None
+  | tl :: [] => Some tl
+  | hd :: tl => listLast tl

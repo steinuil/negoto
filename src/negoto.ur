@@ -243,21 +243,41 @@ and thread id =
           {postInfo op}
           <div class="post-body">{body}</div>
         </div></xml>
+
+      fun lastPost p =
+        Util.listLast p |> Option.mp (fn x => x.Number)
+
+      fun fetchNewPosts posts =
+        (last, staticPosts) <- get posts;
+        newPosts <- rpc (Data.postsSince id last);
+        n <- List.mapXM threadPost newPosts;
+        set posts (Option.get last (lastPost newPosts), <xml>{staticPosts}{n}</xml>)
     in
       op <- mkOp;
-      posts <- List.mapXM threadPost posts;
+      staticPosts <- List.mapXM threadPost posts;
+      dynPosts <- source (Option.get id (lastPost posts), staticPosts);
       layout boards title' thread_page <xml>
         <header>
           [<a link={catalog t.Board}>back</a>]
           <span class="subject">{[t.Subject]}</span>
           {if t.Locked then <xml>(locked)</xml> else <xml/>}
         </header>
-        <div class="container">{op}{posts}</div>
+        <div class="container">
+          {op}
+          <noscript>{staticPosts}</noscript>
+          <dyn signal={
+            (_, posts) <- signal dynPosts;
+            return posts
+          }/>
+        </div>
         {if t.Locked then <xml/> else
         <xml>
           <div class="static-form-container">{staticForm}</div>
           <!-- {pForm} -->
         </xml>}
+        [ <a link={catalog t.Board}>back</a>
+        / <span class="ulink" onclick={fn _ => fetchNewPosts dynPosts}>update</span>
+        ]
       </xml>
     end
 
