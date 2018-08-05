@@ -188,14 +188,17 @@ structure Css = Handler(struct
   type link = url
 
 
-  fun path name _ =
-    FileFfi.link css_dir name
+  fun fname hash = hash ^ ".css"
 
 
-  fun save name _ file =
-    FileFfi.save css_dir name file
+  fun path hash _ =
+    FileFfi.link css_dir (fname hash)
 
 
-  fun delete name _ =
-    FileFfi.delete css_dir name
+  fun save hash _ file =
+    FileFfi.save css_dir (fname hash) file
+
+
+  fun delete hash _ =
+    FileFfi.delete css_dir (fname hash)
 end)
