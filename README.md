@@ -1,7 +1,7 @@
 # Negoto
 Negoto is a simple and functional imageboard. It is mostly written in Ur/Web,
 which makes it extremely efficient and lightweight (at least compared to the
-more popular PHP-based imageboard), and [ostensibly bug-free](https://github.com/urweb/urweb#the-urweb-programming-language).
+more popular PHP-based imageboard), and [ostensibly crash-free](https://github.com/urweb/urweb#the-urweb-programming-language).
 
 [![Build Status](https://travis-ci.org/steinuil/negoto.svg?branch=master)](https://travis-ci.org/steinuil/negoto)
 
