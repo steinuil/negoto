@@ -190,20 +190,36 @@ and thread id =
     postBody <- source "";
     pForm <- postForm postBody id;
     let
-      val title' =
+      val pageTitle =
         List.find (fn board => board.Id = t.Board) boards
         |> Option.mp show
         |> Option.get ""
-
-      fun addTxt str =
-        t <- get postBody;
-        set postBody (t ^ str)
 
       val (op, posts) = case posts of
         | op :: rest => (op, rest)
         | _ => error <xml>This thread doesn't have an OP</xml>
 
-      fun picture files expanded =
+      fun addTxt str =
+        t <- get postBody;
+        set postBody (t ^ str)
+
+      fun postInfo p =
+        <xml><div class="info">
+          <span class="name">{[p.Nam]}</span>
+          <time>{[p.Time]}</time>
+          <a href={Post.link (Post.id p.Number)}>&#8470;</a><span class="ulink"
+            onclick={fn _ => addTxt (">>" ^ show p.Number ^ "\n")}>{[p.Number]}</span>
+        </div></xml>
+
+      fun threadPost' pic p =
+        postBody <- Post.toHtml p.Body;
+        return <xml><div class="post reply" id={Post.id p.Number}>
+          {pic p.Files}
+          {postInfo p}
+          <div class="post-body">{postBody}</div>
+        </div></xml>
+
+      fun picture expanded files =
         case files of
         | [] => <xml/>
         | f :: _ => <xml><a href={f.Src} onclick={fn _ =>
@@ -218,28 +234,23 @@ and thread id =
                          <xml><img src={thumbOf f}/></xml>)}/>
         </a></xml>
 
-      fun postInfo post' =
-        <xml><div class="info">
-          <span class="name">{[post'.Nam]}</span>
-          <time>{[post'.Time]}</time>
-          <a href={Post.link (Post.id post'.Number)}>&#8470;</a><span class="ulink"
-            onclick={fn _ => addTxt (">>" ^ show post'.Number ^ "\n")}>{[post'.Number]}</span>
-        </div></xml>
+      fun staticPicture f =
+        case f of
+        | [] => <xml/>
+        | f :: _ => <xml><a href={f.Src}><img src={thumbOf f}/></a></xml>
 
-      fun threadPost post' =
+      fun threadPost p =
         expanded <- source False;
-        postBody <- Post.toHtml post'.Body;
-        return <xml><div class="post reply" id={Post.id post'.Number}>
-          {picture post'.Files expanded}
-          {postInfo post'}
-          <div class="post-body">{postBody}</div>
-        </div></xml>
+        threadPost' (picture expanded) p
+
+      fun staticThreadPost p =
+        threadPost' staticPicture p
 
       val mkOp =
         expanded <- source False;
         body <- Post.toHtml op.Body;
         return <xml><div class="post op-post" id={Post.id op.Number}>
-          {picture op.Files expanded}
+          {picture expanded op.Files}
           {postInfo op}
           <div class="post-body">{body}</div>
         </div></xml>
@@ -254,9 +265,10 @@ and thread id =
         set posts (Option.get last (lastPost newPosts), <xml>{staticPosts}{n}</xml>)
     in
       op <- mkOp;
-      staticPosts <- List.mapXM threadPost posts;
-      dynPosts <- source (Option.get id (lastPost posts), staticPosts);
-      layout boards title' thread_page <xml>
+      staticPosts <- List.mapXM staticThreadPost posts;
+      dynPosts <- List.mapXM threadPost posts;
+      dynPosts <- source (Option.get id (lastPost posts), dynPosts);
+      layout boards pageTitle thread_page <xml>
         <header>
           [<a link={catalog t.Board}>back</a>]
           <span class="subject">{[t.Subject]}</span>
