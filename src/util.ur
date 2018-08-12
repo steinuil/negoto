@@ -93,13 +93,16 @@ fun oneCols [tbl ::: Name] [row ::: {Type}] [col :: Name] [t ::: Type] [[col] ~ 
     []
 
 
+fun replaceField [rcrd ::: {Type}] [nm :: Name] [a ::: Type] [b ::: Type] [[nm] ~ rcrd]
+    (record : $(rcrd ++ [nm = a])) (value : b) : $(rcrd ++ [nm = b]) =
+  record -- nm ++ { nm = value }
 
 
-    (*
+(*
 fun rowCount [tbl ::: Name] [row ::: {Type}] t expr =
   { Count = count } <- oneRow (SELECT COUNT( * ) AS Count FROM t WHERE {expr});
   return count
-  *)
+*)
 
 
 val getIp =

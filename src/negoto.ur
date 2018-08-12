@@ -185,107 +185,126 @@ and thread id =
   case t of
   | None => error <xml>Thread not found: {[id]}</xml>
   | Some (t, posts) =>
-    boards <- Data.allBoards;
-    staticForm <- staticThreadForm t.Id;
-    postBody <- source "";
-    pForm <- postForm postBody id;
+    (*
+    dynFormBody <- source "";
+    dynForm <- postForm dynFormBody id;
+    *)
     let
-      val pageTitle =
+      fun pageTitle boards =
         List.find (fn board => board.Id = t.Board) boards
         |> Option.mp show
         |> Option.get ""
 
       val (op, posts) = case posts of
         | op :: rest => (op, rest)
-        | _ => error <xml>This thread doesn't have an OP</xml>
+        | _ => error <xml>Empty thread</xml>
 
-      fun addTxt str =
-        t <- get postBody;
-        set postBody (t ^ str)
+      (*
+      fun addToForm str =
+        b <- get dynFormBody;
+        set dynFormBody (b ^ str)
+      *)
 
       fun postInfo p =
         <xml><div class="info">
           <span class="name">{[p.Nam]}</span>
           <time>{[p.Time]}</time>
-          <a href={Post.link (Post.id p.Number)}>&#8470;</a><span class="ulink"
-            onclick={fn _ => addTxt (">>" ^ show p.Number ^ "\n")}>{[p.Number]}</span>
+          <a href={Post.link (Post.id p.Number)}>&#8470;</a><span class="ulink">{[p.Number]}</span>
+          <!-- onclick={fn _ => addToForm (">>" ^ show p.Number ^ "\n")}>{[p.Number]}</span> -->
         </div></xml>
 
       fun threadPost' pic p =
-        postBody <- Post.toHtml p.Body;
-        return <xml><div class="post reply" id={Post.id p.Number}>
+        <xml><div class="post reply" id={Post.id p.Number}>
           {pic p.Files}
           {postInfo p}
-          <div class="post-body">{postBody}</div>
+          <div class="post-body">{p.Body}</div>
         </div></xml>
 
-      fun picture expanded files =
+      fun threadOp pic op =
+        <xml><div class="post op-post" id={Post.id op.Number}>
+          {pic op.Files}
+          {postInfo op}
+          <div class="post-body">{op.Body}</div>
+        </div></xml>
+
+      fun staticPicture files =
         case files of
         | [] => <xml/>
-        | f :: _ => <xml><a href={f.Src} onclick={fn _ =>
-                                                    exp <- get expanded;
-                                                    preventDefault;
-                                                    set expanded (not exp)}>
-          <noscript><img src={thumbOf f}/></noscript>
-          <dyn signal={exp <- signal expanded;
-                       return (if exp then
-                         <xml><img class="expanded-img" src={f.Src}/></xml>
-                       else
-                         <xml><img src={thumbOf f}/></xml>)}/>
+        | f :: _ => <xml><a href={f.Src}>
+          <img src={thumbOf f}/>
         </a></xml>
 
-      fun staticPicture f =
-        case f of
-        | [] => <xml/>
-        | f :: _ => <xml><a href={f.Src}><img src={thumbOf f}/></a></xml>
+      fun dynPicture expanded files =
+        let
+          val toggleExp =
+            exp <- get expanded;
+            preventDefault;
+            set expanded (not exp)
 
-      fun threadPost p =
-        expanded <- source False;
-        threadPost' (picture expanded) p
+          fun image f =
+            exp <- signal expanded;
+            return <|
+              if exp then
+                <xml><img class="expanded-img" src={f.Src}/></xml>
+              else
+                <xml><img src={thumbOf f}/></xml>
+        in
+          case files of
+          | [] => <xml/>
+          | f :: _ => <xml><a href={f.Src} onclick={fn _ => toggleExp}>
+            <noscript><img src={thumbOf f}/></noscript>
+            <dyn signal={image f}/>
+          </a></xml>
+        end
 
       fun staticThreadPost p =
-        threadPost' staticPicture p
+        body <- Post.toHtml p.Body;
+        return (threadPost' staticPicture (Util.replaceField [#Body] p body))
 
-      val mkOp =
+      fun dynThreadPost p =
+        threadPost' (dynPicture p.Expanded) (p -- #Expanded)
+
+      fun toDynPost p =
         expanded <- source False;
-        body <- Post.toHtml op.Body;
-        return <xml><div class="post op-post" id={Post.id op.Number}>
-          {picture expanded op.Files}
-          {postInfo op}
-          <div class="post-body">{body}</div>
-        </div></xml>
+        body <- Post.toHtml p.Body;
+        return (p -- #Body ++ { Body = body, Expanded = expanded })
 
       fun lastPost p =
-        Util.listLast p |> Option.mp (fn x => x.Number)
+        Util.listLast p
+        |> Option.mp (fn x => x.Number)
+        |> Option.get 1
 
-      fun fetchNewPosts posts =
-        (last, staticPosts) <- get posts;
-        newPosts <- rpc (Data.postsSince id last);
-        n <- List.mapXM threadPost newPosts;
-        set posts (Option.get last (lastPost newPosts), <xml>{staticPosts}{n}</xml>)
+      fun fetchNewPosts ps =
+        posts <- get ps;
+        newPosts <- rpc (Data.postsSince id (lastPost posts));
+        newPosts <- List.mapM toDynPost newPosts;
+        set ps (List.append posts newPosts)
     in
-      op <- mkOp;
+      boards <- Data.allBoards;
+      op <- toDynPost op;
       staticPosts <- List.mapXM staticThreadPost posts;
-      dynPosts <- List.mapXM threadPost posts;
-      dynPosts <- source (Option.get id (lastPost posts), dynPosts);
-      layout boards pageTitle thread_page <xml>
+      dynPosts <- List.mapM toDynPost posts;
+      dynPosts <- source dynPosts;
+      staticForm <- staticThreadForm t.Id;
+
+      layout boards (pageTitle boards) thread_page <xml>
         <header>
           [<a link={catalog t.Board}>back</a>]
           <span class="subject">{[t.Subject]}</span>
           {if t.Locked then <xml>(locked)</xml> else <xml/>}
         </header>
         <div class="container">
-          {op}
+          {threadOp (dynPicture op.Expanded) (op -- #Expanded)}
           <noscript>{staticPosts}</noscript>
           <dyn signal={
-            (_, posts) <- signal dynPosts;
-            return posts
+            posts <- signal dynPosts;
+            return (List.mapX dynThreadPost posts)
           }/>
         </div>
         {if t.Locked then <xml/> else
         <xml>
           <div class="static-form-container">{staticForm}</div>
-          <!-- {pForm} -->
+          <!-- {dynForm} -->
         </xml>}
         [ <a link={catalog t.Board}>back</a>
         / <span class="ulink" onclick={fn _ => fetchNewPosts dynPosts}>update</span>
