@@ -105,7 +105,7 @@ case $f in
 esac
 
 if [ -z "$DB_FILE" ]; then
-  die "a"
+  usage
 fi
 shift; shift
 
