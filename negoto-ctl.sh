@@ -20,7 +20,7 @@ usage() {
   die "Usage: $0 -d <negoto.db> <command> <args>
 
 Commands:
-  add-theme <name> <file> <color>
+  add-theme <name> <file> <color> <css-dir>
   add-board <id> <name>
   add-admin <name> owner|admin|moderator"
 }
@@ -45,6 +45,7 @@ add_theme() {
   name=$1
   file=$2
   color=$3
+  css_dir=$4
 
   hash=$(file_md5 "$file")
   handle=$(next_css_handle)
@@ -58,6 +59,9 @@ INSERT INTO $THEMES_TABLE VALUES ('$name', '/static/css/$hash.css', $handle, '$c
 
 INSERT INTO $KV_TABLE VALUES ('defaultTheme', $handle) ON CONFLICT DO NOTHING;
 EOF
+
+  cp "$file" "$css_dir/$hash.css"
+
   echo "Created theme '$name' with hash $hash"
 }
 
@@ -118,8 +122,8 @@ shift
 
 case $subcmd in
   add-theme)
-    if [ $# -ne 3 ]; then usage; fi
-    add_theme "$1" "$2" "$3"
+    if [ $# -ne 4 ]; then usage; fi
+    add_theme "$1" "$2" "$3" "$4"
     ;;
   add-board)
     if [ $# -ne 2 ]; then usage; fi
