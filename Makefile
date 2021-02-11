@@ -84,7 +84,7 @@ $s/bcrypt/bcrypt.a: $(bcrypt_lib)
 
 # Themes
 sass_base = themes/base.sass themes/reset.sass
-css = $b/yotsuba.css $b/yotsuba-b.css
+css = $b/yotsuba.css $b/yotsuba-b.css $b/tomorrow.css
 
 $b/%.css: themes/%.sass $(sass_base) | $b
 	$(sass) --sourcemap=none --style=expanded -C $< $@
@@ -105,7 +105,7 @@ $(db): $b/schema.sql init.sql
 
 
 
-negoto: $(exe) $(db)
+negoto: $(exe) $(css)
 
 
 static = public/static
