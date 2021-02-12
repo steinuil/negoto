@@ -92,7 +92,7 @@ $b/%.css: themes/%.sass $(sass_base) | $b
 
 # Main program
 exe = negoto.fcgi
-db = $b/negoto.db
+db = negoto.db
 
 $b/schema.sql: $(exe) ;
 $(exe): project.urp $(src) | $(ext)

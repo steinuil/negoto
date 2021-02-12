@@ -5,5 +5,3 @@ link build/uuid.o
 link build/buffer.o
 sql build/schema.sql
 allow url *
-prefix /negoto/
-minHeap 16384
