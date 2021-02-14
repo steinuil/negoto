@@ -72,6 +72,13 @@ val thread  : int -> transaction (option (thread * list post))
 val postsSince : int -> int -> transaction (list post)
   (** Get all posts in a thread given the last seen post number. *)
 
+val recentPosts : int -> transaction (list { Id : int
+                                           , Number : int
+                                           , Thread : int
+                                           , Nam : string
+                                           , Time : time
+                                           , Body : string })
+
 val addPost :
   { Nam    : string
   , Body   : string

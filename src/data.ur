@@ -267,6 +267,12 @@ fun postsSince thread lastNum =
   queryPost (WHERE posts.Thread = {[thread]} AND posts.Number > {[lastNum]})
 
 
+fun recentPosts n =
+  queryL1 (SELECT * FROM posts
+           ORDER BY posts.Time DESC
+           LIMIT {n})
+
+
 fun deletePostIn thread num =
   if num > 1 then
     dml (DELETE FROM posts WHERE Thread = {[thread]} AND Number = {[num]})

@@ -107,6 +107,7 @@ and front () =
   readme <- Admin.readme;
   readme <- Post.toHtml readme;
   siteName <- Admin.siteName;
+  recentPosts <- Data.recentPosts 5;
   Layout.layout ("Front Page - " ^ siteName) front_page "" <xml>
     <header>
       <h1>{[siteName]}</h1>
@@ -128,6 +129,16 @@ and front () =
         <section>
           <header>News</header>
           <div class="section-body">{news}</div>
+        </section>
+      </div>
+      <div class="container">
+        <section>
+          <header>Recent posts</header>
+          <div class="section-body">
+            {List.mapX
+              (fn p => <xml>#{[p.Id]} Thread {[p.Thread]} Number {[p.Number]} Body {[p.Body]}</xml>)
+              recentPosts}
+          </div>
         </section>
       </div>
     </main>
