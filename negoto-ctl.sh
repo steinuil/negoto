@@ -17,7 +17,7 @@ die() {
 }
 
 usage() {
-  die "Usage: $0 -d <negoto.db> <command> <args>
+  die "Usage: $0 -f <negoto.db> <command> <args>
 
 Commands:
   add-theme <name> <file> <color> <css-dir>
