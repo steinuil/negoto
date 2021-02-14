@@ -31,28 +31,41 @@ table themes :
   , Link     : url
   , Handle   : File.handle
   , TabColor : string }
-  PRIMARY KEY Handle
-  CONSTRAINT UniqueName UNIQUE Nam
+  PRIMARY KEY Nam
 
 
-cookie selectedTheme : File.handle
+type theme =
+  { Nam      : string
+  , Link     : url
+  , Handle   : File.handle
+  , TabColor : string }
 
 
-fun addTheme { Nam = name, TabColor = color } file =
+cookie selectedTheme : string
+
+
+fun addTheme { Nam = name, TabColor = color, Css = file } =
   (handle, link) <- File.Css.save file;
   dml (INSERT INTO themes (Nam, Link, Handle, TabColor)
        VALUES ({[name]}, {[link]}, {[handle]}, {[color]}))
 
 
-fun editTheme handle { TabColor = color, Nam = name } =
-  dml (UPDATE themes SET TabColor = {[color]}, Nam = {[name]}
-       WHERE Handle = {[handle]})
+fun editTheme name { TabColor = color, Css = file } =
+  { Handle = handle } <- oneRow1 (SELECT themes.Handle FROM themes
+                                  WHERE themes.Nam = {[name]});
+  File.Css.delete handle;
+  (handle, link) <- File.Css.save file;
+  dml (UPDATE themes
+       SET TabColor = {[color]}, Handle = {[handle]}, Link = {[link]}
+       WHERE Nam = {[name]})
 
 
-fun deleteTheme handle =
+fun deleteTheme name =
   def <- KeyVal.unsafeGet "defaultTheme";
-  if handle <> def then
-    dml (DELETE FROM themes WHERE Handle = {[handle]});
+  if name <> def then
+    { Handle = handle } <- oneRow1 (SELECT themes.Handle FROM themes
+                                    WHERE themes.Nam = {[name]});
+    dml (DELETE FROM themes WHERE Nam = {[name]});
     File.Css.delete handle
   else
     error <xml>You can't delete the default theme</xml>
@@ -62,17 +75,17 @@ val allThemes =
   queryL1 (SELECT * FROM themes)
 
 
-val defaultTheme =
+val defaultTheme : transaction theme =
   def <- KeyVal.unsafeGet "defaultTheme";
-  oneRow1 (SELECT * FROM themes WHERE themes.Handle = {[def]})
+  oneRow1 (SELECT * FROM themes WHERE themes.Nam = {[def]})
 
 
-fun setDefaultTheme handle =
-  exists <- hasRows (SELECT 1 FROM themes WHERE themes.Handle = {[handle]});
+fun setDefaultTheme name =
+  exists <- hasRows (SELECT 1 FROM themes WHERE themes.Nam = {[name]});
   if exists then
-    KeyVal.set "defaultTheme" handle
+    KeyVal.set "defaultTheme" name
   else
-    error <xml>The theme {[handle]} doesn't exist in the database</xml>
+    error <xml>The theme {[name]} doesn't exist in the database</xml>
 
 
 val currentSessionTheme =
@@ -81,7 +94,7 @@ val currentSessionTheme =
   | None =>
     defaultTheme
   | Some t =>
-    t <- oneOrNoRows1 (SELECT * FROM themes WHERE themes.Handle = {[t]});
+    t <- oneOrNoRows1 (SELECT * FROM themes WHERE themes.Nam = {[t]});
     case t of
     | None =>
       clearCookie selectedTheme;
@@ -198,8 +211,8 @@ val currentSessionTheme =
 fun themeSwitcher themes' curr act : xbody =
   <xml><form>
     <select{#Theme}>
-      {List.mapX (fn { Handle = id, Nam = name, ... } =>
-        <xml><option value={show id} selected={id = curr}>{[name]}</option></xml>)
+      {List.mapX (fn { Nam = name, ... } =>
+        <xml><option value={name} selected={name = curr}>{[name]}</option></xml>)
         themes'}
     </select>
     <submit action={act} value="Switch theme"/>
@@ -239,7 +252,7 @@ fun layout (title' : string) class' desc body' =
 fun layoutWithSwitcher act title' class' desc f =
   curr <- currentSessionTheme;
   themes <- allThemes;
-  return <| layout' curr.Link curr.TabColor title' class' desc (f (themeSwitcher themes curr.Handle act))
+  return <| layout' curr.Link curr.TabColor title' class' desc (f (themeSwitcher themes curr.Nam act))
 
   (*
   let

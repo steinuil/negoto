@@ -438,6 +438,7 @@ and site_settings () =
         <td>{del}</td>
       </tr></xml>)
     banners;
+  { Nam = defaultTheme, ... } <- Layout.defaultTheme;
   layout <xml><section>
   <!-- SITE NAME AND LINKS -->
     <header>Site name</header>
@@ -518,17 +519,18 @@ and site_settings () =
       | None => return <xml/>
       | Some theme =>
         return <xml><form class="edit-area">
-          <hidden{#Handle} value={show theme.Handle}/>
-          <textbox{#Nam} placeholder="Name" value={theme.Nam}/><br/>
+          <div>Editing theme {[theme.Nam]}</div>
+          <hidden{#Nam} value={theme.Nam}/>
           <textbox{#TabColor} placeholder="Tab color" value={theme.TabColor}/><br/>
+          <upload{#Css}/>
           <submit value="Edit theme" action={edit_theme}/>
         </form></xml>}/>
   </section><section>
     <header>Default theme</header>
     <form>
       <select{#Theme}>
-        {List.mapX (fn { Nam = name, Handle = handle, ... } =>
-          <xml><option value={show handle}>{[name]}</option></xml>) themes}
+        {List.mapX (fn { Nam = name, ... } =>
+          <xml><option value={name} selected={name = defaultTheme}>{[name]}</option></xml>) themes}
       </select>
       <submit value="Set default theme" action={set_default_theme}/>
     </form>
@@ -605,31 +607,30 @@ and add_theme f =
   if strlen f.TabColor < 1 then E.length0 "Tab Color" else
   if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.addTheme (f -- #Css) f.Css;
+  Layout.addTheme f;
   Log.info (admin ^ " uploaded theme " ^ f.Nam);
   redirect (url (site_settings ()))
 
 
 and edit_theme f =
   if strlen f.TabColor < 1 then E.length0 "Tab Color" else
-  if strlen f.Nam < 1 then E.length0 "Name" else
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.editTheme (readError f.Handle) (f -- #Handle);
+  Layout.editTheme f.Nam (f -- #Nam);
   Log.info (admin ^ " edited theme " ^ f.Nam);
   redirect (url (site_settings ()))
 
 
-and delete_theme { Id = handle } =
+and delete_theme { Id = name } =
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.deleteTheme (readError handle);
-  Log.info (admin ^ " edited theme " ^ handle);
+  Layout.deleteTheme name;
+  Log.info (admin ^ " edited theme " ^ name);
   redirect (url (site_settings ()))
 
 
-and set_default_theme { Theme = handle } =
+and set_default_theme { Theme = name } =
   (admin, _) <- Account.requireLevel Account.Admin;
-  Layout.setDefaultTheme (readError handle);
-  Log.info (admin ^ " set the default theme to " ^ handle);
+  Layout.setDefaultTheme name;
+  Log.info (admin ^ " set the default theme to " ^ name);
   redirect (url (site_settings ()))
 
 
