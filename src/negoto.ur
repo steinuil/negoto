@@ -108,6 +108,19 @@ and front () =
   readme <- Post.toHtml readme;
   siteName <- Admin.siteName;
   recentPosts <- Data.recentPosts 5;
+  recentPosts <- List.mapXM
+    (fn p =>
+      elapsed <- Util.elapsed p.Time;
+      return <xml>
+        <li class="recent_post">
+          <a link={thread p.Thread}>
+            >>/{[p.Board]}/{[p.Thread]}/{[p.Number]} ({elapsed}): {[
+              if String.lengthGe p.Body 1 then p.Body else "[empty]"
+            ]}
+          </a>
+        </li>
+      </xml>)
+    recentPosts;
   Layout.layout ("Front Page - " ^ siteName) front_page "" <xml>
     <header>
       <h1>{[siteName]}</h1>
@@ -134,11 +147,9 @@ and front () =
       <div class="container">
         <section>
           <header>Recent posts</header>
-          <div class="section-body">
-            {List.mapX
-              (fn p => <xml>#{[p.Id]} Thread {[p.Thread]} Number {[p.Number]} Body {[p.Body]}</xml>)
-              recentPosts}
-          </div>
+          <ul class="section-body recent_posts_list">
+            {recentPosts}
+          </ul>
         </section>
       </div>
     </main>

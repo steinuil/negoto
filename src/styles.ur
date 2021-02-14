@@ -23,3 +23,5 @@ style news_body
 style inline_form
 style banner
 style static_form_container
+style recent_posts_list
+style recent_post

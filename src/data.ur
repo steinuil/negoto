@@ -268,9 +268,19 @@ fun postsSince thread lastNum =
 
 
 fun recentPosts n =
-  queryL1 (SELECT * FROM posts
-           ORDER BY posts.Time DESC
-           LIMIT {n})
+  queryL (SELECT
+            posts.Number AS Number,
+            posts.Thread AS Thread,
+            boards.Id AS Board,
+            boards.Nam AS BoardName,
+            posts.Nam AS Nam,
+            posts.Time AS Time,
+            posts.Body AS Body
+          FROM posts
+          JOIN threads ON posts.Thread = threads.Id
+          JOIN boards ON threads.Board = boards.Id
+          ORDER BY posts.Time DESC
+          LIMIT {n})
 
 
 fun deletePostIn thread num =
