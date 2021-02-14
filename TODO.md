@@ -35,7 +35,6 @@
   * [ ] add default spoiler image
   * [ ] add a "maintenance mode" where it is not possible to post
   * [ ] set an expire time for cookies, the default value is until the browser session is closed
-  * [ ] fix issues with theme management
   * [ ] fix unicode handling in post rendering
 
 
