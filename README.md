@@ -29,7 +29,7 @@ The very least Negoto requires to build is:
 
 The normal installation also requires:
 
-* ImageMagick's `convert` in the $PATH
+* ImageMagick's `convert` in the $PATH (or set the path in NEGOTO_CONVERT_PATH in negoto_config.h)
 
 To compile, simply clone the repository and invoke make:
 

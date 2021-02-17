@@ -204,13 +204,13 @@ static void save_resize_image(void *d) {
     strcat(name, "[0]");
 
     char *const argv[] = {
-      "convert", name,
+      NEGOTO_CONVERT_PATH, name,
       "-strip",
       "-quality", "70%",
       "-resize", NEGOTO_THUMB_SIZE ">",
       data->thumb, NULL
     };
-    execvp("convert", argv);
+    execvp(NEGOTO_CONVERT_PATH, argv);
   }
 
   if (pid < 0) {
