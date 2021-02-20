@@ -135,6 +135,8 @@ and front () =
               boards}
           </ul>
         </section>
+      </div>
+      <div class="container">
         <section>
           <header>About</header>
           <div class="section-body">{readme}</div>
