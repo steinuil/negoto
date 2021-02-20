@@ -16,7 +16,7 @@ type board =
 
 
 val allBoards =
-  queryL1 (SELECT * FROM boards)
+  queryL1 (SELECT * FROM boards ORDER BY boards.Id ASC)
 
 
 fun nameOfBoard id =
